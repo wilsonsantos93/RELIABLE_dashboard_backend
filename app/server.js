@@ -4,8 +4,7 @@ dotenv.config(); // Loads .env file contents into process.env
 
 
 // Weather database
-import { WeatherDatabase } from "./config/mongo.js"; // Gets the environment variables to use for the database connection
-WeatherDatabase.connectToDatabase();
+import "./config/mongo.js"
 
 // Get JSON from weather API
 const request = require('request');
