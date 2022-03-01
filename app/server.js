@@ -1,28 +1,34 @@
-// Environment variables for the database connection
-import dotenv from 'dotenv';
-dotenv.config(); // Loads .env file contents into process.env
+//! Import require
+import { createRequire } from "module";
+const require = createRequire(import.meta.url);
 
 
-// Weather database
-import "./config/mongo.js"
-
-// Get JSON from weather API
-const request = require('request');
-let weather_url = "https://www.reddit.com/r/popular.json";
-let options = { json: true };
-request(weather_url, options, (error, response, body) => {
-
-    if (error) {
-        throw error
-    };
-
-    if (!error && response.statusCode == 200) {
+//! Environment variables for the database connection
+import dotenv from "dotenv";
+dotenv.config(); // Loads .env file contents into process.env.
+// console.log(process.env)
 
 
-        const Cat = mongoose.model('Cat', { name: String });
+//! Connect to weather database
+import { databaseEngine } from "./mongo.js"
+databaseEngine.connectToDatabase()
 
-        const kitty = new Cat({ name: 'Zildjian' });
-        kitty.save().then(() => console.log('meow'));
-        // do something with JSON, using the 'body' variable
-    };
-});
+
+//! Get JSON from weather API and save it to the database
+const fetch = require("node-fetch");
+let weatherDataJSON;
+(async function () {
+    const url = "http://api.weatherapi.com/v1/current.json?key=a1f415612c9543ea80a151844220103&q=Madeira&aqi=yes"
+    const fetchSettings = { method: "Get" };
+    const response = await fetch(url, fetchSettings);
+    const weatherDataJSON = await response.json();
+})();
+
+
+//! Save JSON to the database
+const weatherVisualizerDatabase = databaseEngine.getConnection().db("weatherDashboard");
+const weatherDataCollection = weatherVisualizerDatabase.collection("weatherData");
+const result = await weatherDataCollection.insertOne(weatherDataJSON);
+console.log("Weather data JSON saved to the database.");
+
+
