@@ -1,0 +1,48 @@
+{
+
+  "name": "weather_dashboard_backend",
+
+  "version": "1.0.0",
+
+  "description": "Server that gathers weather data and exposes the weather and region borders as API endpoints.",
+
+  "main": "server.js",
+
+  "scripts": {
+
+    "start": "node app/server.js",
+
+    "dev": "nodemon app/server.js"
+
+  },
+
+  "keywords": [],
+
+  "author": "Mistakx",
+
+  "license": "ISC",
+
+  "dependencies": {
+
+    "cross-fetch": "^3.1.5",
+
+    "dotenv": "^16.0.0",
+
+    "express": "^4.17.3",
+
+    "mongodb": "^4.4.0",
+
+    "multer": "^1.4.4"
+
+  },
+
+  "type": "module",
+
+  "devDependencies": {
+
+    "nodemon": "^2.0.15"
+
+  }
+
+}
+

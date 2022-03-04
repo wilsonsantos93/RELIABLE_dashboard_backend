@@ -1,14 +1,11 @@
-
-//! Environment variables for the database connection
+//! Importing environment variables to connect to the database engine
 import dotenv from "dotenv";
-dotenv.config(); // Loads .env file contents into process.env.
+dotenv.config({ path: "./src/.env"}); // Loads .env file contents into process.env
 // console.log(process.env)
 
-
-//! Connect to weather database
+//! Database engine connection
 import { databaseEngine } from "./mongo.js"
-databaseEngine.connectToDatabase()
-
+await databaseEngine.connectToDatabase()
 
 //! Get JSON from weather API and save it to the database
 import fetch from 'cross-fetch';
@@ -25,11 +22,8 @@ async function saveWeatherData(weatherData) {
     const result = await weatherDataCollection.insertOne(weatherData);
     console.log("Weather data saved to the database.");
 };
-async function getAndSaveWeatherData() {
-    let weatherDataJSON = await getWeatherData();
-    saveWeatherData(weatherDataJSON)
-}
-getAndSaveWeatherData()
+// let weatherDataJSON = await getWeatherData();
+// await saveWeatherData(weatherDataJSON)
 
 //! Express
 import express from "express";
@@ -39,5 +33,5 @@ import { router } from "./routes.js";
 app.use('/', router); // Import my routes into the root path '/'
 
 app.listen(process.env.WEATHER_DATA_PORT, function () {
-    console.log(`Example app listening on port ${process.env.WEATHER_DATA_PORT}.`)
+    console.log(`Weather data server started listening on port ${process.env.WEATHER_DATA_PORT}.`)
 })

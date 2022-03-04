@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>Import geoJSON to database</title>
+    <!-- <meta name="description" content="Our first page" /> -->
+    <!-- <meta name="keywords" content="html tutorial template" /> -->
+  </head>
+
+  <body>
+
+    <form method="post" enctype="multipart/form-data">
+      
+      <label for="geojson">Choose a geoJSON file:</label>
+
+      <br />
+
+      <!--* Button to select the geoJSON to send to the server -->
+      <input
+        type="file"
+        name="geojson"
+        accept="application/json"
+      />
+
+      <!-- <input type="hidden" id="custId" name="custId" value="3487" /> -->
+
+
+      <!--* Button to send the geoJSON to the server -->
+      <div>
+        <button>Submit</button>
+      </div>
+    </form>
+  </body>
+</html>
