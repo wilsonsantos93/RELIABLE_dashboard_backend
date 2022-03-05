@@ -1,6 +1,6 @@
 //! Mongo database engine class
 import { MongoClient } from "mongodb";
-export class databaseEngine {
+export class DatabaseEngine {
 
     static #databaseEngineConnection;
 

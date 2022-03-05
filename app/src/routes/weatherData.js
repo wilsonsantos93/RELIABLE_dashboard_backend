@@ -3,7 +3,7 @@ import express from "express";
 export let weatherRouter = express.Router();
 
 //! Database engine connection
-import { databaseEngine } from "../config/mongo.js"
+import { DatabaseEngine } from "../config/mongo.js"
 
 //! Middleware
 // weatherRouter.use(express.urlencoded({extended: true}));
@@ -12,7 +12,7 @@ import { databaseEngine } from "../config/mongo.js"
 
 //! Get weather data route
 weatherRouter.get("/getWeatherData", function (request, response) {
-    const weatherDashboardDatabase = databaseEngine.getConnection().db("weatherDashboard");
+    const weatherDashboardDatabase = DatabaseEngine.getConnection().db("weatherDashboard");
     const weatherDataCollection = weatherDashboardDatabase.collection("weatherData");
     
     const query = { "location.name": "Porto Santo" }; // Build database query for the specific location name
@@ -27,7 +27,7 @@ weatherRouter.get("/getWeatherData", function (request, response) {
         if (error) throw error;
         // console.log(result);
         response.send(result)
-        databaseEngine.getConnection().close();
+        DatabaseEngine.getConnection().close();
     });
 
 });

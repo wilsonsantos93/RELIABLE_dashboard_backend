@@ -4,8 +4,8 @@ dotenv.config({ path: "./src/config/.env"}); // Loads .env file contents into pr
 // console.log(process.env)
 
 //! Database engine connection
-import { databaseEngine } from "./config/mongo.js"
-await databaseEngine.connectToDatabaseEngine()
+import { DatabaseEngine } from "./config/mongo.js"
+await DatabaseEngine.connectToDatabaseEngine()
 
 //! Get JSON from weather API and save it to the database
 import fetch from 'cross-fetch';
@@ -17,7 +17,7 @@ async function getWeatherData() {
     return weatherDataJSON
 }
 async function saveWeatherData(weatherData) {
-    const weatherDashboardDatabase = databaseEngine.getConnection().db("weatherDashboard");
+    const weatherDashboardDatabase = DatabaseEngine.getConnection().db("weatherDashboard");
     const weatherDataCollection = weatherDashboardDatabase.collection("weatherData");
     const result = await weatherDataCollection.insertOne(weatherData);
     console.log("Weather data saved to the database.");

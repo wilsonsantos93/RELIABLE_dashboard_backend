@@ -4,7 +4,7 @@ import express from "express";
 export let regionBordersRouter = express.Router();
 
 //! Database engine connection
-import { databaseEngine } from "../config/mongo.js"
+import { DatabaseEngine } from "../config/mongo.js"
 
 //! Middleware
 // regionBordersRouter.use(express.urlencoded({extended: true}));
@@ -12,7 +12,7 @@ import { databaseEngine } from "../config/mongo.js"
 
 //! Get region borders data route
 regionBordersRouter.get("/getRegionBordersData", function (request, response) {
-    const regionBordersDataCollection = databaseEngine.getRegionBordersCollection()
+    const regionBordersDataCollection = DatabaseEngine.getRegionBordersCollection()
     
     const query = {}; // Query all documents in the database
 
@@ -33,8 +33,8 @@ regionBordersRouter.get("/getRegionBordersData", function (request, response) {
 
 });
  
-//! Page that allows a client to select a JSON document to be sent to the server
-regionBordersRouter.get("/saveJSON", function (request, response) {
+//! Page that allows a client to select a geoJSON document to be saved to the database collection, or delete the already existing collection
+regionBordersRouter.get("/regionBorders", function (request, response) {
     response.sendFile('uploadJSON.html', { root: './src/views' })
 });
 
@@ -43,23 +43,45 @@ import multer from "multer"
 const storage = multer.memoryStorage()
 const upload = multer({ storage: storage })
 // https://stackoverflow.com/questions/31530200/node-multer-unexpected-field
-regionBordersRouter.post("/saveJSON", upload.single('geojson'), function (request, response) {
+regionBordersRouter.post("/saveRegionBorders", upload.single('geojson'), function (request, response) {
 
     // Parse received file to JSON
     console.log("Received geoJSON from the client.")
     let fileBuffer = request.file.buffer
     let geoJSON = JSON.parse(fileBuffer)
 
-    // Save JSON to database
-    const regionBordersCollection = databaseEngine.getRegionBordersCollection()
+    // Save JSON to database and send response to the client
+    const regionBordersCollection = DatabaseEngine.getRegionBordersCollection()
     regionBordersCollection.insertMany(geoJSON.features, function (insertingError, databaseResponse) {
         if (insertingError) {response.send(error) }
+        console.log("Inserted geoJSON in the database.")
+        // console.log(databaseResponse)
+
+        // Send successful response to the client
+        let responseMessage = ""
+        responseMessage += "Server successfully saved geoJSON.<br><br>"
+        responseMessage += "<a href='javascript:history.back()'>Return to the last page.</a>"
+        response.send(responseMessage)
     });
     
-    // Send response to the client
-    let responseMessage = ""
-    responseMessage += "Server successfully received JSON.<br><br>"
-    responseMessage += "<a href='javascript:history.back()'>Return to the last page.</a>"
-    response.send(responseMessage)
+});
 
+//! Client requests the region borders collection to be deleted 
+regionBordersRouter.post("/deleteRegionBorders", function (request, response) {
+
+    console.log("Client requested to drop the region borders collection.")
+
+    // Drop database and send response to the server.
+    DatabaseEngine.getRegionBordersCollection().drop(function (dropError, databaseResponse) {
+        if (dropError) {response.send(error) }
+        console.log("Deleted region borders data from the database.")
+        // console.log(databaseResponse)
+
+        // Send successful response to the client
+        let responseMessage = ""
+        responseMessage += "Server successfully deleted region borders from the database.<br><br>"
+        responseMessage += "<a href='javascript:history.back()'>Return to the last page.</a>"
+        response.send(responseMessage)
+
+    })
 });

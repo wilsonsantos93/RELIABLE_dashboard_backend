@@ -3,33 +3,42 @@
 <html>
   <head>
     <meta charset="utf-8" />
-    <title>Import geoJSON to database</title>
-    <!-- <meta name="description" content="Our first page" /> -->
-    <!-- <meta name="keywords" content="html tutorial template" /> -->
+    <title>Import geoJSON</title>
   </head>
 
   <body>
 
-    <form method="post" enctype="multipart/form-data">
+    <!-- Form to import and submit geoJSON -->
+    <form  action="/saveRegionBorders" method="post" enctype="multipart/form-data">
       
-      <label for="geojson">Choose a geoJSON file:</label>
+      <label for="geojsonImportButton">Choose a geoJSON file:</label>
 
       <br />
 
       <!--* Button to select the geoJSON to send to the server -->
+      <!-- Only accept files with the .geojson extension -->
       <input
         type="file"
+        id="geojsonImportButton"
         name="geojson"
-        accept="application/json"
+        accept=".geojson"
       />
-
-      <!-- <input type="hidden" id="custId" name="custId" value="3487" /> -->
 
 
       <!--* Button to send the geoJSON to the server -->
       <div>
         <button>Submit</button>
       </div>
+    </form>
+
+    <!-- Form to delete the region borders collection -->
+    <form  action="/deleteRegionBorders" method="post">
+
+      <!--* Button to send the geoJSON to the server -->
+      <div>
+        <button>Delete region borders in database</button>
+      </div>
+
     </form>
   </body>
 </html>
