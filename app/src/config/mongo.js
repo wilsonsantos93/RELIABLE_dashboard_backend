@@ -26,11 +26,11 @@ export class DatabaseEngine {
     }
 
     static getWeatherCollection() {
-        return this.getDashboardDatabase().collection("weatherDataTest")
+        return this.getDashboardDatabase().collection("weatherData")
     }
 
     static getRegionBordersCollection() {
-        return this.getDashboardDatabase().collection("regionBordersTest")
+        return this.getDashboardDatabase().collection("regionBorders")
     }
 }
 
