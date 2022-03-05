@@ -42,7 +42,8 @@ app.use('/', weatherRouter); // Import weather routes into the root path '/'
 //! Root route
 app.get("/", function (request, response) {
 
-    response.send("Root route for the backend container.")
+    // response.send("Root route for the backend container.")
+    response.sendFile("/media/shared/My Programs/weather_dashboard_backend/app/src/views/map.html")
 
 });
 
