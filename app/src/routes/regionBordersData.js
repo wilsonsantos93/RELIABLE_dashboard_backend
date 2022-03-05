@@ -7,34 +7,35 @@ export let regionBordersRouter = express.Router();
 import { databaseEngine } from "../config/mongo.js"
 
 //! Middleware
-regionBordersRouter.use(express.urlencoded({extended: true}));
+// regionBordersRouter.use(express.urlencoded({extended: true}));
 // reginBordersRouter.use(express.json());
 
 //! Get region borders data route
 regionBordersRouter.get("/getRegionBordersData", function (request, response) {
-    const weatherDashboardDatabase = databaseEngine.getConnection().db("weatherDashboard");
-    const regionBordersDataCollection = weatherDashboardDatabase.collection("regionBordersData");
+    const regionBordersDataCollection = databaseEngine.getRegionBordersCollection()
     
-    const query = {}; // Query all documents
+    const query = {}; // Query all documents in the database
 
-    // Include only the coordinates in the returned document
+    // Don't include each document's ID in the query results
     const options = {
-        projection: { "_id": 0, "features.geometry.coordinates": 1,},
+        projection: { "_id": 0, "type": 1, "geometry": 1, "properties": 1}
     };
 
     // Queries database and sends the information to the client that requested it
     regionBordersDataCollection.find(query, options).toArray(function(error, result) {
         if (error) throw error;
-        // console.log(result);
-        response.send(result)
-        databaseEngine.getConnection().close();
+        
+        // The database query result is an array of geoJSON features
+        // We need to return a geoJSON to the front end, and a geoJSON has a type, and the array of features
+        let geoJSON = {"type": "FeatureCollection", "features": result}
+        response.send(geoJSON)
     });
 
 });
  
 //! Page that allows a client to select a JSON document to be sent to the server
 regionBordersRouter.get("/saveJSON", function (request, response) {
-    response.sendFile('uploadJSON.html', { root: './src' })
+    response.sendFile('uploadJSON.html', { root: './src/views' })
 });
 
 //! Client requests a geoJSON to be saved to the database 

@@ -6,7 +6,7 @@ export let weatherRouter = express.Router();
 import { databaseEngine } from "../config/mongo.js"
 
 //! Middleware
-weatherRouter.use(express.urlencoded({extended: true}));
+// weatherRouter.use(express.urlencoded({extended: true}));
 // router.use(express.json());
 
 
