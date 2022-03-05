@@ -28,12 +28,16 @@ async function saveWeatherData(weatherData) {
 //! Express
 import express from "express";
 let app = express();
-import { regionBordersRouter } from "./routes/regionBordersData.js";
-import { weatherRouter } from "./routes/weatherData.js";
+
+//! Cross-origin resource sharing
+import cors from "cors"
+app.use(cors())
 
 //! Routers
-app.use('/', regionBordersRouter); // Import my routes into the root path '/'
-app.use('/', weatherRouter); // Import my routes into the root path '/'
+import { regionBordersRouter } from "./routes/regionBordersData.js";
+app.use('/', regionBordersRouter); // Import region border routes into the root path '/'
+import { weatherRouter } from "./routes/weatherData.js";
+app.use('/', weatherRouter); // Import weather routes into the root path '/'
 
 //! Root route
 app.get("/", function (request, response) {
