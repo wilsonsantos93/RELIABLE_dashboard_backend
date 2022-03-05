@@ -38,6 +38,8 @@ import { regionBordersRouter } from "./routes/regionBordersData.js";
 app.use('/', regionBordersRouter); // Import region border routes into the root path '/'
 import { weatherRouter } from "./routes/weatherData.js";
 app.use('/', weatherRouter); // Import weather routes into the root path '/'
+import { librariesRouter } from "./routes/libraries.js";
+app.use('/', librariesRouter); // Import libraries routes into the root path '/'
 
 //! Root route
 app.get("/", function (request, response) {
