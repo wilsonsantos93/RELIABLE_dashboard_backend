@@ -1,3 +1,6 @@
+//! // Appends to a message a HTML link so the browser user can go back a page, and sends it
+import sendResponseWithGoBackLink from "../utils/response.js";
+
 //! Express
 import express from "express";
 export let regionBordersRouter = express.Router();
@@ -5,51 +8,39 @@ export let regionBordersRouter = express.Router();
 //! Database engine connection
 import { DatabaseEngine } from "../config/mongo.js";
 
-//! Middleware
-// regionBordersRouter.use(express.urlencoded({extended: true}));
-// reginBordersRouter.use(express.json());
-
 //! Get region borders data route
 regionBordersRouter.get(
   "/getRegionBorders",
   async function (request, response) {
+    console.log("Client requested region borders.");
 
-    console.log("Client requested region borders.")
+    //* Check if the region border collection exists
+    let regionBordersCollectionExists =
+      await DatabaseEngine.regionBordersCollectionExists();
 
-    const regionBordersDataCollection =
-      DatabaseEngine.getRegionBordersCollection();
+    //* If the region borders collection doesn't exist, send error response to the client
+    if (!regionBordersCollectionExists) {
+      response.send(
+        "Couldn't get region borders because the collection doesn't exist."
+      );
+    } else if (regionBordersCollectionExists) {
+      //* Query the region borders collection for the crs
+      let crsQueryResults = await DatabaseEngine.getRegionBordersCRS();
+      console.log(crsQueryResults);
+      //* Query the region borders collection for the various features
+      let featuresQueryResults =
+        await DatabaseEngine.getRegionBordersFeatures();
 
-    //! Query region borders collection for the coordinate reference system
-    const crsQuery = { "crs.type": "name" }; // Query for the only document in the region borders collection who has a crs.type
-    // Don't include the crs document's ID in the query results
-    const crsQueryOptions = {
-      projection: { _id: 0, crs: 1 },
-    };
-    // The following query returns {crs: { type: 'name', properties: { name: 'urn:ogc:def:crs:EPSG::3763' } } }
-    console.log("Querying collection for the coordinate reference system.")
-    let crsQueryResults = await regionBordersDataCollection.findOne(
-      crsQuery,
-      crsQueryOptions
-    );
-
-    //! Query region borders collection for the various features
-    let featuresQuery = { "type": "Feature" }; // Query for various features in the region borders collection
-    // Don't include each document's ID in the query results
-    let featuresQueryOptions = {
-      projection: { _id: 0, type: 1, geometry: 1, properties: 1 },
-    };
-    // The following query returns [{type: "Feature",...}, {type:"Feature",...}]
-    console.log("Querying region borders collection for the various features.")
-    let featuresQueryResults = await regionBordersDataCollection
-      .find(featuresQuery, featuresQueryOptions)
-      .toArray();
-
-    //! Parse and send geoJSON
-    // let geoJSON = { type: "FeatureCollection", crs: crsQueryResults.crs, features: featuresQueryResults };
-    let geoJSON = { type: "FeatureCollection", crs: crsQueryResults.crs, features: featuresQueryResults };
-    console.log("Started sending geoJSON to the client.")
-    response.send(geoJSON);
-    console.log("Finished sending geoJSON to the client.\n")
+      //* Parse and send geoJSON
+      let geoJSON = {
+        type: "FeatureCollection",
+        crs: crsQueryResults.crs,
+        features: featuresQueryResults,
+      };
+      console.log("Started sending geoJSON to the client.");
+      response.send(geoJSON);
+      console.log("Finished sending geoJSON to the client.\n");
+    }
   }
 );
 
@@ -97,15 +88,14 @@ regionBordersRouter.post(
         if (insertingError) {
           response.send(error);
         }
-        console.log("Inserted geoJSON features in the database.");
+        console.log("Inserted geoJSON features in the database.\n");
         // console.log(databaseResponse)
 
         // Send successful response to the client
-        let responseMessage = "";
-        responseMessage += "Server successfully saved geoJSON.<br><br>";
-        responseMessage +=
-          "<a href='javascript:history.back()'>Return to the last page.</a>";
-        response.send(responseMessage);
+        sendResponseWithGoBackLink(
+          response,
+          "Server successfully saved geoJSON."
+        );
       }
     );
   }
@@ -123,14 +113,12 @@ regionBordersRouter.post("/deleteRegionBorders", function (request, response) {
     //* Error handling
     if (dropError && dropError.codeName == "NamespaceNotFound") {
       console.log(
-        "Region borders collection doesn't exist in the database (was probably already deleted)"
+        "Region borders collection doesn't exist in the database (was probably already deleted).\n"
       );
-      let responseMessage = "";
-      responseMessage +=
-        "Region borders collection doesn't exist in the database (was probably already deleted).<br><br>";
-      responseMessage +=
-        "<a href='javascript:history.back()'>Return to the last page.</a>";
-      response.send(responseMessage);
+      sendResponseWithGoBackLink(
+        response,
+        "Region borders collection doesn't exist in the database (was probably already deleted)."
+      );
       return dropError;
     } else if (dropError) {
       console.log(dropError);
@@ -141,11 +129,56 @@ regionBordersRouter.post("/deleteRegionBorders", function (request, response) {
     console.log("Deleted region borders data from the database.\n");
 
     // Send successful response to the client
-    let responseMessage = "";
-    responseMessage +=
-      "Server successfully deleted region borders from the database.<br><br>";
-    responseMessage +=
-      "<a href='javascript:history.back()'>Return to the last page.</a>";
-    response.send(responseMessage);
+    sendResponseWithGoBackLink(
+      response,
+      "Server successfully deleted region borders from the database."
+    );
   });
 });
+
+//! Calculate centers of each feature in the database route
+import polygonCenter from "geojson-polygon-center";
+regionBordersRouter.get(
+  "/calculateCenters",
+  async function (request, response) {
+    console.log(
+      "Client requested to calculate the centers for each region border in the collection."
+    );
+
+    //* Check if the region border collection exists
+    let regionBordersCollectionExists =
+      await DatabaseEngine.regionBordersCollectionExists();
+
+    //* If the region borders collection doesn't exist, send error response to the client
+    if (!regionBordersCollectionExists) {
+      response.send(
+        "Can't calculate centers because the region borders collection doesn't exist."
+      );
+    }
+
+    //* If the region borders collection exists, calculate and update the centers of each feature in the collection
+    else if (regionBordersCollectionExists) {
+      //* Query the region borders collection for the various features
+      let featuresQueryResults =
+        await DatabaseEngine.getRegionBordersFeatures();
+
+      for (const feature of featuresQueryResults) {
+        // Calculate centre point of the feature
+        let center = polygonCenter(feature.geometry);
+
+        // Add the centre data to the feature in the database
+        DatabaseEngine.getRegionBordersCollection().updateOne(
+          { "properties.Dicofre": feature.properties.Dicofre }, // Updates the database document that has the same properties.Dicofre as the current feature
+          {
+            $set: {
+              center: center,
+            },
+          }
+        );
+      }
+      response.send(
+        "Successfully calculated centers coordinates for each feature in the region borders collection."
+      );
+    }
+  }
+);

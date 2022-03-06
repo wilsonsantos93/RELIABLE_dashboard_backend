@@ -44,30 +44,26 @@
   </body>
 
   <script>
-    var map_init = L.map("map", {
-      //   crs: L.Proj.CRS(
-      //     "EPSG:3763",
-      //     "+lon_0=15.808277777799999 +lat_0=0.0 +k=1.0 +x_0=1500000.0 " +
-      //       "+y_0=0.0 +proj=tmerc +ellps=bessel +units=m " +
-      //       "+towgs84=414.1,41.3,603.1,-0.855,2.141,-7.023,0 +no_defs",
-      //     {
-      //       resolutions: [8192, 4096, 2048], // 3 example zoom level resolutions
-      //     }
-      //   ),
-      center: [9.082, 8.6753],
-      zoom: 8,
+
+    //! Map
+    let map = L.map("map", {
+      center: [38.686796, -9.128914], // The coordinates the map is in when first loaded
+      zoom: 8, // The zoom level the map has when first loaded
     });
 
-    var osm = L.tileLayer(
+    //! Map tile layer
+    let mapLayer = L.tileLayer(
       "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
       {
-        continuousWorld: true,
+        noWrap: true, // If false, the map wraps around itself, repeating itself
       }
-    ).addTo(map_init);
+    ).addTo(map);
 
+    // Load geoJSON and project it to the map
     async function loadGeoJSON() {
 
       //! Fetch the geoJSON from the backend
+      console.log("Started fetching the geoJSON from the backend.")
       const geojsonResponse = await fetch(
         "http://localhost:8000/getRegionBorders"
       );
@@ -75,7 +71,7 @@
 
       //! Map the geoJSON to the map using the correct projection 
 
-      //* If geojson sent by the server uses the EPSG Projection 3763
+      //* If geojson sen1t by the server uses the EPSG Projection 3763
       if (geojson.crs.properties.name == "urn:ogc:def:crs:EPSG::3763") {
         console.log(
           "Received geoJSON with EPSG Projection 3763 - ETRS89 / Portugal TM06 "
@@ -86,7 +82,7 @@
           // https://spatialreference.org/ref/epsg/etrs89-portugal-tm06/proj4/
           "+proj=tmerc +lat_0=39.66825833333333 +lon_0=-8.133108333333334 +k=1 +x_0=0 +y_0=0 +ellps=GRS80 +units=m +no_defs "
         );
-        L.Proj.geoJson(geojson).addTo(map_init);
+        L.Proj.geoJson(geojson).addTo(map);
 
       } 
 
@@ -95,19 +91,34 @@
         console.log(
           "Received geoJSON not using EPSG Projection 3763 - ETRS89 / Portugal TM06 "
         );
-        L.geoJson(geojson).addTo(map_init);
+        L.geoJson(geojson).addTo(map);
       }
     
     }
     loadGeoJSON();
 
-    var marker = L.marker([9.082, 8.6753]).addTo(map_init);
-    var Basemaps = {
-      OSM: osm,
+    // let marker = L.marker([9.082, 8.6753]).addTo(map);
+
+    let Basemaps = {
+      OSM: mapLayer,
     };
-    var Overlaymaps = {
-      Marker: marker,
+
+    let Overlaymaps = {
+      // Marker: marker,
     };
-    L.control.layers(Basemaps, Overlaymaps).addTo(map_init);
+
+    L.control.layers(Basemaps, Overlaymaps).addTo(map);
+
+    function getColor(d) {
+    return d > 1000 ? '#800026' :
+           d > 500  ? '#BD0026' :
+           d > 200  ? '#E31A1C' :
+           d > 100  ? '#FC4E2A' :
+           d > 50   ? '#FD8D3C' :
+           d > 20   ? '#FEB24C' :
+           d > 10   ? '#FED976' :
+                      '#FFEDA0';
+    }
+
   </script>
 </html>
