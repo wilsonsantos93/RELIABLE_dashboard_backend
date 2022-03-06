@@ -83,12 +83,14 @@ export class DatabaseEngine {
     return crsQueryResults;
   }
 
-  //* Query the region borders collection for the various features, and return them in an array
+  //* Query the region borders collection for the various features border coordinates and properties, and return them in an array
   static async getRegionBordersFeatures() {
     let featuresQuery = { type: "Feature" }; // Query for various features in the region borders collection
     // Don't include each document's ID in the query results
     let featuresQueryOptions = {
-      projection: { _id: 0, type: 1, geometry: 1, properties: 1 },
+      // The query results are going to be used by the browser to draw the region borders, and give each region a name.
+      // As such, the center coordinates of each region don't need to be returned.
+      projection: { _id: 0, center: 0 },
     };
     // The following query returns [{type: "Feature",...}, {type:"Feature",...}]
     console.log("Querying region borders collection for the various features.");

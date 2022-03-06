@@ -53,3 +53,9 @@ app.get("/", function (request, response) {
 app.listen(process.env.WEATHER_DATA_PORT, function () {
     console.log(`Weather data server started listening on port ${process.env.WEATHER_DATA_PORT}.`)
 })
+
+import * as proj4js from "./lib/proj4.js"
+var EPSG3763 = "+proj=tmerc +lat_0=39.66825833333333 +lon_0=-8.133108333333334 +k=1 +x_0=0 +y_0=0 +ellps=GRS80 +units=m +no_defs";
+var EPSG4258 = "+proj=longlat +ellps=GRS80 +no_defs";
+//I'm not going to redefine those two in latter examples.
+console.log(proj4(EPSG3763,EPSG4258,[2,5]));

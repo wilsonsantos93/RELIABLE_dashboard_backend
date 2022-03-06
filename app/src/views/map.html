@@ -2,6 +2,8 @@
 
 <html lang="en">
   <head>
+    <!--! Meta Information -->
+
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
@@ -27,6 +29,7 @@
     <script src="proj4.js"></script>
     <script src="proj4leaflet.js"></script>
 
+    <!--! Style -->
     <style>
       body {
         margin: 0;
@@ -39,12 +42,12 @@
       }
     </style>
   </head>
+
   <body>
     <div id="map"></div>
   </body>
 
   <script>
-
     //! Map
     let map = L.map("map", {
       center: [38.686796, -9.128914], // The coordinates the map is in when first loaded
@@ -61,39 +64,62 @@
 
     // Load geoJSON and project it to the map
     async function loadGeoJSON() {
-
       //! Fetch the geoJSON from the backend
-      console.log("Started fetching the geoJSON from the backend.")
+      console.log("Started fetching the geoJSON from the backend.");
       const geojsonResponse = await fetch(
         "http://localhost:8000/getRegionBorders"
       );
       let geojson = await geojsonResponse.json();
 
-      //! Map the geoJSON to the map using the correct projection 
+      console.log(
+        "Received geoJON with the following projection: ",
+        geojson.crs.properties.name
+      );
 
-      //* If geojson sen1t by the server uses the EPSG Projection 3763
-      if (geojson.crs.properties.name == "urn:ogc:def:crs:EPSG::3763") {
-        console.log(
-          "Received geoJSON with EPSG Projection 3763 - ETRS89 / Portugal TM06 "
-        );
-        proj4.defs(
-          "urn:ogc:def:crs:EPSG::3763",
-          // https://www.dgterritorio.gov.pt/geodesia/sistemas-referencia/portugal-continental/PT-TM06-ETRS89?language=en
-          // https://spatialreference.org/ref/epsg/etrs89-portugal-tm06/proj4/
-          "+proj=tmerc +lat_0=39.66825833333333 +lon_0=-8.133108333333334 +k=1 +x_0=0 +y_0=0 +ellps=GRS80 +units=m +no_defs "
-        );
-        L.Proj.geoJson(geojson).addTo(map);
+      //! Fetch the projection information to use in the proj4 library, so the coordinates can be correctly projected to the map
+      console.log("Started fetching the projection information from epsg.io.");
 
-      } 
+      let projectionNumber = geojson.crs.properties.name.split("::")[1]; // The number of the EPSG projection, used to fetch the projection information from an external API
+      let projectionInformationURL =
+        "https://epsg.io/" + projectionNumber + ".proj4"; // The URL of the projection information
+      const projectionResponse = await fetch(projectionInformationURL);
+      projectionInformation = await projectionResponse.text();
 
-      //* If geojson sent by the server doesn't use the EPSG Projection 3763
-      else {
-        console.log(
-          "Received geoJSON not using EPSG Projection 3763 - ETRS89 / Portugal TM06 "
-        );
-        L.geoJson(geojson).addTo(map);
-      }
-    
+      let projectionName = "urn:ogc:def:crs:EPSG::" + projectionNumber // Parses the projection name, to be used by the proj4 library
+      proj4.defs(projectionName, projectionInformation); // Tells the proj4 library to use the projection information returned from the external API
+
+      L.Proj.geoJson(geojson).addTo(map);
+
+      // proj4.defs(
+      //     "urn:ogc:def:crs:EPSG::3763",
+      //     // https://www.dgterritorio.gov.pt/geodesia/sistemas-referencia/portugal-continental/PT-TM06-ETRS89?language=en
+      //     // https://spatialreference.org/ref/epsg/etrs89-portugal-tm06/proj4/
+      //     "+proj=tmerc +lat_0=39.66825833333333 +lon_0=-8.133108333333334 +k=1 +x_0=0 +y_0=0 +ellps=GRS80 +units=m +no_defs "
+      //   );
+
+      // //* If geojson sent by the server uses the EPSG Projection 3763
+      // if (geojson.crs.properties.name == "urn:ogc:def:crs:EPSG::3763") {
+      //   console.log(
+      //     "Received geoJSON with EPSG Projection 3763 - ETRS89 / Portugal TM06"
+      //   );
+      //   console.log("Using proj4 to correctly project the coordinates.");
+      //   proj4.defs(
+      //     "urn:ogc:def:crs:EPSG::3763",
+      //     // https://www.dgterritorio.gov.pt/geodesia/sistemas-referencia/portugal-continental/PT-TM06-ETRS89?language=en
+      //     // https://spatialreference.org/ref/epsg/etrs89-portugal-tm06/proj4/
+      //     "+proj=tmerc +lat_0=39.66825833333333 +lon_0=-8.133108333333334 +k=1 +x_0=0 +y_0=0 +ellps=GRS80 +units=m +no_defs "
+      //   );
+      //   L.Proj.geoJson(geojson).addTo(map);
+      // }
+
+      // //* If geojson sent by the server uses the EPSG Projection 4258
+      // else if (geojson.crs.properties.name == "urn:ogc:def:crs:EPSG::4258") {
+      //   console.log(
+      //     "Received geoJSON using EPSG Projection 4258 - ETRS89 / Portugal TM06 "
+      //   );
+      //   console.log("Using projection: ", geojson.crs.properties.name);
+      //   L.geoJson(geojson).addTo(map);
+      // }
     }
     loadGeoJSON();
 
@@ -110,15 +136,21 @@
     L.control.layers(Basemaps, Overlaymaps).addTo(map);
 
     function getColor(d) {
-    return d > 1000 ? '#800026' :
-           d > 500  ? '#BD0026' :
-           d > 200  ? '#E31A1C' :
-           d > 100  ? '#FC4E2A' :
-           d > 50   ? '#FD8D3C' :
-           d > 20   ? '#FEB24C' :
-           d > 10   ? '#FED976' :
-                      '#FFEDA0';
+      return d > 1000
+        ? "#800026"
+        : d > 500
+        ? "#BD0026"
+        : d > 200
+        ? "#E31A1C"
+        : d > 100
+        ? "#FC4E2A"
+        : d > 50
+        ? "#FD8D3C"
+        : d > 20
+        ? "#FEB24C"
+        : d > 10
+        ? "#FED976"
+        : "#FFEDA0";
     }
-
   </script>
 </html>
