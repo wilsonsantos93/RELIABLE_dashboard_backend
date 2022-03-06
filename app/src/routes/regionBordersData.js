@@ -26,7 +26,6 @@ regionBordersRouter.get(
     } else if (regionBordersCollectionExists) {
       //* Query the region borders collection for the crs
       let crsQueryResults = await DatabaseEngine.getRegionBordersCRS();
-      console.log(crsQueryResults);
       //* Query the region borders collection for the various features
       let featuresQueryResults =
         await DatabaseEngine.getRegionBordersFeatures();
@@ -63,12 +62,11 @@ regionBordersRouter.post(
     let fileBuffer = request.file.buffer; // Multer enables the server to access the file sent by the client using "request.file.buffer". The file accessed is in bytes.
     let trimmedFileBuffer = fileBuffer.toString("utf-8").trimStart().trimEnd(); // Sometimes the geoJSON sent has unnecessary spaces that need to be trimmed
     let geoJSON = JSON.parse(trimmedFileBuffer); // Parse the trimmed file buffer to a correct geoJSON
-    // console.log(geoJSON)
 
-    //! RoutersSave JSON to database and send response to the client
+    //! Save geoJSON to region borders collection and send response to the client
     const regionBordersCollection = DatabaseEngine.getRegionBordersCollection();
 
-    //! Save geoJSON coordinate reference system to the collection
+    //* Save geoJSON coordinate reference system to the collection
     regionBordersCollection.insertOne(
       { crs: geoJSON.crs },
       function (insertingError, databaseResponse) {
@@ -81,7 +79,7 @@ regionBordersRouter.post(
       }
     );
 
-    //! Save geoJSON features to the collection individually
+    //* Save each geoJSON feature to the collection individually
     regionBordersCollection.insertMany(
       geoJSON.features,
       function (insertingError, databaseResponse) {
