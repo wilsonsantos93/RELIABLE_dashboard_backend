@@ -138,7 +138,7 @@ regionBordersRouter.post("/deleteRegionBorders", function (request, response) {
       return dropError;
     }
 
-    console.log("Deleted region borders data from the database.");
+    console.log("Deleted region borders data from the database.\n");
 
     // Send successful response to the client
     let responseMessage = "";
