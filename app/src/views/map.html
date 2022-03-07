@@ -85,41 +85,10 @@
       const projectionResponse = await fetch(projectionInformationURL);
       projectionInformation = await projectionResponse.text();
 
-      let projectionName = "urn:ogc:def:crs:EPSG::" + projectionNumber // Parses the projection name, to be used by the proj4 library
+      let projectionName = "urn:ogc:def:crs:EPSG::" + projectionNumber; // Parses the projection name, to be used by the proj4 library
       proj4.defs(projectionName, projectionInformation); // Tells the proj4 library to use the projection information returned from the external API
 
-      L.Proj.geoJson(geojson).addTo(map);
-
-      // proj4.defs(
-      //     "urn:ogc:def:crs:EPSG::3763",
-      //     // https://www.dgterritorio.gov.pt/geodesia/sistemas-referencia/portugal-continental/PT-TM06-ETRS89?language=en
-      //     // https://spatialreference.org/ref/epsg/etrs89-portugal-tm06/proj4/
-      //     "+proj=tmerc +lat_0=39.66825833333333 +lon_0=-8.133108333333334 +k=1 +x_0=0 +y_0=0 +ellps=GRS80 +units=m +no_defs "
-      //   );
-
-      // //* If geojson sent by the server uses the EPSG Projection 3763
-      // if (geojson.crs.properties.name == "urn:ogc:def:crs:EPSG::3763") {
-      //   console.log(
-      //     "Received geoJSON with EPSG Projection 3763 - ETRS89 / Portugal TM06"
-      //   );
-      //   console.log("Using proj4 to correctly project the coordinates.");
-      //   proj4.defs(
-      //     "urn:ogc:def:crs:EPSG::3763",
-      //     // https://www.dgterritorio.gov.pt/geodesia/sistemas-referencia/portugal-continental/PT-TM06-ETRS89?language=en
-      //     // https://spatialreference.org/ref/epsg/etrs89-portugal-tm06/proj4/
-      //     "+proj=tmerc +lat_0=39.66825833333333 +lon_0=-8.133108333333334 +k=1 +x_0=0 +y_0=0 +ellps=GRS80 +units=m +no_defs "
-      //   );
-      //   L.Proj.geoJson(geojson).addTo(map);
-      // }
-
-      // //* If geojson sent by the server uses the EPSG Projection 4258
-      // else if (geojson.crs.properties.name == "urn:ogc:def:crs:EPSG::4258") {
-      //   console.log(
-      //     "Received geoJSON using EPSG Projection 4258 - ETRS89 / Portugal TM06 "
-      //   );
-      //   console.log("Using projection: ", geojson.crs.properties.name);
-      //   L.geoJson(geojson).addTo(map);
-      // }
+      L.Proj.geoJson(geojson).addTo(map); // Add the projection to the map
     }
     loadGeoJSON();
 

@@ -27,8 +27,13 @@ regionBordersRouter.get(
       //* Query the region borders collection for the crs
       let crsQueryResults = await DatabaseEngine.getRegionBordersCRS();
       //* Query the region borders collection for the various features
-      let featuresQueryResults =
-        await DatabaseEngine.getRegionBordersFeatures();
+
+      // The query results are going to be used by the browser to draw the region borders (geometry field), and give each region a name (type field).
+      // As such, the center coordinates of each region don't need to be returned.
+      let featuresQueryProjection = { _id: 0, center: 0 };
+      let featuresQueryResults = await DatabaseEngine.getRegionBordersFeatures(
+        featuresQueryProjection
+      );
 
       //* Parse and send geoJSON
       let geoJSON = {
@@ -135,6 +140,7 @@ regionBordersRouter.post("/deleteRegionBorders", function (request, response) {
 });
 
 //! Calculate centers of each feature in the database route
+//TODO: If the centers were already calculated, warn the client, and don't calculate them again
 import polygonCenter from "geojson-polygon-center";
 regionBordersRouter.get(
   "/calculateCenters",
@@ -157,6 +163,10 @@ regionBordersRouter.get(
     //* If the region borders collection exists, calculate and update the centers of each feature in the collection
     else if (regionBordersCollectionExists) {
       //* Query the region borders collection for the various features
+
+      // The query results are going to be used by server to calculate the center of each feature (geometry field), and save it to the corresponding feature (using the id).
+      // As such, the properties don't need to be returned, and the center coordinates of each region don't need to be returned (because they shouldn't exist yet).
+      let featuresQueryProjection = { _id: 1, properties: 0, center: 0 };
       let featuresQueryResults =
         await DatabaseEngine.getRegionBordersFeatures();
 
@@ -166,7 +176,7 @@ regionBordersRouter.get(
 
         // Add the centre data to the feature in the database
         DatabaseEngine.getRegionBordersCollection().updateOne(
-          { "properties.Dicofre": feature.properties.Dicofre }, // Updates the database document that has the same properties.Dicofre as the current feature
+          { _id: feature._id }, // Updates the database document that has the same properties.Dicofre as the current feature
           {
             $set: {
               center: center,
@@ -174,10 +184,10 @@ regionBordersRouter.get(
           }
         );
       }
-      response.send(
+      sendResponseWithGoBackLink(
+        response,
         "Successfully calculated centers coordinates for each feature in the region borders collection."
       );
     }
   }
 );
-

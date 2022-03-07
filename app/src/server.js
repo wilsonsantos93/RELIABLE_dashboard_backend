@@ -34,9 +34,9 @@ import cors from "cors"
 app.use(cors())
 
 //! Routers
-import { regionBordersRouter } from "./routes/regionBordersData.js";
+import { regionBordersRouter } from "./routes/regionBorders.js";
 app.use('/', regionBordersRouter); // Import region border routes into the root path '/'
-import { weatherRouter } from "./routes/weatherData.js";
+import { weatherRouter } from "./routes/weather.js";
 app.use('/', weatherRouter); // Import weather routes into the root path '/'
 import { librariesRouter } from "./routes/libraries.js";
 app.use('/', librariesRouter); // Import libraries routes into the root path '/'

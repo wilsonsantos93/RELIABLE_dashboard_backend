@@ -2,9 +2,9 @@
 import { MongoClient } from "mongodb";
 export class DatabaseEngine {
   static #databaseEngineConnection;
-  static #weatherCollectionName = "weather";
-  static #regionBordersCollectionName = "regionBorders";
-
+  static #weatherCollectionName = "weather"; // Name of the collection that contains the weather data of the various features, and the id of the corresponding features
+  static #regionBordersCollectionName = "regionBorders"; // Name of the collection that contains region borders information such as the coordinates that make the border on the map, the region name, and those coordinates reference system
+  static #weatherDates = "weatherDates"; // Name of the collection that contains the dates that the various weather data documents were saved, and the id of the corresponding weather data documents
   //! Database engine connection
   static async connectToDatabaseEngine() {
     // Connect to the database engine
@@ -33,6 +33,11 @@ export class DatabaseEngine {
   }
 
   //! Weather collection
+
+  //* Weather saved dates collection name
+  static getWeatherDatesCollectionName() {
+    return this;
+  }
 
   //* Return the weather collection name
   static getWeatherCollectionName() {
@@ -84,13 +89,11 @@ export class DatabaseEngine {
   }
 
   //* Query the region borders collection for the various features border coordinates and properties, and return them in an array
-  static async getRegionBordersFeatures() {
+  static async getRegionBordersFeatures(queryProjection) {
     let featuresQuery = { type: "Feature" }; // Query for various features in the region borders collection
     // Don't include each document's ID in the query results
     let featuresQueryOptions = {
-      // The query results are going to be used by the browser to draw the region borders, and give each region a name.
-      // As such, the center coordinates of each region don't need to be returned.
-      projection: { _id: 0, center: 0 },
+      projection: queryProjection,
     };
     // The following query returns [{type: "Feature",...}, {type:"Feature",...}]
     console.log("Querying region borders collection for the various features.");
