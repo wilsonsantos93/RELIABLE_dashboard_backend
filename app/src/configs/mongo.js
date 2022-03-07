@@ -9,7 +9,7 @@ export class DatabaseEngine {
   static #regionBordersCollectionName = "regionBorders"; // Name of the collection that contains region borders information such as the coordinates that make the border on the map, the region name, and those coordinates reference system
   static #weatherDatesCollectionName = "weatherDates"; // Name of the collection that contains the dates that the various weather data documents were saved, and the id of the corresponding weather data documents
 
-  //* Database engine connection
+  //! Database engine connection
   static async connectToDatabaseEngine() {
     // Connect to the database engine
     let databaseConnectionString =
@@ -31,24 +31,24 @@ export class DatabaseEngine {
     return this.#databaseEngineConnection;
   }
 
-  //* Dashboard database
+  //! Dashboard database
   static getDashboardDatabase() {
     return this.#databaseEngineConnection.db("weatherDashboard");
   }
 
-  //* Return the CRS collection
-  static getCRScollection() {
-    return this.getDashboardDatabase().collection(this.#crsCollectionName);
+  //! Weather dates collection
+  static getWeatherDatesCollection() {
+    return this.getDashboardDatabase().collection(
+      this.#weatherDatesCollectionName
+    );
   }
 
   //! Weather collection
-
-  //* Return the weather collection object
   static getWeatherCollection() {
     return this.getDashboardDatabase().collection(this.#weatherCollectionName);
   }
 
-  //! Region borders
+  //! Region borders collection
   static getRegionBordersCollectionName() {
     return this.#regionBordersCollectionName;
   }
@@ -56,5 +56,10 @@ export class DatabaseEngine {
     return this.getDashboardDatabase().collection(
       this.#regionBordersCollectionName
     );
+  }
+
+  //! CRS collection
+  static getCRScollection() {
+    return this.getDashboardDatabase().collection(this.#crsCollectionName);
   }
 }

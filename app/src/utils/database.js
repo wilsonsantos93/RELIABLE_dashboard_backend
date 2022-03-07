@@ -1,4 +1,4 @@
-import { DatabaseEngine } from "../config/mongo.js";
+import { DatabaseEngine } from "../configs/mongo.js";
 
 //* Returns true if a collection exists in the dashboard database, false if it doesn't
 export async function collectionExistsInDatabase(collectionName) {
@@ -42,11 +42,10 @@ export async function saveFeatures(geoJSON) {
   // To convert the returned JSON to an array with only the ObjectIDs, we use Object.values(databaseResponse.insertedIds)
   let ObjectIdsArray = Object.values(databaseResponse.insertedIds);
 
-  return ObjectIdsArray
+  return ObjectIdsArray;
 }
 //* Create a field on each feature with its associated coordinates reference system
 export async function associateCRStoFeatures(crsObjectId, featureObjectIds) {
-
   //* For each feature that had its ID passed as parameter, associate a crs ID
   for (const featureObjectId of featureObjectIds) {
     // Update the crs ID of a feature in the database
@@ -61,7 +60,7 @@ export async function associateCRStoFeatures(crsObjectId, featureObjectIds) {
   }
 }
 
-//* Query the region borders collection for various features border coordinates and properties, and return them in an array
+//* Query the region borders collection for some features border coordinates and properties, and return them in an array
 export async function getRegionBordersFeatures(query, queryProjection) {
   query.type = "Feature"; // In addition to the query parameters passed as argument, query for various features in the region borders collection
 
@@ -72,15 +71,15 @@ export async function getRegionBordersFeatures(query, queryProjection) {
   // The following query returns [{type: "Feature",...}, {type:"Feature",...}]
   console.log("Querying region borders collection for the various features.");
   let featuresQueryResults = await DatabaseEngine.getRegionBordersCollection()
-    .find(featuresQuery, featuresQueryOptions)
+    .find(query, featuresQueryOptions)
     .toArray();
   return featuresQueryResults;
 }
 
-//* Query the region borders collection for the various features border coordinates and properties, and return them in an array
-export async function getAllRegionBordersFeatures(queryProjection) {
-  let featuresQuery = { type: "Feature" }; // Query for various features in the region borders collection
-  // Don't include each document's ID in the query results
+//* Query the region borders collection for all features, and return them in an array
+export async function queryAllRegionBordersFeatures(queryProjection) {
+  let featuresQuery = {}; // Query for all documents in the region borders collection
+
   let featuresQueryOptions = {
     projection: queryProjection,
   };
@@ -92,19 +91,21 @@ export async function getAllRegionBordersFeatures(queryProjection) {
   return featuresQueryResults;
 }
 
-//* Query the region borders collection for the coordinate reference system, and return it
-export async function getRegionBordersCRS() {
-  const crsQuery = { "crs.type": "name" }; // Query for the only document in the region borders collection who has a crs.type
-  // Don't include the crs document's ID in the query results
-  const crsQueryOptions = {
-    projection: { _id: 0, crs: 1 },
+//* Query the coordinates reference systems collection for all CRSs, and return them in an array
+export async function queryAllCoordinatesReferenceSystems(queryProjection) {
+  let featuresQuery = {}; // Query for all documents in the region borders collection
+
+  let featuresQueryOptions = {
+    projection: queryProjection,
   };
-  // The following query returns {crs: { type: 'name', properties: { name: 'urn:ogc:def:crs:EPSG::3763' } } }
-  console.log("Querying collection for the coordinate reference system.");
-  let crsQueryResults =
-    await DatabaseEngine.getRegionBordersCollection().findOne(
-      crsQuery,
-      crsQueryOptions
-    );
-  return crsQueryResults;
+  // The following query returns [{crs: Object,...}, {crs: Object},...]
+  console.log(
+    "Querying coordinates reference systems collection for all CRSs."
+  );
+  let featuresQueryResults = await DatabaseEngine.getCRScollection()
+    .find(featuresQuery, featuresQueryOptions)
+    .toArray();
+  return featuresQueryResults;
 }
+
+

@@ -5406,13 +5406,13 @@ module.exports={
   "name": "proj4",
   "version": "2.3.14",
   "description": "Proj4js is a JavaScript library to transform point coordinates from one coordinate system to another, including datum transformations.",
-  "main": "lib/index.js",
+  "main": "libs/index.js",
   "directories": {
     "test": "test",
     "doc": "docs"
   },
   "scripts": {
-    "test": "./node_modules/istanbul/lib/cli.js test ./node_modules/mocha/bin/_mocha test/test.js"
+    "test": "./node_modules/istanbul/libs/cli.js test ./node_modules/mocha/bin/_mocha test/test.js"
   },
   "repository": {
     "type": "git",

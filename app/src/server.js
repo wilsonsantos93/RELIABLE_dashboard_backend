@@ -1,10 +1,10 @@
 //! Importing environment variables to connect to the database engine
 import dotenv from "dotenv";
-dotenv.config({ path: "./src/config/.env"}); // Loads .env file contents into process.env
+dotenv.config({ path: "./src/configs/.env"}); // Loads .env file contents into process.env
 // console.log(process.env)
 
 //! Database engine connection
-import { DatabaseEngine } from "./config/mongo.js"
+import { DatabaseEngine } from "./configs/mongo.js"
 await DatabaseEngine.connectToDatabaseEngine()
 
 
@@ -38,7 +38,7 @@ app.listen(process.env.WEATHER_DATA_PORT, function () {
     console.log(`Weather data server started listening on port ${process.env.WEATHER_DATA_PORT}.\n`)
 })
 
-import * as proj4js from "./lib/proj4.js"
+import * as proj4js from "./libs/proj4.js"
 var EPSG3763 = "+proj=tmerc +lat_0=39.66825833333333 +lon_0=-8.133108333333334 +k=1 +x_0=0 +y_0=0 +ellps=GRS80 +units=m +no_defs";
 var EPSG4258 = "+proj=longlat +ellps=GRS80 +no_defs";
 //I'm not going to redefine those two in latter examples.

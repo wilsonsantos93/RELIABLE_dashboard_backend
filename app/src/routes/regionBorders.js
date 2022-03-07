@@ -2,7 +2,7 @@ import {
   saveCRS,
   saveFeatures,
   associateCRStoFeatures,
-  getRegionBordersFeatures,
+  queryAllRegionBordersFeatures,
   collectionExistsInDatabase,
 } from "../utils/database.js";
 
@@ -14,9 +14,10 @@ import express from "express";
 export let regionBordersRouter = express.Router();
 
 //! Database engine connection
-import { DatabaseEngine } from "../config/mongo.js";
+import { DatabaseEngine } from "../configs/mongo.js";
 
 //! Get region borders data route
+import { getRegionBorders } from "../handlers/regionBorders.js";
 regionBordersRouter.get(
   "/getRegionBorders",
   async function (request, response) {
@@ -24,37 +25,26 @@ regionBordersRouter.get(
 
     //* Check if the region border collection exists
     let regionBordersCollectionName =
-      DatabaseEngine.getRegionBordersCollectionName;
+      DatabaseEngine.getRegionBordersCollectionName();
     let regionBordersCollectionExists = await collectionExistsInDatabase(
       regionBordersCollectionName
     );
 
     //* If the region borders collection doesn't exist, send error response to the client
     if (!regionBordersCollectionExists) {
-      response.send(
+      console.log("Couldn't get region borders because the collection doesn't exist.")
+      sendResponseWithGoBackLink(
+        response,
         "Couldn't get region borders because the collection doesn't exist."
       );
-    } else if (regionBordersCollectionExists) {
-      //* Query the region borders collection for the crs
-      let crsQueryResults = await DatabaseEngine.getRegionBordersCRS();
-      //* Query the region borders collection for the various features
+    }
 
-      // The query results are going to be used by the browser to draw the region borders (geometry field), and give each region a name (type field).
-      // As such, the center coordinates of each region don't need to be returned.
-      let featuresQueryProjection = { _id: 0, center: 0 };
-      let featuresQueryResults = await DatabaseEngine.getRegionBordersFeatures(
-        featuresQueryProjection
-      );
-
-      //* Parse and send geoJSON
-      let geoJSON = {
-        type: "FeatureCollection",
-        crs: crsQueryResults.crs,
-        features: featuresQueryResults,
-      };
-      console.log("Started sending geoJSON to the client.");
-      response.send(geoJSON);
-      console.log("Finished sending geoJSON to the client.\n");
+    //* If the region borders collection exists, send the various saved geoJSONs to the client
+    else if (regionBordersCollectionExists) {
+      console.log("Started sending geoJSONs to the client.");
+      let geoJSONs = await getRegionBorders();
+      response.send(geoJSONs);
+      console.log("Finished sending geoJSONs to the client.\n");
     }
   }
 );
@@ -89,8 +79,8 @@ regionBordersRouter.post(
     let insertedCRSObjectId = await saveCRS(geoJSON);
     console.log(
       "Inserted geoJSON coordinate reference system in the database. CRS ID in database:",
-        // To extract the ID string inside the ObjectId, we use ObjectId.toHexString
-      insertedCRSObjectId.toHexString() // The ID string of the CRS document that was inserted in the database  
+      // To extract the ID string inside the ObjectId, we use ObjectId.toHexString
+      insertedCRSObjectId.toHexString() // The ID string of the CRS document that was inserted in the database
     );
 
     //* Save each geoJSON feature to the collection individually
@@ -207,10 +197,15 @@ regionBordersRouter.get(
     else if (regionBordersCollectionExists) {
       //* Query the region borders collection for the various features
 
-      // The query results are going to be used by server to calculate the center of each feature (geometry field), and save it to the corresponding feature (using the id).
+      // The query results are going to be used by server to calculate the center of each and all features (geometry field), and save it to the corresponding feature (using the id).
       // As such, the properties don't need to be returned, and the center coordinates of each region don't need to be returned (because they shouldn't exist yet).
-      let featuresQueryProjection = { _id: 1, properties: 0, center: 0 };
-      let featuresQueryResults = await getRegionBordersFeatures(
+      let featuresQueryProjection = {
+        _id: 1,
+        properties: 0,
+        center: 0,
+        crsObjectId: 0,
+      };
+      let featuresQueryResults = await queryAllRegionBordersFeatures(
         featuresQueryProjection
       );
 

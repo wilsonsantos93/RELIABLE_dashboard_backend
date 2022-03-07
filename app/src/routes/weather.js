@@ -3,7 +3,7 @@ import express from "express";
 export let weatherRouter = express.Router();
 
 //! Database engine connection
-import { DatabaseEngine } from "../config/mongo.js";
+import { DatabaseEngine } from "../configs/mongo.js";
 
 //! Middleware
 // weatherRouter.use(express.urlencoded({extended: true}));
