@@ -35,5 +35,25 @@ weatherRouter.get("/saveWeather", function (request, response) {
   // The server will then save the weather data to the weather collection, and associate it to the corresponding feature id (id field).s
   // As such, the geometry and properties of each region don't need to be returned.
   let featuresQueryProjection = { _id: 1, center: 1 };
-  DatabaseEngine.getRegionBordersFeatures();
+  let regionBordersFeatures = DatabaseEngine.getRegionBordersFeatures();
+
+  // http://api.weatherapi.com/v1/current.json?key=a1f415612c9543ea80a151844220103&q=London&aqi=yes
 });
+
+//! Get JSON from weather API and save it to the database
+import fetch from 'cross-fetch';
+async function getWeatherData() {
+  const url = "https://api.weatherapi.com/v1/current.json?key=a1f415612c9543ea80a151844220103&q=Porto%20Santo&aqi=yes"
+  const fetchSettings = { method: "Get" };
+  const response = await fetch(url, fetchSettings);
+  const weatherDataJSON = await response.json();
+  return weatherDataJSON
+}
+async function saveWeatherData(weatherData) {
+  const weatherDashboardDatabase = DatabaseEngine.getConnection().db("weatherDashboard");
+  const weatherDataCollection = weatherDashboardDatabase.collection("weatherData");
+  const result = await weatherDataCollection.insertOne(weatherData);
+  console.log("Weather data saved to the database.");
+}
+// let weatherDataJSON = await getWeatherData();
+// await saveWeatherData(weatherDataJSON)

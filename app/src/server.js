@@ -7,23 +7,7 @@ dotenv.config({ path: "./src/config/.env"}); // Loads .env file contents into pr
 import { DatabaseEngine } from "./config/mongo.js"
 await DatabaseEngine.connectToDatabaseEngine()
 
-//! Get JSON from weather API and save it to the database
-import fetch from 'cross-fetch';
-async function getWeatherData() {
-    const url = "http://api.weatherapi.com/v1/current.json?key=a1f415612c9543ea80a151844220103&q=Porto%20Santo&aqi=yes"
-    const fetchSettings = { method: "Get" };
-    const response = await fetch(url, fetchSettings);
-    const weatherDataJSON = await response.json();
-    return weatherDataJSON
-}
-async function saveWeatherData(weatherData) {
-    const weatherDashboardDatabase = DatabaseEngine.getConnection().db("weatherDashboard");
-    const weatherDataCollection = weatherDashboardDatabase.collection("weatherData");
-    const result = await weatherDataCollection.insertOne(weatherData);
-    console.log("Weather data saved to the database.");
-};
-// let weatherDataJSON = await getWeatherData();
-// await saveWeatherData(weatherDataJSON)
+
 
 //! Express
 import express from "express";
@@ -51,7 +35,7 @@ app.get("/", function (request, response) {
 
 //! Start server
 app.listen(process.env.WEATHER_DATA_PORT, function () {
-    console.log(`Weather data server started listening on port ${process.env.WEATHER_DATA_PORT}.`)
+    console.log(`Weather data server started listening on port ${process.env.WEATHER_DATA_PORT}.\n`)
 })
 
 import * as proj4js from "./lib/proj4.js"
@@ -59,3 +43,5 @@ var EPSG3763 = "+proj=tmerc +lat_0=39.66825833333333 +lon_0=-8.133108333333334 +
 var EPSG4258 = "+proj=longlat +ellps=GRS80 +no_defs";
 //I'm not going to redefine those two in latter examples.
 console.log(proj4(EPSG3763,EPSG4258,[2,5]));
+
+//TODO: Backend changes to support one to many crs collection to region borders collection
