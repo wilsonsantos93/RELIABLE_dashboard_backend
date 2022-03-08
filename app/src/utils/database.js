@@ -1,12 +1,10 @@
 import { DatabaseEngine } from "../configs/mongo.js";
 
-//* Returns true if a collection exists in the dashboard database, false if it doesn't
-export async function collectionExistsInDatabase(collectionName) {
+//* Returns true if a collection exists in a database, false if it doesn't
+export async function collectionExistsInDatabase(collectionName, database) {
   var collectionExists = false;
 
-  var collectionsInDatabase = await DatabaseEngine.getDashboardDatabase()
-    .listCollections()
-    .toArray();
+  var collectionsInDatabase = await database.listCollections().toArray();
 
   collectionsInDatabase.forEach(function (collectionInDatabase) {
     if (collectionInDatabase.name === collectionName) {
@@ -17,31 +15,46 @@ export async function collectionExistsInDatabase(collectionName) {
   return collectionExists;
 }
 
-//* Returns true if the given CRS already exists in the CRS collection
-async function crsAlreadyExistsInCrsCollection(CRS, crsCollection) {
-  let crsQuery = {crs: CRS}; // Query for the database document that has the same crs field as the CRS passed as argument
+//* Deletes a collection from database
+export async function deleteCollectionFromDatabase(collectionName, database) {}
+
+//* Returns a CRS database _id given that it already exists in the CRS collection
+//* Returns null otherwise
+async function queryCrsCollectionID(CRS, crsCollection) {
+  let crsQuery = { crs: CRS }; // Query for the database document that has the same crs field as the CRS passed as argument
   // We only want to verify if the CRS passed as argument already exists in the database
   // To do so, we only need a crs document field to be returned by the query, like the _id field
   // If no field is returned we know that the CRS argument doesn't exist in the database
-  let crsQueryProjection = { _id: 1 }
+  let crsQueryProjection = { _id: 1 };
 
-  let databaseResponse = await crsCollection.findOne(crsQuery, crsQueryProjection);
-  return databaseResponse != null; // If the CRS already exists in the database, the response isn't null
+  let databaseCRS = await crsCollection.findOne(crsQuery, crsQueryProjection);
+
+  //* Returns a CRS database _id given that it exists in the CRS collection
+  if (databaseCRS != null) {
+    return databaseCRS._id;
+  }
+
+  //* Returns null otherwise
+  if (databaseCRS == null) {
+    return null;
+  }
 }
+
 //* Save a coordinates reference system found on a geoJSON to the database
-//* Returns the database ObjectId of the crs document inserteds
+//* Returns the database ObjectId of the crs document inserted
 //* If the crs already exists in the database, return its ObjectId
 export async function saveCRS(geoJSON) {
   let crsCollection = DatabaseEngine.getCRScollection();
 
   // Verify if the crs already exists in the database
-  let crsAlreadyExists = await crsAlreadyExistsInCrsCollection(
-    geoJSON.crs,
-    crsCollection
-  );
-  console.log("crsAlreadyExistsInCrsCollection");
-  console.log(crsAlreadyExists);
+  let crsCollectionID = await queryCrsCollectionID(geoJSON.crs, crsCollection);
 
+  //* If the crs already exists in the database, return its ObjectID
+  if (crsCollectionID != null) {
+    return crsCollectionID;
+  }
+  
+  //* If the crs already doesn't already exist in the database, insert it and return its ObjectID
   let databaseResponse = await crsCollection.insertOne({
     crs: geoJSON.crs,
   });
@@ -65,6 +78,7 @@ export async function saveFeatures(geoJSON) {
 
   return ObjectIdsArray;
 }
+
 //* Create a field on each feature with its associated coordinates reference system
 export async function associateCRStoFeatures(crsObjectId, featureObjectIds) {
   //* For each feature that had its ID passed as parameter, associate a crs ID
@@ -82,7 +96,7 @@ export async function associateCRStoFeatures(crsObjectId, featureObjectIds) {
 }
 
 //* Query the region borders collection for some features border coordinates and properties, and return them in an array
-export async function getRegionBordersFeatures(query, queryProjection) {
+export async function queryRegionBordersFeatures(query, queryProjection) {
   query.type = "Feature"; // In addition to the query parameters passed as argument, query for various features in the region borders collection
 
   // Don't include each document's ID in the query results
@@ -90,7 +104,6 @@ export async function getRegionBordersFeatures(query, queryProjection) {
     projection: queryProjection,
   };
   // The following query returns [{type: "Feature",...}, {type:"Feature",...}]
-  console.log("Querying region borders collection for the various features.");
   let featuresQueryResults = await DatabaseEngine.getRegionBordersCollection()
     .find(query, featuresQueryOptions)
     .toArray();

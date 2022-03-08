@@ -17,35 +17,11 @@ export let regionBordersRouter = express.Router();
 import { DatabaseEngine } from "../configs/mongo.js";
 
 //! Get region borders data route
-import { getRegionBorders } from "../handlers/regionBorders.js";
+import { handleGetRegionBorders } from "../handlers/regionBorders.js";
 regionBordersRouter.get(
   "/getRegionBorders",
   async function (request, response) {
-    console.log("Client requested region borders.");
-
-    //* Check if the region border collection exists
-    let regionBordersCollectionName =
-      DatabaseEngine.getRegionBordersCollectionName();
-    let regionBordersCollectionExists = await collectionExistsInDatabase(
-      regionBordersCollectionName
-    );
-
-    //* If the region borders collection doesn't exist, send error response to the client
-    if (!regionBordersCollectionExists) {
-      console.log("Couldn't get region borders because the collection doesn't exist.")
-      sendResponseWithGoBackLink(
-        response,
-        "Couldn't get region borders because the collection doesn't exist."
-      );
-    }
-
-    //* If the region borders collection exists, send the various saved geoJSONs to the client
-    else if (regionBordersCollectionExists) {
-      console.log("Started sending geoJSONs to the client.");
-      let geoJSONs = await getRegionBorders();
-      response.send(geoJSONs);
-      console.log("Finished sending geoJSONs to the client.\n");
-    }
+    await handleGetRegionBorders(request, response);
   }
 );
 
@@ -55,6 +31,7 @@ regionBordersRouter.get("/regionBorders", function (request, response) {
 });
 
 //! Client sends a geoJSON to be saved to the database
+import { handleSaveRegionBorders } from "../handlers/regionBorders.js";
 import multer from "multer";
 const storage = multer.memoryStorage(); // Use RAM to temporarily store the received geoJSON, before parsing it and saving it to the database
 const upload = multer({ storage: storage });
@@ -63,110 +40,20 @@ regionBordersRouter.post(
   "/saveRegionBorders",
   upload.single("geojson"),
   async function (request, response) {
-    //! Parse received file bytes to geoJSON
-    console.log("Received geoJSON from the client.");
-    let fileBuffer = request.file.buffer; // Multer enables the server to access the file sent by the client using "request.file.buffer". The file accessed is in bytes.
-    let trimmedFileBuffer = fileBuffer.toString("utf-8").trimStart().trimEnd(); // Sometimes the geoJSON sent has unnecessary spaces that need to be trimmed
-    let geoJSON = JSON.parse(trimmedFileBuffer); // Parse the trimmed file buffer to a correct geoJSON
-
-    //! Save geoJSON to region borders collection and send response to the client
-
-    //* Save geoJSON coordinate reference system to the collection
-    // TODO: Error handling
-    console.log(
-      "Started inserting geoJSON coordinate reference system in the database."
-    );
-    let insertedCRSObjectId = await saveCRS(geoJSON);
-    console.log(
-      "Inserted geoJSON coordinate reference system in the database. CRS ID in database:",
-      // To extract the ID string inside the ObjectId, we use ObjectId.toHexString
-      insertedCRSObjectId.toHexString() // The ID string of the CRS document that was inserted in the database
-    );
-
-    //* Save each geoJSON feature to the collection individually
-    // TODO: Error handling
-    console.log("Starting inserting geoJSON features in the database.");
-    let insertedFeaturesObjectIds = await saveFeatures(geoJSON);
-    console.log("Inserted geoJSON features in the database.\n");
-
-    //* Create a field with on each feature with its associated coordinates reference system
-    console.log("Starting associating each feature with its CRS.");
-    associateCRStoFeatures(insertedCRSObjectId, insertedFeaturesObjectIds);
-    console.log("Finsihed associating each feature with its CRS.\n");
-
-    // Send successful response to the client
-    sendResponseWithGoBackLink(response, "Server successfully saved geoJSON.");
+    await handleSaveRegionBorders(request, response);
   }
 );
 
 //! Client requests the region borders collection to be deleted
-regionBordersRouter.post("/deleteRegionBorders", function (request, response) {
-  console.log("Client requested to drop the region borders collection.");
-
-  // Drop database and send response to the server.
-  DatabaseEngine.getRegionBordersCollection().drop(function (
-    dropError,
-    databaseResponse
-  ) {
-    //* Error handling
-    if (dropError && dropError.codeName == "NamespaceNotFound") {
-      console.log(
-        "Region borders collection doesn't exist in the database (was probably already deleted).\n"
-      );
-      sendResponseWithGoBackLink(
-        response,
-        "Region borders collection doesn't exist in the database (was probably already deleted)."
-      );
-      return dropError;
-    } else if (dropError) {
-      console.log(dropError);
-      response.send(dropError);
-      return dropError;
-    }
-
-    console.log("Deleted region borders data from the database.\n");
-
-    // Send successful response to the client
-    sendResponseWithGoBackLink(
-      response,
-      "Server successfully deleted region borders from the database."
-    );
-  });
+import { handleDeleteRegionBorders } from "../handlers/regionBorders.js";
+regionBordersRouter.post("/deleteRegionBorders", async function (request, response) {
+  await handleDeleteRegionBorders(request, response);
 });
 
 //! Client requests the CRSs collection to be deleted
-regionBordersRouter.post("/deleteCRS", function (request, response) {
-  console.log("Client requested to drop the CRSs collection.");
-
-  // Drop database and send response to the server.
-  DatabaseEngine.getCRScollection().drop(function (
-    dropError,
-    databaseResponse
-  ) {
-    //* Error handling
-    if (dropError && dropError.codeName == "NamespaceNotFound") {
-      console.log(
-        "CRSs collection doesn't exist in the database (was probably already deleted).\n"
-      );
-      sendResponseWithGoBackLink(
-        response,
-        "CRSs collection doesn't exist in the database (was probably already deleted)."
-      );
-      return dropError;
-    } else if (dropError) {
-      console.log(dropError);
-      response.send(dropError);
-      return dropError;
-    }
-
-    console.log("Deleted CRSs from the database.\n");
-
-    // Send successful response to the client
-    sendResponseWithGoBackLink(
-      response,
-      "Server successfully deleted CRSs from the database."
-    );
-  });
+import { handleDeleteCRSs } from "../handlers/regionBorders.js";
+regionBordersRouter.post("/deleteCRS", async function (request, response) {
+  await handleDeleteCRSs(request, response);
 });
 
 //! Calculate centers of each feature in the database route
@@ -183,7 +70,8 @@ regionBordersRouter.get(
     let regionBordersCollectionName =
       DatabaseEngine.getRegionBordersCollectionName();
     let regionBordersCollectionExists = await collectionExistsInDatabase(
-      regionBordersCollectionName
+      regionBordersCollectionName,
+      DatabaseEngine.getDashboardDatabase()
     );
 
     //* If the region borders collection doesn't exist, send error response to the client
