@@ -17,10 +17,31 @@ export async function collectionExistsInDatabase(collectionName) {
   return collectionExists;
 }
 
-//* Save a coordinates reference system to the database
-//* Returns the database ObjectId of the crs document inserted
+//* Returns true if the given CRS already exists in the CRS collection
+async function crsAlreadyExistsInCrsCollection(CRS, crsCollection) {
+  let crsQuery = {crs: CRS}; // Query for the database document that has the same crs field as the CRS passed as argument
+  // We only want to verify if the CRS passed as argument already exists in the database
+  // To do so, we only need a crs document field to be returned by the query, like the _id field
+  // If no field is returned we know that the CRS argument doesn't exist in the database
+  let crsQueryProjection = { _id: 1 }
+
+  let databaseResponse = await crsCollection.findOne(crsQuery, crsQueryProjection);
+  return databaseResponse != null; // If the CRS already exists in the database, the response isn't null
+}
+//* Save a coordinates reference system found on a geoJSON to the database
+//* Returns the database ObjectId of the crs document inserteds
+//* If the crs already exists in the database, return its ObjectId
 export async function saveCRS(geoJSON) {
   let crsCollection = DatabaseEngine.getCRScollection();
+
+  // Verify if the crs already exists in the database
+  let crsAlreadyExists = await crsAlreadyExistsInCrsCollection(
+    geoJSON.crs,
+    crsCollection
+  );
+  console.log("crsAlreadyExistsInCrsCollection");
+  console.log(crsAlreadyExists);
+
   let databaseResponse = await crsCollection.insertOne({
     crs: geoJSON.crs,
   });
@@ -107,5 +128,3 @@ export async function queryAllCoordinatesReferenceSystems(queryProjection) {
     .toArray();
   return featuresQueryResults;
 }
-
-
