@@ -8,6 +8,7 @@
 
   <body>
 
+    <h2>geoJSON</h2>
     <!-- Form to import and submit geoJSON -->
     <form  action="/saveRegionBorders" method="post" enctype="multipart/form-data">
       
@@ -31,12 +32,15 @@
       </div>
     </form>
 
-    <!-- Form to delete the region borders collection -->
-    <form  action="/deleteRegionBorders" method="post">
+
+    <h2>Database deletes</h2>
+
+    <!-- Form to delete the weather collection -->
+    <form  action="/deleteAll" method="post">
 
       <!--* Button to send the post request to the server -->
       <div>
-        <button>Delete region borders in database</button>
+        <button>Delete all database collections</button>
       </div>
 
     </form>
@@ -50,6 +54,37 @@
       </div>
 
     </form>
+
+    <!-- Form to delete the region borders collection -->
+    <form  action="/deleteRegionBorders" method="post">
+
+      <!--* Button to send the post request to the server -->
+      <div>
+        <button>Delete region borders in database</button>
+      </div>
+
+    </form>
+
+    <!-- Form to delete the weatherDates collection -->
+    <form  action="/deleteWeatherDates" method="post">
+
+      <!--* Button to send the post request to the server -->
+      <div>
+        <button>Delete weather dates in database</button>
+      </div>
+
+    </form>
+
+    <!-- Form to delete the weather collection -->
+    <form  action="/deleteWeather" method="post">
+
+      <!--* Button to send the post request to the server -->
+      <div>
+        <button>Delete weather of regions in the database</button>
+      </div>
+
+    </form>
+
 
   </body>
 </html>

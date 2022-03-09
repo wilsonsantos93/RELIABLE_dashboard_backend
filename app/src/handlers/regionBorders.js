@@ -1,11 +1,15 @@
 import { DatabaseEngine } from "../configs/mongo.js";
 import sendResponseWithGoBackLink from "../utils/response.js";
-
 import {
+  saveCRS,
+  saveFeatures,
+  associateCRStoFeatures,
   queryAllCoordinatesReferenceSystems,
   collectionExistsInDatabase,
   queryRegionBordersFeatures,
+  queryAllRegionBordersFeatures,
 } from "../utils/database.js";
+import { request, response } from "express";
 
 //* Returns an array of geoJSONs
 //* Each element of the array is a geoJSON with a different coordinates reference system found in the database
@@ -37,11 +41,20 @@ export async function handleGetRegionBorders(request, response) {
     //* Query the region borders collection for the crs
     //* The _id and the crs of the each CRS document, is going to be used to return a geoJSON with the crs, and the associated region border features
     let crsQueryProjection = { _id: 1, crs: 1 };
+    console.log(
+      "Started querying coordinates reference systems collection for all CRSs."
+    );
     let crsQueryResults = await queryAllCoordinatesReferenceSystems(
       crsQueryProjection
     );
+    console.log(
+      "Finished querying coordinates reference systems collection for all CRSs."
+    );
 
     //* Query each CRS in the database for the associated border region features
+    console.log(
+      "Started query each CRS in the database for the associated border region features."
+    );
     for (const crs of crsQueryResults) {
       let geoJSON = {
         type: "FeatureCollection",
@@ -70,18 +83,17 @@ export async function handleGetRegionBorders(request, response) {
       // Add the geoJSON to the geoJSONs array
       geoJSONs.push(geoJSON);
     }
+    console.log(
+      "Finished query each CRS in the database for the associated border region features."
+    );
 
+    console.log("Started sending geoJSONs to the client.");
     response.send(geoJSONs);
     console.log("Finished sending geoJSONs to the client.\n");
   }
 }
 
 //* Save a geoJSON information to the database
-import {
-  saveCRS,
-  saveFeatures,
-  associateCRStoFeatures,
-} from "../utils/database.js";
 export async function handleSaveRegionBorders(request, response) {
   console.log("Received geoJSON from the client.");
 
@@ -103,13 +115,13 @@ export async function handleSaveRegionBorders(request, response) {
       // To extract the ID string inside the ObjectId, we use ObjectId.toHexString
       insertedCRSObjectId.toHexString() // The ID string of the CRS document that was inserted in the database
     );
+    console.log("\n")
   } catch (error) {
     console.log(error);
     response.send(error);
   }
 
   //* Save each geoJSON feature to the collection individually
-  // TODO: Error handling
   console.log("Starting inserting geoJSON features in the database.");
   let insertedFeaturesObjectIds = await saveFeatures(geoJSON);
   console.log("Inserted geoJSON features in the database.\n");
@@ -123,59 +135,76 @@ export async function handleSaveRegionBorders(request, response) {
   sendResponseWithGoBackLink(response, "Server successfully saved geoJSON.");
 }
 
-//* Deletes the region borders collection from the databaseResponse
-export async function handleDeleteRegionBorders(request, response) {
-  console.log("Client requested to drop the region borders collection.");
+//* Client requests for the server to the center coordinates of all the features in the database
+import polygonCenter from "geojson-polygon-center";
+// import multiPolygon from ""
+export async function handleCalculateCenters(request, response) {
+  console.log(
+    "Client requested to calculate the centers for each region border in the collection."
+  );
 
-  // Drop database and send response to the server
-  try {
-    await DatabaseEngine.getRegionBordersCollection().drop();
+  //* Check if the region border collection exists
+  let regionBordersCollectionName =
+    DatabaseEngine.getRegionBordersCollectionName();
+  let regionBordersCollectionExists = await collectionExistsInDatabase(
+    regionBordersCollectionName,
+    DatabaseEngine.getDashboardDatabase()
+  );
 
-    let message =
-      "Server successfully deleted region borders from the database.";
+  //* If the region borders collection doesn't exist, send error response to the client
+  if (!regionBordersCollectionExists) {
+    response.send(
+      "Can't calculate centers because the region borders collection doesn't exist."
+    );
+  }
 
-    console.log(message);
-    console.log("\n");
+  //* If the region borders collection exists, calculate and update the centers of each feature in the collection
+  else if (regionBordersCollectionExists) {
+    //* Query the region borders collection for the various features
 
-    // Send successful response to the client
-    sendResponseWithGoBackLink(response, message);
-  } catch (dropError) {
-    if (dropError && dropError.codeName == "NamespaceNotFound") {
-      let message =
-        "Region borders collection doesn't exist in the database (was probably already deleted).";
-      console.log(message);
-      console.log("\n");
-      sendResponseWithGoBackLink(response, message);
-    } else if (dropError) {
-      console.log(dropError);
-      sendResponseWithGoBackLink(response, dropError);
+    // The query results are going to be used by server to calculate the center of each and all features (geometry field), and save it to the corresponding feature (using the id).
+    // As such, the properties don't need to be returned, and the center coordinates of each region don't need to be returned (because they shouldn't exist yet).
+    let featuresQueryProjection = {
+      _id: 1,
+      properties: 0,
+      center: 0,
+      crsObjectId: 0,
+    };
+    let featuresQueryResults = await queryAllRegionBordersFeatures(
+      featuresQueryProjection
+    );
+
+    for (const feature of featuresQueryResults) {
+      let center;
+
+      // Can't calculate the center of a feature if the geoJSON of that feature has the geometry type of multy polygon
+      // TODO: Implement a way to separate the multy polygon feature into multiple features with a polygon type
+      if (feature.geometry.type === "MultiPolygon") {
+        center = null;
+      }
+
+      // Calculate the center
+      else if (feature.geometry.type === "Polygon") {
+        center = polygonCenter(feature.geometry);
+      }
+
+      // Add the centre data to the feature in the database
+      DatabaseEngine.getRegionBordersCollection().updateOne(
+        { _id: feature._id }, // Updates the region feature document that has the same id as the current feature
+        {
+          $set: {
+            center: center,
+          },
+        }
+      );
+
     }
+
+    response.send(
+      "Successfully calculated centers coordinates for each feature in the region borders collection."
+    );
   }
 }
 
-//! Client requests the CRSs collection to be deleted
-export async function handleDeleteCRSs(request, response) {
-  console.log("Client requested to drop the CRSs collection.");
 
-  // Drop database and send response to the server
-  try {
-    await DatabaseEngine.getCRScollection().drop();
-    let message = "Server successfully deleted CRSs from the database.";
-    console.log(message);
-    console.log("");
 
-    // Send successful response to the client
-    sendResponseWithGoBackLink(response, message);
-  } catch (dropError) {
-    if (dropError && dropError.codeName == "NamespaceNotFound") {
-      let message =
-        "CRSs collection doesn't exist in the database (was probably already deleted).";
-      console.log(message);
-      console.log("\n");
-      sendResponseWithGoBackLink(response, message);
-    } else if (dropError) {
-      console.log(dropError);
-      response.send(dropError);
-    }
-  }
-}

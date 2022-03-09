@@ -1,4 +1,5 @@
 import { DatabaseEngine } from "../configs/mongo.js";
+import fetch from "cross-fetch";
 
 //* Returns true if a collection exists in a database, false if it doesn't
 export async function collectionExistsInDatabase(collectionName, database) {
@@ -20,7 +21,7 @@ export async function deleteCollectionFromDatabase(collectionName, database) {}
 
 //* Returns a CRS database _id given that it already exists in the CRS collection
 //* Returns null otherwise
-async function queryCrsCollectionID(CRS, crsCollection) {
+export async function queryCrsCollectionID(CRS, crsCollection) {
   let crsQuery = { crs: CRS }; // Query for the database document that has the same crs field as the CRS passed as argument
   // We only want to verify if the CRS passed as argument already exists in the database
   // To do so, we only need a crs document field to be returned by the query, like the _id field
@@ -40,6 +41,17 @@ async function queryCrsCollectionID(CRS, crsCollection) {
   }
 }
 
+//* Fetch the projection information of the feature associated CRS, and return it
+async function fetchProjectionInformation(crsName) {
+  let projectionNumber = crsName.split("::")[1]; // The number of the EPSG projection, used to fetch the projection information from an external API
+  let projectionInformationURL =
+    "https://epsg.io/" + projectionNumber + ".proj4"; // The URL of the projection information
+  const projectionResponse = await fetch(projectionInformationURL);
+  let projectionInformation = await projectionResponse.text();
+
+  return projectionInformation;
+}
+
 //* Save a coordinates reference system found on a geoJSON to the database
 //* Returns the database ObjectId of the crs document inserted
 //* If the crs already exists in the database, return its ObjectId
@@ -53,10 +65,11 @@ export async function saveCRS(geoJSON) {
   if (crsCollectionID != null) {
     return crsCollectionID;
   }
-  
-  //* If the crs already doesn't already exist in the database, insert it and return its ObjectID
+
+  //* If the crs already doesn't already exist in the database, insert it and its projection information, and return its ObjectID.
   let databaseResponse = await crsCollection.insertOne({
     crs: geoJSON.crs,
+    projection: await fetchProjectionInformation(geoJSON.crs.properties.name)
   });
   // insertOne returns some unnecessary parameters
   // it also returns an ObjectId("62266b751239b26c92ec8858") accessed with "databaseResponse.insertedId"
@@ -133,11 +146,9 @@ export async function queryAllCoordinatesReferenceSystems(queryProjection) {
     projection: queryProjection,
   };
   // The following query returns [{crs: Object,...}, {crs: Object},...]
-  console.log(
-    "Querying coordinates reference systems collection for all CRSs."
-  );
   let featuresQueryResults = await DatabaseEngine.getCRScollection()
     .find(featuresQuery, featuresQueryOptions)
     .toArray();
+
   return featuresQueryResults;
 }
