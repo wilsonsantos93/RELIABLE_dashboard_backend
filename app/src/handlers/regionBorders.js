@@ -115,7 +115,7 @@ export async function handleSaveRegionBorders(request, response) {
       // To extract the ID string inside the ObjectId, we use ObjectId.toHexString
       insertedCRSObjectId.toHexString() // The ID string of the CRS document that was inserted in the database
     );
-    console.log("\n")
+    console.log();
   } catch (error) {
     console.log(error);
     response.send(error);
@@ -174,6 +174,7 @@ export async function handleCalculateCenters(request, response) {
       featuresQueryProjection
     );
 
+    let collectionHadMultiPolygonFeatures = false; // Is true if the collection had MultiPolygon features, and its centers couldn't be calculated as a result
     for (const feature of featuresQueryResults) {
       let center;
 
@@ -181,6 +182,7 @@ export async function handleCalculateCenters(request, response) {
       // TODO: Implement a way to separate the multy polygon feature into multiple features with a polygon type
       if (feature.geometry.type === "MultiPolygon") {
         center = null;
+        collectionHadMultiPolygonFeatures = true;
       }
 
       // Calculate the center
@@ -197,14 +199,23 @@ export async function handleCalculateCenters(request, response) {
           },
         }
       );
-
     }
 
-    response.send(
-      "Successfully calculated centers coordinates for each feature in the region borders collection."
+    let message = "";
+    if (collectionHadMultiPolygonFeatures) {
+      message +=
+        "Couldn't calculate center coordinates for every feature in the region borders collection (collection had MultiPolygon features).";
+      console.log(message);
+      sendResponseWithGoBackLink(response, message)
+    } else if (!collectionHadMultiPolygonFeatures) {
+      message +=
+        "Calculated the center coordinates for every feature in the region borders collection (every feature was of the type Polygon and not MultiPolygon).";
+      console.log(message);
+      sendResponseWithGoBackLink(response, message);
+    }
+
+    console.log(
+      "Server finished calculating the centers for each region border in the collection."
     );
   }
 }
-
-
-

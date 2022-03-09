@@ -42,7 +42,7 @@ regionBordersRouter.post(
 //! Calculate centers of each feature in the database route
 //TODO: If the centers were already calculated, warn the client, and don't calculate them again
 import { handleCalculateCenters } from "../handlers/regionBorders.js";
-regionBordersRouter.get(
+regionBordersRouter.post(
   "/calculateCenters",
   async function (request, response) {
     await handleCalculateCenters(request, response);

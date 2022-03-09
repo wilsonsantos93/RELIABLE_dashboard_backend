@@ -69,7 +69,7 @@ export async function saveCRS(geoJSON) {
   //* If the crs already doesn't already exist in the database, insert it and its projection information, and return its ObjectID.
   let databaseResponse = await crsCollection.insertOne({
     crs: geoJSON.crs,
-    projection: await fetchProjectionInformation(geoJSON.crs.properties.name)
+    crsProjection: await fetchProjectionInformation(geoJSON.crs.properties.name)
   });
   // insertOne returns some unnecessary parameters
   // it also returns an ObjectId("62266b751239b26c92ec8858") accessed with "databaseResponse.insertedId"

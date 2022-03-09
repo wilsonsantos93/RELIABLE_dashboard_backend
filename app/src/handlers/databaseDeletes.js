@@ -64,6 +64,7 @@ export async function handleDeleteAll(request, response) {
   }
 
   console.log(message);
+  console.log("");
   sendResponseWithGoBackLink(response, newlineBr(message));
 }
 

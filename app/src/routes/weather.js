@@ -27,9 +27,10 @@ weatherRouter.get("/getWeatherData", function (request, response) {
 
 //! Route that requests the current weather for each center of each feature found in the region borders collection
 import { handleSaveWeather } from "../handlers/weather.js";
-weatherRouter.get("/saveWeather", async function (request, response) {
+weatherRouter.post("/saveWeather", async function (request, response) {
   await handleSaveWeather(request, response);
 });
+
 
 async function saveWeatherData(weatherData) {
   const weatherDashboardDatabase =
