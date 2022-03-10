@@ -27,7 +27,9 @@ export async function handleSaveWeather(request, response) {
 
   //* Save the current date to the weatherDates collection
   let weatherDatesCollection = DatabaseEngine.getWeatherDatesCollection();
-  await saveCurrentDateToCollection(weatherDatesCollection);
+  let weatherDateDatabaseID = await saveCurrentDateToCollection(
+    weatherDatesCollection
+  );
 
   //* Query for all the border regions features in the database that have a center field
   // The server requests an API for the weather in the center (center field) of all individual features saved in the region borders collection.
@@ -56,11 +58,20 @@ export async function handleSaveWeather(request, response) {
 
     // Convert the current feature coordinates from it's current CRS to latitude/longitude
     let latitudeLongitudeProjection = "+proj=longlat +datum=WGS84 +no_defs"; // Latitude/Longitude projection
+    console.log(feature.center)
+    console.log(currentFeatureCRS.crsProjection)
+    console.log(latitudeLongitudeProjection)
+    console.log(proj4(
+      currentFeatureCRS.crsProjection,
+      latitudeLongitudeProjection,
+      feature.center.coordinates
+    ))
+    console.log("HERE")
     proj4.defs(currentFeatureCRS.crsProjection, latitudeLongitudeProjection);
     let projectedCoordinates = proj4(
       currentFeatureCRS.crsProjection,
       latitudeLongitudeProjection,
-      feature.center
+      feature.center.coordinates
     );
 
     //* Request the weather at the center of each feature from an external API
@@ -74,15 +85,12 @@ export async function handleSaveWeather(request, response) {
     const weatherDataJSON = await response.json();
 
     // //* Save the weather of each feature to the weather collection
-    // let weatherCollection = DatabaseEngine.getWeatherCollection();
-    // let databaseResponse = await weatherCollection.insertOne({
-    //   weather: weatherDataJSON,
-    //   weatherDate: insertedDateDatabaseID,
-    //   regionBorderFeatureObjectId: feature._id,
-    // });
-    // // insertOne returns some unnecessary parameters
-    // // it also returns an ObjectId("62266b751239b26c92ec8858") accessed with "databaseResponse.insertedId"
-    // let insertedDateDatabaseID = databaseResponse.insertedId;
+    let weatherCollection = DatabaseEngine.getWeatherCollection();
+    let databaseResponse = await weatherCollection.insertOne({
+      weather: weatherDataJSON,
+      weatherDate: weatherDateDatabaseID,
+      regionBorderFeatureObjectId: feature._id,
+    });
   }
 
   //* Query for features who don't have their center calculated
@@ -109,5 +117,5 @@ export async function handleSaveWeather(request, response) {
   }
 
   console.log(message);
-  response.send(message);
+  sendResponseWithGoBackLink(response, message)
 }
