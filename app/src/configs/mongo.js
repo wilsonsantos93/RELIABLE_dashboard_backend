@@ -1,5 +1,3 @@
-import { collectionExistsInDatabase } from "../utils/database.js";
-
 //! Mongo database engine class
 import { MongoClient } from "mongodb";
 export class DatabaseEngine {
@@ -44,6 +42,10 @@ export class DatabaseEngine {
   }
 
   //! Weather collection
+  static getWeatherCollectionName() {
+    return this.#weatherCollectionName
+  }
+
   static getWeatherCollection() {
     return this.getDashboardDatabase().collection(this.#weatherCollectionName);
   }

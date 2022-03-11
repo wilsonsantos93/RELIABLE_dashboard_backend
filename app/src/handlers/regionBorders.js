@@ -63,10 +63,8 @@ export async function handleGetRegionBorders(request, response) {
 
       let regionBordersQuery = { crsObjectId: crs._id }; // Query for all the features that have the the same crsObjectId as the current CRS _id
       // We are going to use the returning query parameters to build the geoJSON
-      // As such, the feature _id, center, and crsObjectId
+      // As such, the feature _id, center, and crsObjectId aren't needed
       // We only need the type, properties and geometry
-      // The query results are going to be used by the browser to draw the region borders (geometry field), and give each region a name (type field).
-      // As such, the center coordinates of each region don't need to be returned.
       let regionBordersQueryProjection = {
         type: 1,
         properties: 1,
@@ -124,12 +122,12 @@ export async function handleSaveRegionBorders(request, response) {
   //* Save each geoJSON feature to the collection individually
   console.log("Starting inserting geoJSON features in the database.");
   let insertedFeaturesObjectIds = await saveFeatures(geoJSON);
-  console.log("Inserted geoJSON features in the database.\n");
+  console.log("Inserted geoJSON features in the database.");
 
   //* Create a field with on each feature with its associated coordinates reference system
   console.log("Starting associating each feature with its CRS.");
   await associateCRStoFeatures(insertedCRSObjectId, insertedFeaturesObjectIds);
-  console.log("Finsihed associating each feature with its CRS.\n");
+  console.log("Finished associating each feature with its CRS.\n");
 
   // Send successful response to the client
   sendResponseWithGoBackLink(response, "Server successfully saved geoJSON.");
@@ -215,7 +213,7 @@ export async function handleCalculateCenters(request, response) {
     }
 
     console.log(
-      "Server finished calculating the centers for each region border in the collection."
+      "Server finished calculating the centers for each region border in the collection.\n"
     );
   }
 }

@@ -1,13 +1,10 @@
-import {
-  queryAllRegionBordersFeatures,
-  queryCrsCollectionID,
-  queryRegionBordersFeatures,
-} from "../utils/database.js";
+import { queryRegionBordersFeatures } from "../utils/database.js";
 import { DatabaseEngine } from "../configs/mongo.js";
 import sendResponseWithGoBackLink from "../utils/response.js";
 import * as proj4js from "../libs/proj4.js";
 import fetch from "cross-fetch";
 
+//* Saves the current date to the weatherDates database
 async function saveCurrentDateToCollection(weatherDatesCollection) {
   let currentDate = new Date();
   let databaseResponse = await weatherDatesCollection.insertOne({
@@ -22,6 +19,8 @@ async function saveCurrentDateToCollection(weatherDatesCollection) {
 //* Saves the weather of each region border feature to the weather collection
 //* Associate the weathers saved to the date that they were saved, in the weatherDates collection
 //* Sends a warning to the user if not all features had their centers calculated
+// TODO: 3000 weather JSONs take approximately 25 minutes to be fetched from the weather API
+// TODO: Doing the fetching in an asynchronous manner would optimize this process
 export async function handleSaveWeather(request, response) {
   console.log("Started saving weather of each feature to the database.");
 
@@ -58,26 +57,31 @@ export async function handleSaveWeather(request, response) {
 
     // Convert the current feature coordinates from it's current CRS to latitude/longitude
     let latitudeLongitudeProjection = "+proj=longlat +datum=WGS84 +no_defs"; // Latitude/Longitude projection
-    console.log(feature.center)
-    console.log(currentFeatureCRS.crsProjection)
-    console.log(latitudeLongitudeProjection)
-    console.log(proj4(
-      currentFeatureCRS.crsProjection,
-      latitudeLongitudeProjection,
-      feature.center.coordinates
-    ))
-    console.log("HERE")
-    proj4.defs(currentFeatureCRS.crsProjection, latitudeLongitudeProjection);
+    // console.log(feature.center.coordinates); // Center
+    // console.log(currentFeatureCRS.crsProjection); // Center projection
+    // console.log(latitudeLongitudeProjection); // Lat/Long projection
+    // console.log("Original projection:", currentFeatureCRS.crs.properties.name)
+    // console.log("Original coordinates:", feature.center.coordinates);
+    // console.log(
+    //   "Projection without defs:",
+    //   proj4(
+    //     currentFeatureCRS.crsProjection,
+    //     latitudeLongitudeProjection,
+    //     feature.center.coordinates
+    //   )
+    // );
+
     let projectedCoordinates = proj4(
       currentFeatureCRS.crsProjection,
       latitudeLongitudeProjection,
       feature.center.coordinates
     );
+    // console.log("Projection inside variable:", projectedCoordinates);
 
     //* Request the weather at the center of each feature from an external API
     const url =
       "http://api.weatherapi.com/v1/current.json?key=a1f415612c9543ea80a151844220103&q=" +
-      projectedCoordinates.coordinates.reverse() + // The database coordinates are saved in [long,lat], the weather API acceps [lat,long]
+      projectedCoordinates.reverse() + // The database coordinates are saved in [long,lat], the weather API acceps [lat,long]
       "&aqi=yes";
 
     const fetchSettings = { method: "Get" };
@@ -88,7 +92,7 @@ export async function handleSaveWeather(request, response) {
     let weatherCollection = DatabaseEngine.getWeatherCollection();
     let databaseResponse = await weatherCollection.insertOne({
       weather: weatherDataJSON,
-      weatherDate: weatherDateDatabaseID,
+      weatherDateObjectId: weatherDateDatabaseID,
       regionBorderFeatureObjectId: feature._id,
     });
   }
@@ -117,5 +121,23 @@ export async function handleSaveWeather(request, response) {
   }
 
   console.log(message);
-  sendResponseWithGoBackLink(response, message)
+  sendResponseWithGoBackLink(response, message);
+}
+
+// Returns a JSON with the various dates the weather was saved in the database
+export async function handleGetWeatherDates(request, response) {
+  let weatherDatesQuery = {}; // Query all weather dates to return to the client
+  let weatherDatesProjection = { _id: 0, date: 1 }; // Only the date itself needs to be returned by the query
+
+  // Don't include each document's ID in the query results
+  let weatherDatesQueryOptions = {
+    projection: weatherDatesProjection,
+  };
+  // The following query returns [{type: "Feature",...}, {type:"Feature",...}]
+  let featuresQueryResults = await DatabaseEngine.getWeatherDatesCollection()
+    .find(weatherDatesQuery, weatherDatesQueryOptions)
+    .toArray();
+  
+  response.send(featuresQueryResults)
+
 }

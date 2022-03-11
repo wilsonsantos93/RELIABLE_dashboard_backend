@@ -29,6 +29,19 @@
     <script src="proj4.js"></script>
     <script src="proj4leaflet.js"></script>
 
+    <!-- Bootstrap  -->
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+      integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC"
+      crossorigin="anonymous"
+    />
+    <script
+      src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js"
+      integrity="sha384-MrcW6ZMFYlzcLA8Nl+NtUVF0sA7MsXsP1UyJoMp4YLEuNSfAP+JcXn/tWtIaxVXM"
+      crossorigin="anonymous"
+    ></script>
+
     <!--! Style -->
     <style>
       body {
@@ -38,12 +51,38 @@
 
       #map {
         width: 100%;
-        height: 100vh;
+        height: 90%;
       }
     </style>
   </head>
 
   <body>
+    <!-- Weather dates dropdown menu -->
+    <div class="dropdown">
+      <a
+        class="btn btn-secondary dropdown-toggle"
+        href="#"
+        role="button"
+        id="dropdownMenuLink"
+        data-bs-toggle="dropdown"
+        aria-expanded="false"
+      >
+        Weather dates
+      </a>
+
+
+      <ul class="dropdown-menu" aria-labelledby="dropdownMenuLink">
+        <% for (let index = 0; index < weatherDates.length; index++) { %>
+        <input
+          id="clickMe"
+          type="button"
+          value="<%= weatherDates[index].date%>"
+          onclick=loadGeoJSONs('ObjectId("<%- weatherDates[index]._id %>")')
+        />
+        <% } %>
+      </ul>
+    </div>
+
     <div id="map"></div>
   </body>
 
@@ -62,20 +101,20 @@
       }
     ).addTo(map);
 
-    // Load geoJSON and project it to the map
-    async function loadGeoJSON() {
+    // Load geoJSONs with the weather information of a given date, and project them to the map
+    async function loadGeoJSONs(weatherDate) {
+      console.log("DEBUG")
       //! Fetch the geoJSON from the backend
       console.log("Started fetching the geoJSONs from the backend.");
-      const geoJSONsResponse = await fetch(
-        "http://localhost:8000/getRegionBorders"
-      );
+      let url = "http://localhost:8000/getRegionBordersAndWeather/" + weatherDate;
+
+      const geoJSONsResponse = await fetch(url);
 
       console.log("Finished fetching the geoJSONs from the backend.");
-      // Note that despite the method being named json(), 
+      // Note that despite the method being named json(),
       //the result is not JSON but is instead the result of taking JSON as input and parsing it to produce a JavaScript object.
-      let geoJSONsArray = await geoJSONsResponse.json()
+      let geoJSONsArray = await geoJSONsResponse.json();
       for (const geoJSON of geoJSONsArray) {
-
         console.log(
           "Received geoJON with the following projection: ",
           geoJSON.crs.properties.name
@@ -98,7 +137,6 @@
         L.Proj.geoJson(geoJSON).addTo(map); // Add the projection to the map
       }
     }
-    loadGeoJSON();
 
     // let marker = L.marker([9.082, 8.6753]).addTo(map);
 

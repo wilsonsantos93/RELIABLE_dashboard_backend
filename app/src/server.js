@@ -11,6 +11,10 @@ await DatabaseEngine.connectToDatabaseEngine();
 import express from "express";
 let app = express();
 
+//! EJS Template engine
+app.set("view engine", "ejs");
+app.set("views", ("./src/views/"));
+
 //! Cross-origin resource sharing
 import cors from "cors";
 app.use(cors());
@@ -25,15 +29,9 @@ app.use("/", librariesRouter); // Import libraries routes into the root path '/'
 import { configRouter } from "./routes/config.js";
 app.use("/", configRouter); // Import config routes into the root path '/'
 import { databaseDeletesRouter } from "./routes/databaseDeletes.js";
-app.use("/", databaseDeletesRouter); // Import config routes into the root path '/'
-
-//! Root route
-app.get("/", function (request, response) {
-  // response.send("Root route for the backend container.")
-  response.sendFile(
-    "/media/shared/My Programs/weather_dashboard_backend/app/src/views/map.html"
-  );
-});
+app.use("/", databaseDeletesRouter); // Import database deletes routes into the root path '/'
+import {mapRouter} from "./routes/map.js"
+app.use("/", mapRouter); // Import map routes into the root path '/'
 
 //! Start server
 app.listen(process.env.WEATHER_DATA_PORT, function () {
