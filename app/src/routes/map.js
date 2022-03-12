@@ -15,11 +15,10 @@ mapRouter.get("/getRegionBordersAndWeather/:weatherDateID", async function (requ
 async function getWeatherDates() {
   let weatherDatesQuery = {}; // Query all weather dates to return to the client
   let weatherDatesProjection = { _id: 1, date: 1 }; // Only the date itself needs to be returned by the query
-
-  // Don't include each document's ID in the query results
   let weatherDatesQueryOptions = {
     projection: weatherDatesProjection,
   };
+  
   // The following query returns [{type: "Feature",...}, {type:"Feature",...}]
   let featuresQueryResults = await DatabaseEngine.getWeatherDatesCollection()
     .find(weatherDatesQuery, weatherDatesQueryOptions)

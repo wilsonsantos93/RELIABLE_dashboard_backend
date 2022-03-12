@@ -14,6 +14,15 @@ With this in mind, if the geoJSON sent by the server uses the EPSG Projection 37
 If the server sends any other projection system, proj4 isn't used, and the geoJSON is simply projected to the map using the default function.
 
 
-## 2nd Implementation
+### 2nd Implementation
 
 The frontend identifies the projection system number that was sent by the backend, and requests the corresponding projection system information from an external API, so the coordinates can be correctly projected to the map.
+
+## Map
+When the map loads, the server sends the various dates that the weather information was saved to the database, using EJS.
+The client then dinamically creates a list of buttons with each date, and each button has the ID of the date in the database associated with its POST request.
+
+## Weather API
+The server calculates the center of each region border feature using its CRS coordinates, and saves them to the database. The featues that have the type MultiPolygon instead of Polygon don't have their center calculated, and their center is saved as null.
+When fecthing the weatcher from the external API, it converts those coordinates from their saved CRS to latitude/longitude, uses those coordinates to fetch the weather. Regions with a null center, or with a center that hasn't been calculated at that point, don't have their corresponding weather fetched.
+

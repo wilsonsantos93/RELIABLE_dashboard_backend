@@ -1,16 +1,22 @@
 import {
   collectionExistsInDatabase,
   queryRegionBordersFeatures,
+  queryAllCoordinatesReferenceSystems,
 } from "../utils/database.js";
 import { DatabaseEngine } from "../configs/mongo.js";
 import sendResponseWithGoBackLink from "../utils/response.js";
+import { ObjectId } from "mongodb";
 
 // Sends an array of geoJSONs with the border regions and its weather information on a certain date
 export async function handleGetRegionBordersAndWeatherByDate(
   request,
   response
 ) {
-  console.log("Client requested region borders and weather (Date:" + request.params.weatherDateID + ")");
+  console.log(
+    "Client requested region borders and weather (Date:" +
+      request.params.weatherDateID +
+      ")"
+  );
 
   let message = "";
 
@@ -51,6 +57,8 @@ export async function handleGetRegionBordersAndWeatherByDate(
   //! End of error handling
 
   //* If the region borders collection and the weather collection exists, send the various database geoJSONs to the client
+  //* If the region borders collection exists, so does the coordinates reference systems collection
+  //* If the weather collection exists, so does the weather data collection
   if (regionBordersCollectionExists && weatherCollectionExists) {
     console.log("Started sending geoJSONs to the client.");
     let geoJSONs = [];
@@ -76,9 +84,15 @@ export async function handleGetRegionBordersAndWeatherByDate(
       let geoJSON = {
         type: "FeatureCollection",
         crs: crs.crs,
+        features: [],
       };
 
-      let regionBordersQuery = { crsObjectId: crs._id }; // Query for all the features that have the the same crsObjectId field as the current CRS _id
+      // Query for all the features that have the the same crsObjectId field as the current CRS _id
+      // The features also need to have had their center calculated, otherwise they don't have a weather associated
+      let featuresQuery = {
+        crsObjectId: crs._id,
+        center: { $exists: true, $ne: null },
+      };
       // We are going to use the returning query parameters to build the geoJSON
       // As such, the feature center coordinates, and crsObjectId aren't needed
       // We only need the type, properties and geometry to build the geoJSONs
@@ -90,36 +104,49 @@ export async function handleGetRegionBordersAndWeatherByDate(
         geometry: 1,
       };
       let regionBordersFeaturesArray = await queryRegionBordersFeatures(
-        regionBordersQuery,
+        featuresQuery,
         regionBordersQueryProjection
       );
 
-      //* Add the queried features to the geoJSON
-      geoJSON.features = regionBordersFeaturesArray;
-
-      //* Query for the weather information of each feature, at a given date
+      //* Query for the weather information of each feature in the regionBordersFeaturesArray, at a given date, and save it to the feature
       console.log("Started query for the weather of each feature.");
-      for (const feature in regionBordersFeaturesArray) {
+      for (const currentFeature of regionBordersFeaturesArray) {
         let weatherCollection = DatabaseEngine.getWeatherCollection();
+        // EJS is used to dinamically create a button for each date that the regions weather information the were saved
+        // Each button makes a POST request to the getRegionBordersAndWeather/:weatherDateID
         let weatherDateID = request.params.weatherDateID; //https://stackoverflow.com/questions/20089582/how-to-get-a-url-parameter-in-express
 
         let weatherOfCurrentFeatureQuery = {
-          _id: weatherDateID,
-          regionBorderFeatureObjectId: feature._id,
+          weatherDateObjectId: ObjectId(weatherDateID),
+          regionBorderFeatureObjectId: currentFeature._id,
         }; // Query for the weather that has the same regionBorderFeatureObjectId field as the current feature _id
         // We are going to use the returning query parameters to add the weather information to the current geoJSON
         // As such, the _id, regionBorderFeatureObjectId, weatherDateObjecId aren't needed
-        // We only need the weather field
+        // We only need the weatherInformation.current field
         let weatherOfCurrentFeatureQueryProjection = {
-          weather: 1,
+          _id: 0,
+          weatherDateObjectId: 0,
+          regionBorderFeatureObjectId: 0,
         };
+        let weatherOfCurrentFeatureQueryOptions = {
+          projection: weatherOfCurrentFeatureQueryProjection,
+        };
+
         let currentFeatureWeatherInformation = await weatherCollection.findOne(
           weatherOfCurrentFeatureQuery,
-          weatherOfCurrentFeatureQueryProjection
+          weatherOfCurrentFeatureQueryOptions
         );
 
-        //* Add the current feature weather information to the geoJSON
-        geoJSON.properties.weather = currentFeatureWeatherInformation;
+        //* If the current feature had its weather saved at the given date, add the current feature weather information to the feature, and push the feature to the geoJSON
+        if (currentFeatureWeatherInformation != null) {
+          // console.log(currentFeature._id.toHexString());
+          currentFeature.weather = {};
+          currentFeature.weather.location =
+            currentFeatureWeatherInformation.location;
+          currentFeature.weather.current =
+            currentFeatureWeatherInformation.current;
+          geoJSON.features.push(currentFeature);
+        }
       }
 
       //* Add the geoJSON to the geoJSONs array

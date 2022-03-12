@@ -49,10 +49,13 @@ export async function handleSaveWeather(request, response) {
     // We are going to query the weather API for the weather at the center coordinates of this feature
     // The weather API uses latitude and longitude, so we need the CRS projection information that the database feature was saved with, to convert it to latitude/longitude
     let crsQueryProjection = { _id: 1, crsProjection: 1 };
+    let crsQueryOptions = {
+      projection: crsQueryProjection,
+    };
 
     let currentFeatureCRS = await crsCollection.findOne(
       crsQuery,
-      crsQueryProjection
+      crsQueryOptions
     );
 
     // Convert the current feature coordinates from it's current CRS to latitude/longitude
@@ -91,7 +94,7 @@ export async function handleSaveWeather(request, response) {
     // //* Save the weather of each feature to the weather collection
     let weatherCollection = DatabaseEngine.getWeatherCollection();
     let databaseResponse = await weatherCollection.insertOne({
-      weather: weatherDataJSON,
+      weatherInformation: weatherDataJSON,
       weatherDateObjectId: weatherDateDatabaseID,
       regionBorderFeatureObjectId: feature._id,
     });
@@ -128,11 +131,10 @@ export async function handleSaveWeather(request, response) {
 export async function handleGetWeatherDates(request, response) {
   let weatherDatesQuery = {}; // Query all weather dates to return to the client
   let weatherDatesProjection = { _id: 0, date: 1 }; // Only the date itself needs to be returned by the query
-
-  // Don't include each document's ID in the query results
   let weatherDatesQueryOptions = {
     projection: weatherDatesProjection,
   };
+
   // The following query returns [{type: "Feature",...}, {type:"Feature",...}]
   let featuresQueryResults = await DatabaseEngine.getWeatherDatesCollection()
     .find(weatherDatesQuery, weatherDatesQueryOptions)

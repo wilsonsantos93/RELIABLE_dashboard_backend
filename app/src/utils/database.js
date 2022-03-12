@@ -27,8 +27,11 @@ export async function queryCrsCollectionID(CRS, crsCollection) {
   // To do so, we only need a crs document field to be returned by the query, like the _id field
   // If no field is returned we know that the CRS argument doesn't exist in the database
   let crsQueryProjection = { _id: 1 };
+  let crsQueryOptions = {
+    projection: crsQueryProjection,
+  };
 
-  let databaseCRS = await crsCollection.findOne(crsQuery, crsQueryProjection);
+  let databaseCRS = await crsCollection.findOne(crsQuery, crsQueryOptions);
 
   //* Returns a CRS database _id given that it exists in the CRS collection
   if (databaseCRS != null) {
@@ -111,11 +114,11 @@ export async function associateCRStoFeatures(crsObjectId, featureObjectIds) {
 //* Query the region borders collection for some features border coordinates and properties, and return them in an array
 export async function queryRegionBordersFeatures(query, queryProjection) {
   query.type = "Feature"; // In addition to the query parameters passed as argument, query for various features in the region borders collection
-
-  // Don't include each document's ID in the query results
   let featuresQueryOptions = {
     projection: queryProjection,
   };
+
+
   // The following query returns [{type: "Feature",...}, {type:"Feature",...}]
   let featuresQueryResults = await DatabaseEngine.getRegionBordersCollection()
     .find(query, featuresQueryOptions)
@@ -126,10 +129,10 @@ export async function queryRegionBordersFeatures(query, queryProjection) {
 //* Query the region borders collection for all features, and return them in an array
 export async function queryAllRegionBordersFeatures(queryProjection) {
   let featuresQuery = {}; // Query for all documents in the region borders collection
-
   let featuresQueryOptions = {
     projection: queryProjection,
   };
+
   // The following query returns [{type: "Feature",...}, {type:"Feature",...}]
   console.log("Querying region borders collection for all features.");
   let featuresQueryResults = await DatabaseEngine.getRegionBordersCollection()
@@ -140,15 +143,14 @@ export async function queryAllRegionBordersFeatures(queryProjection) {
 
 //* Query the coordinates reference systems collection for all CRSs, and return them in an array
 export async function queryAllCoordinatesReferenceSystems(queryProjection) {
-  let featuresQuery = {}; // Query for all documents in the region borders collection
-
-  let featuresQueryOptions = {
+  let CRSsQuery = {}; // Query for all documents in the coordinates reference systems collection
+  let CRSsQueryOptions = {
     projection: queryProjection,
   };
-  // The following query returns [{crs: Object,...}, {crs: Object},...]
-  let featuresQueryResults = await DatabaseEngine.getCRScollection()
-    .find(featuresQuery, featuresQueryOptions)
+
+  let CRSsQueryResults = await DatabaseEngine.getCRScollection()
+    .find(CRSsQuery, CRSsQueryOptions)
     .toArray();
 
-  return featuresQueryResults;
+  return CRSsQueryResults;
 }

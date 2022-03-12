@@ -73,12 +73,12 @@
 
       <ul class="dropdown-menu" aria-labelledby="dropdownMenuLink">
         <% for (let index = 0; index < weatherDates.length; index++) { %>
-        <input
+        <li><input
           id="clickMe"
           type="button"
           value="<%= weatherDates[index].date%>"
-          onclick=loadGeoJSONs('ObjectId("<%- weatherDates[index]._id %>")')
-        />
+          onclick=loadGeoJSONs("<%- weatherDates[index]._id %>")
+        /></li>
         <% } %>
       </ul>
     </div>
