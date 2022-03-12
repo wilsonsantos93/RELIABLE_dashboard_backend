@@ -132,19 +132,20 @@ export async function handleGetRegionBordersAndWeatherByDate(
           projection: weatherOfCurrentFeatureQueryProjection,
         };
 
-        let currentFeatureWeatherInformation = await weatherCollection.findOne(
+        let currentFeatureWeatherDocument = await weatherCollection.findOne(
           weatherOfCurrentFeatureQuery,
           weatherOfCurrentFeatureQueryOptions
         );
 
         //* If the current feature had its weather saved at the given date, add the current feature weather information to the feature, and push the feature to the geoJSON
-        if (currentFeatureWeatherInformation != null) {
+        if (currentFeatureWeatherDocument != null) {
+          let currentFeatureWeatherInformation = currentFeatureWeatherDocument.weatherInformation
           // console.log(currentFeature._id.toHexString());
           currentFeature.weather = {};
           currentFeature.weather.location =
-            currentFeatureWeatherInformation.location;
+          currentFeatureWeatherInformation.location;
           currentFeature.weather.current =
-            currentFeatureWeatherInformation.current;
+          currentFeatureWeatherInformation.current;
           geoJSON.features.push(currentFeature);
         }
       }
