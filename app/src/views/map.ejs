@@ -53,6 +53,20 @@
         width: 100%;
         height: 90%;
       }
+
+      /* https://leafletjs.com/SlavaUkraini/examples/choropleth/ */
+      .info {
+        padding: 6px 8px;
+        font: 14px/16px Arial, Helvetica, sans-serif;
+        background: white;
+        background: rgba(255, 255, 255, 0.8);
+        box-shadow: 0 0 15px rgba(0, 0, 0, 0.2);
+        border-radius: 5px;
+      }
+      .info h4 {
+        margin: 0 0 5px;
+        color: #777;
+      }
     </style>
   </head>
 
@@ -78,7 +92,7 @@
             type="button"
             value="<%=
           weatherDates[index].date%>"
-            onclick='loadGeoJSONs("<%-weatherDates[index]._id %>")'
+            onclick='loadDateGeoJSONs("<%-weatherDates[index]._id %>")'
           />
         </li>
         <% } %>
@@ -89,43 +103,40 @@
   </body>
 
   <script>
-    //! Map
-    let map = L.map("map", {
-      center: [38.686796, -9.128914], // The coordinates the map is in when first loaded
-      zoom: 8, // The zoom level the map has when first loaded
-    });
-
-    //! Map tile layer
-    let mapLayer = L.tileLayer(
-      "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
-      {
-        noWrap: true, // If false, the map wraps around itself, repeating itself
-      }
-    ).addTo(map);
+    // Feature highlighting
 
     // Returns the temperature of a given color
     function getTemperatureColor(temperature) {
-      return temperature > 20
+      return temperature > 30
         ? "#800026"
-        : temperature > 15
+        : temperature > 25
         ? "#BD0026"
-        : temperature > 10
+        : temperature > 20
         ? "#E31A1C"
-        : temperature > 5
+        : temperature > 15
         ? "#FC4E2A"
-        : temperature > 0
+        : temperature > 10
         ? "#FD8D3C"
-        : temperature > -5
+        : temperature > 5
         ? "#FEB24C"
-        : temperature > -10
+        : temperature > 0
         ? "#FED976"
         : "#FFEDA0";
     }
 
     // Returns the style of a region in the map
     function style(feature) {
+      let featureColor;
+      if ("weather" in feature) {
+        featureColor = getTemperatureColor(feature.weather.current.temp_c);
+      } else if ("weather" in feature == false) {
+        featureColor = "#808080";
+      }
+
+      let featureStyle = {};
+
       return {
-        fillColor: getTemperatureColor(feature.weather.current.temp_c),
+        fillColor: featureColor,
         weight: 2,
         opacity: 1,
         color: "white",
@@ -134,7 +145,87 @@
       };
     }
 
-    async function loadGeoJSONsWithoutWeather() {
+    // Highlights a feature of the map when hovered over
+    function highlightFeature(event) {
+      let mapRegionBorderCurrentlyHovered = event.target;
+      let mapFeatureCurrentlyHovered = mapRegionBorderCurrentlyHovered.feature;
+
+      mapRegionBorderCurrentlyHovered.setStyle({
+        weight: 5,
+        // color: "#666",
+        dashArray: "",
+        fillOpacity: 0.7,
+      });
+
+      if (!L.Browser.ie && !L.Browser.opera && !L.Browser.edge) {
+        mapRegionBorderCurrentlyHovered.bringToFront();
+      }
+
+      if ("weather" in mapFeatureCurrentlyHovered) {
+        updateInformationMenuWithWeather(mapFeatureCurrentlyHovered);
+      } else if ("weather" in mapFeatureCurrentlyHovered == false) {
+        updateInformationMenuWithName(mapFeatureCurrentlyHovered);
+      }
+    }
+
+    // Stops highlighting a feature when it stops being hovered over
+    function resetHighlight(event) {
+      let mapFeatureCurrentlyHovered = event.target;
+
+      geojson.resetStyle(mapFeatureCurrentlyHovered);
+
+      if ("weather" in mapFeatureCurrentlyHovered) {
+        updateInformationMenuWithWeather();
+      } else if ("weather" in mapFeatureCurrentlyHovered == false) {
+        updateInformationMenuWithName();
+      }
+    }
+
+    // Zooms to the feature clicked
+    function zoomToFeature(e) {
+      worldMap.fitBounds(e.target.getBounds());
+    }
+
+    // The events associated with each feature
+    function onEachFeature(feature, layer) {
+      layer.on({
+        mouseover: highlightFeature,
+        mouseout: resetHighlight,
+        click: zoomToFeature,
+      });
+    }
+
+    //! Information menu
+
+    // Update the information menu with the weather based on feature properties passed
+    function updateInformationMenuWithName(mapFeatureCurrentlyHovered) {
+      mapInformationMenu._div.innerHTML =
+        "<h4>Weather</h4>" +
+        (mapFeatureCurrentlyHovered
+          ? "<b>" +
+            mapFeatureCurrentlyHovered.properties.Freguesia +
+            "</b><br />"
+          : "Hover over a state");
+    }
+
+    // Update the information menu based with the weather information on feature properties passed
+    function updateInformationMenuWithWeather(mapFeatureCurrentlyHovered) {
+
+      mapInformationMenu._div.innerHTML =
+        "<h4>Weather</h4>" +
+        (mapFeatureCurrentlyHovered
+          ? "<b>" +
+            mapFeatureCurrentlyHovered.properties.Freguesia +
+            "</b><br />" +
+            mapFeatureCurrentlyHovered.weather.current.temp_c +
+            " degrees Celsius"
+          : "Hover over a state");
+    }
+
+    //! Loading geoJSONs
+
+    // Loads all the region borders saved on the database upon loading
+    async function loadGeoJSONsUponMapLoad() {
       //! Fetch the geoJSON from the backend
       console.log("Started fetching the geoJSONs from the backend.");
       let url = "http://localhost:8000/getRegionBorders/";
@@ -144,7 +235,7 @@
       console.log("Finished fetching the geoJSONs from the backend.");
       // Note that despite the method being named json(),
       //the result is not JSON but is instead the result of taking JSON as input and parsing it to produce a JavaScript object.
-      let geoJSONsArray = await geoJSONsResponse.json();
+      geoJSONsArray = await geoJSONsResponse.json();
       for (const geoJSON of geoJSONsArray) {
         console.log(
           "Received geoJON with the following projection: ",
@@ -165,14 +256,16 @@
         let projectionName = "urn:ogc:def:crs:EPSG::" + projectionNumber; // Parses the projection name, to be used by the proj4 library
         proj4.defs(projectionName, projectionInformation); // Tells the proj4 library to use the projection information returned from the external API
 
-        L.Proj.geoJson(geoJSON).addTo(map); // Adds the projection to the map
+        // Adds the projection to the map
+        geojson = L.Proj.geoJson(geoJSON, {
+          style: style,
+          onEachFeature: onEachFeature,
+        }).addTo(worldMap);
       }
     }
-    loadGeoJSONsWithoutWeather()
 
     // Load geoJSONs with the weather information of a given date, and project them to the map
-    async function loadGeoJSONs(weatherDate) {
-      console.log("DEBUG");
+    async function loadDateGeoJSONs(weatherDate) {
       //! Fetch the geoJSON from the backend
       console.log("Started fetching the geoJSONs from the backend.");
       let url =
@@ -183,7 +276,7 @@
       console.log("Finished fetching the geoJSONs from the backend.");
       // Note that despite the method being named json(),
       //the result is not JSON but is instead the result of taking JSON as input and parsing it to produce a JavaScript object.
-      let geoJSONsArray = await geoJSONsResponse.json();
+      geoJSONsArray = await geoJSONsResponse.json();
       for (const geoJSON of geoJSONsArray) {
         console.log(
           "Received geoJON with the following projection: ",
@@ -204,20 +297,54 @@
         let projectionName = "urn:ogc:def:crs:EPSG::" + projectionNumber; // Parses the projection name, to be used by the proj4 library
         proj4.defs(projectionName, projectionInformation); // Tells the proj4 library to use the projection information returned from the external API
 
-        L.Proj.geoJson(geoJSON, { style: style }).addTo(map); // Adds the projection to the map
+        // Adds the projection to the map
+        geojson = L.Proj.geoJson(geoJSON, {
+          style: style,
+          onEachFeature: onEachFeature,
+        }).addTo(worldMap);
       }
     }
 
+    let geoJSONsArray;
+    var mapInformationMenu = L.control();
+
+    // loadGeoJSONsUponMapLoad();
+
+    //! Map
+    let worldMap = L.map("map", {
+      center: [38.686796, -9.128914], // The coordinates the map is in when first loaded
+      zoom: 8, // The zoom level the map has when first loaded
+    });
+
+    //! Map tile layer
+    let mapLayer = L.tileLayer(
+      "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
+      {
+        noWrap: true, // If false, the map wraps around itself, repeating itself
+      }
+    ).addTo(worldMap);
+
+    mapInformationMenu.onAdd = function (map) {
+      this._div = L.DomUtil.create("div", "info"); // create a div with a class "info"
+      updateInformationMenuWithName();
+      return this._div;
+    };
+
+    mapInformationMenu.addTo(worldMap);
+
     // let marker = L.marker([9.082, 8.6753]).addTo(map);
 
+    // Choose map layer
     let Basemaps = {
       OSM: mapLayer,
     };
 
+    // Choose map markers
     let Overlaymaps = {
       // Marker: marker,
     };
 
-    L.control.layers(Basemaps, Overlaymaps).addTo(map);
+    // Add control for map layer and markers
+    L.control.layers(Basemaps, Overlaymaps).addTo(worldMap);
   </script>
 </html>
