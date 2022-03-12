@@ -42,10 +42,16 @@ export async function handleSaveWeather(request, response) {
     featuresQueryProjection
   );
 
-  for (const feature of regionBordersFeaturesWithCenter) {
+  let currentFeatureIndex = 1
+  for (const currentFeature of regionBordersFeaturesWithCenter) {
+
+    if (currentFeatureIndex % 100 == 0) {
+      console.log("Saved weather of feature number:", currentFeatureIndex);
+    }
+
     //* Query the database for the CRS associated with the current feature
     let crsCollection = DatabaseEngine.getCRScollection();
-    let crsQuery = { _id: feature.crsObjectId };
+    let crsQuery = { _id: currentFeature.crsObjectId };
     // We are going to query the weather API for the weather at the center coordinates of this feature
     // The weather API uses latitude and longitude, so we need the CRS projection information that the database feature was saved with, to convert it to latitude/longitude
     let crsQueryProjection = { _id: 1, crsProjection: 1 };
@@ -60,24 +66,11 @@ export async function handleSaveWeather(request, response) {
 
     // Convert the current feature coordinates from it's current CRS to latitude/longitude
     let latitudeLongitudeProjection = "+proj=longlat +datum=WGS84 +no_defs"; // Latitude/Longitude projection
-    // console.log(feature.center.coordinates); // Center
-    // console.log(currentFeatureCRS.crsProjection); // Center projection
-    // console.log(latitudeLongitudeProjection); // Lat/Long projection
-    // console.log("Original projection:", currentFeatureCRS.crs.properties.name)
-    // console.log("Original coordinates:", feature.center.coordinates);
-    // console.log(
-    //   "Projection without defs:",
-    //   proj4(
-    //     currentFeatureCRS.crsProjection,
-    //     latitudeLongitudeProjection,
-    //     feature.center.coordinates
-    //   )
-    // );
 
     let projectedCoordinates = proj4(
       currentFeatureCRS.crsProjection,
       latitudeLongitudeProjection,
-      feature.center.coordinates
+      currentFeature.center.coordinates
     );
     // console.log("Projection inside variable:", projectedCoordinates);
 
@@ -96,7 +89,7 @@ export async function handleSaveWeather(request, response) {
     let databaseResponse = await weatherCollection.insertOne({
       weatherInformation: weatherDataJSON,
       weatherDateObjectId: weatherDateDatabaseID,
-      regionBorderFeatureObjectId: feature._id,
+      regionBorderFeatureObjectId: currentFeature._id,
     });
   }
 

@@ -70,15 +70,17 @@
         Weather dates
       </a>
 
-
       <ul class="dropdown-menu" aria-labelledby="dropdownMenuLink">
         <% for (let index = 0; index < weatherDates.length; index++) { %>
-        <li><input
-          id="clickMe"
-          type="button"
-          value="<%= weatherDates[index].date%>"
-          onclick=loadGeoJSONs("<%- weatherDates[index]._id %>")
-        /></li>
+        <li>
+          <input
+            id="clickMe"
+            type="button"
+            value="<%=
+          weatherDates[index].date%>"
+            onclick='loadGeoJSONs("<%-weatherDates[index]._id %>")'
+          />
+        </li>
         <% } %>
       </ul>
     </div>
@@ -101,12 +103,41 @@
       }
     ).addTo(map);
 
-    // Load geoJSONs with the weather information of a given date, and project them to the map
-    async function loadGeoJSONs(weatherDate) {
-      console.log("DEBUG")
+    // Returns the temperature of a given color
+    function getTemperatureColor(temperature) {
+      return temperature > 20
+        ? "#800026"
+        : temperature > 15
+        ? "#BD0026"
+        : temperature > 10
+        ? "#E31A1C"
+        : temperature > 5
+        ? "#FC4E2A"
+        : temperature > 0
+        ? "#FD8D3C"
+        : temperature > -5
+        ? "#FEB24C"
+        : temperature > -10
+        ? "#FED976"
+        : "#FFEDA0";
+    }
+
+    // Returns the style of a region in the map
+    function style(feature) {
+      return {
+        fillColor: getTemperatureColor(feature.weather.current.temp_c),
+        weight: 2,
+        opacity: 1,
+        color: "white",
+        dashArray: "3",
+        fillOpacity: 0.7,
+      };
+    }
+
+    async function loadGeoJSONsWithoutWeather() {
       //! Fetch the geoJSON from the backend
       console.log("Started fetching the geoJSONs from the backend.");
-      let url = "http://localhost:8000/getRegionBordersAndWeather/" + weatherDate;
+      let url = "http://localhost:8000/getRegionBorders/";
 
       const geoJSONsResponse = await fetch(url);
 
@@ -134,7 +165,46 @@
         let projectionName = "urn:ogc:def:crs:EPSG::" + projectionNumber; // Parses the projection name, to be used by the proj4 library
         proj4.defs(projectionName, projectionInformation); // Tells the proj4 library to use the projection information returned from the external API
 
-        L.Proj.geoJson(geoJSON).addTo(map); // Add the projection to the map
+        L.Proj.geoJson(geoJSON).addTo(map); // Adds the projection to the map
+      }
+    }
+    loadGeoJSONsWithoutWeather()
+
+    // Load geoJSONs with the weather information of a given date, and project them to the map
+    async function loadGeoJSONs(weatherDate) {
+      console.log("DEBUG");
+      //! Fetch the geoJSON from the backend
+      console.log("Started fetching the geoJSONs from the backend.");
+      let url =
+        "http://localhost:8000/getRegionBordersAndWeather/" + weatherDate;
+
+      const geoJSONsResponse = await fetch(url);
+
+      console.log("Finished fetching the geoJSONs from the backend.");
+      // Note that despite the method being named json(),
+      //the result is not JSON but is instead the result of taking JSON as input and parsing it to produce a JavaScript object.
+      let geoJSONsArray = await geoJSONsResponse.json();
+      for (const geoJSON of geoJSONsArray) {
+        console.log(
+          "Received geoJON with the following projection: ",
+          geoJSON.crs.properties.name
+        );
+
+        //! Fetch the projection information to use in the proj4 library, so the coordinates can be correctly projected to the map
+        console.log(
+          "Started fetching the projection information from epsg.io."
+        );
+
+        let projectionNumber = geoJSON.crs.properties.name.split("::")[1]; // The number of the EPSG projection, used to fetch the projection information from an external API
+        let projectionInformationURL =
+          "https://epsg.io/" + projectionNumber + ".proj4"; // The URL of the projection information
+        const projectionResponse = await fetch(projectionInformationURL);
+        projectionInformation = await projectionResponse.text();
+
+        let projectionName = "urn:ogc:def:crs:EPSG::" + projectionNumber; // Parses the projection name, to be used by the proj4 library
+        proj4.defs(projectionName, projectionInformation); // Tells the proj4 library to use the projection information returned from the external API
+
+        L.Proj.geoJson(geoJSON, { style: style }).addTo(map); // Adds the projection to the map
       }
     }
 
@@ -149,23 +219,5 @@
     };
 
     L.control.layers(Basemaps, Overlaymaps).addTo(map);
-
-    function getColor(d) {
-      return d > 1000
-        ? "#800026"
-        : d > 500
-        ? "#BD0026"
-        : d > 200
-        ? "#E31A1C"
-        : d > 100
-        ? "#FC4E2A"
-        : d > 50
-        ? "#FD8D3C"
-        : d > 20
-        ? "#FEB24C"
-        : d > 10
-        ? "#FED976"
-        : "#FFEDA0";
-    }
   </script>
 </html>
