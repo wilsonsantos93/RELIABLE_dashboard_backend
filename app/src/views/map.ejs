@@ -42,6 +42,9 @@
       crossorigin="anonymous"
     ></script>
 
+    <!-- https://github.com/digidem/leaflet-bing-layer -->
+    <script src="https://cdn.polyfill.io/v2/polyfill.min.js?features=Promise"></script>
+
     <!--! Style -->
     <style>
       body {
@@ -210,7 +213,6 @@
 
     // Update the information menu based with the weather information on feature properties passed
     function updateInformationMenuWithWeather(mapFeatureCurrentlyHovered) {
-
       mapInformationMenu._div.innerHTML =
         "<h4>Weather</h4>" +
         (mapFeatureCurrentlyHovered
@@ -264,8 +266,20 @@
       }
     }
 
+    // Cleans all the features that were added to the map
+    function cleanMap() {
+      worldMap.eachLayer(function (layer) {
+        if (layer instanceof L.GeoJSON) {
+          worldMap.removeLayer(layer);
+        }
+      });
+    }
+
     // Load geoJSONs with the weather information of a given date, and project them to the map
     async function loadDateGeoJSONs(weatherDate) {
+
+      cleanMap()
+
       //! Fetch the geoJSON from the backend
       console.log("Started fetching the geoJSONs from the backend.");
       let url =
@@ -308,7 +322,7 @@
     let geoJSONsArray;
     var mapInformationMenu = L.control();
 
-    // loadGeoJSONsUponMapLoad();
+    loadGeoJSONsUponMapLoad();
 
     //! Map
     let worldMap = L.map("map", {
@@ -317,7 +331,7 @@
     });
 
     //! Map tile layer
-    let mapLayer = L.tileLayer(
+    let openStreetMapLayer = L.tileLayer(
       "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
       {
         noWrap: true, // If false, the map wraps around itself, repeating itself
@@ -336,7 +350,7 @@
 
     // Choose map layer
     let Basemaps = {
-      OSM: mapLayer,
+      OpenStreetMap: openStreetMapLayer,
     };
 
     // Choose map markers

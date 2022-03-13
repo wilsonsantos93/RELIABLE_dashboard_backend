@@ -148,6 +148,8 @@ export async function handleGetRegionBordersAndWeatherByDate(
           currentFeatureWeatherInformation.current;
           geoJSON.features.push(currentFeature);
         }
+
+        
       }
 
       //* Add the geoJSON to the geoJSONs array
