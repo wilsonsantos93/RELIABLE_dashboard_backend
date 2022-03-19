@@ -43,3 +43,17 @@ When fecthing the weatcher from the external API, it converts those coordinates 
 <p>WEATHER_API_KEY</p>
 
 
+## MultiPolygon features
+Some features in a geoJSON are made of various regions.
+For example: French Guiana is a region of France situated on the coast of South America.
+While on a map, this region belongs to France, it doesn't make sense to treat it as the same region for weather visualization purposes.
+For this reason, an algorithm was implemented that separates the various MultiPolygons in a single feature.
+The feature is separated into multiple features that keep the same properties, but only consist of one of the Polygons in the MultiPolygons array.
+
+### Upsides
+Can now calculate the weather for each independent polygon of a feature.
+![Project](./assets/france.png)
+
+### Downsides
+Sometimes, the individual polygons of a feature don't make sense being separated.
+![Project](./assets/santaCruz.png)

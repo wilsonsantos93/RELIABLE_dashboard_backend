@@ -1,11 +1,12 @@
 import { DatabaseEngine } from "../configs/mongo.js";
 import fetch from "cross-fetch";
+import {separateMultiPolygons} from "./regionBorders.js";
 
 //* Returns true if a collection exists in a database, false if it doesn't
 export async function collectionExistsInDatabase(collectionName, database) {
-  var collectionExists = false;
+  let collectionExists = false;
 
-  var collectionsInDatabase = await database.listCollections().toArray();
+  let collectionsInDatabase = await database.listCollections().toArray();
 
   collectionsInDatabase.forEach(function (collectionInDatabase) {
     if (collectionInDatabase.name === collectionName) {
@@ -17,7 +18,9 @@ export async function collectionExistsInDatabase(collectionName, database) {
 }
 
 //* Deletes a collection from database
-export async function deleteCollectionFromDatabase(collectionName, database) {}
+export async function deleteCollectionFromDatabase(collectionName, database) {
+
+}
 
 //* Returns a CRS database _id given that it already exists in the CRS collection
 //* Returns null otherwise
@@ -83,8 +86,11 @@ export async function saveCRS(geoJSON) {
 //* Returns an array of the database ObjectIds of the features inserted
 export async function saveFeatures(geoJSON) {
   let regionBordersCollection = DatabaseEngine.getRegionBordersCollection();
+
+  let separatedGeoJSON = separateMultiPolygons(geoJSON)  // Separates the geoJSON MultiPolygon features into multiple features
+
   let databaseResponse = await regionBordersCollection.insertMany(
-    geoJSON.features
+      separatedGeoJSON.features
   );
   // insertMany returns some unnecessary parameters
   // it also returns {'0': new ObjectId("62266ee5a6f882dc9e143bfa"), '1': new ObjectId("62266ee5a6f882dc9e143bfb"), ...}

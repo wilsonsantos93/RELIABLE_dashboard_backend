@@ -1,4 +1,4 @@
-// Appends to a message a HTML link so the browser user can go back a page, and sends it
+// Appends to a message an HTML link so the browser user can go back a page, and sends it
 export default function sendResponseWithGoBackLink(response, message) {
     let messageWithGoBackLink = message;
     messageWithGoBackLink += "<br><br>";

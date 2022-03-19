@@ -13,7 +13,7 @@ export async function handleDeleteAll(request, response) {
     await DatabaseEngine.getCRScollection().drop();
     message += "Server successfully deleted CRSs from the database.\n";
   } catch (dropError) {
-    if (dropError && dropError.codeName == "NamespaceNotFound") {
+    if (dropError && dropError.codeName === "NamespaceNotFound") {
       message +=
         "CRSs collection doesn't exist in the database (was probably already deleted).\n";
     } else if (dropError) {
@@ -28,7 +28,7 @@ export async function handleDeleteAll(request, response) {
     message +=
       "Server successfully deleted region borders from the database.\n";
   } catch (dropError) {
-    if (dropError && dropError.codeName == "NamespaceNotFound") {
+    if (dropError && dropError.codeName === "NamespaceNotFound") {
       message +=
         "Region borders collection doesn't exist in the database (was probably already deleted).\n";
     } else if (dropError) {
@@ -42,7 +42,7 @@ export async function handleDeleteAll(request, response) {
     message +=
       "Server successfully deleted weather saved dates from the database.\n";
   } catch (dropError) {
-    if (dropError && dropError.codeName == "NamespaceNotFound") {
+    if (dropError && dropError.codeName === "NamespaceNotFound") {
       message +=
         "Weather saved dates collection doesn't exist in the database (was probably already deleted).\n";
     } else if (dropError) {
@@ -55,7 +55,7 @@ export async function handleDeleteAll(request, response) {
     message +=
       "Server successfully deleted weather information from the database.";
   } catch (dropError) {
-    if (dropError && dropError.codeName == "NamespaceNotFound") {
+    if (dropError && dropError.codeName === "NamespaceNotFound") {
       message +=
         "Weather information collection doesn't exist in the database (was probably already deleted).";
     } else if (dropError) {
@@ -82,7 +82,7 @@ export async function handleDeleteCRSs(request, response) {
     // Send successful response to the client
     sendResponseWithGoBackLink(response, message);
   } catch (dropError) {
-    if (dropError && dropError.codeName == "NamespaceNotFound") {
+    if (dropError && dropError.codeName === "NamespaceNotFound") {
       let message =
         "CRSs collection doesn't exist in the database (was probably already deleted).";
       console.log(message);
@@ -112,7 +112,7 @@ export async function handleDeleteRegionBorders(request, response) {
     // Send successful response to the client
     sendResponseWithGoBackLink(response, message);
   } catch (dropError) {
-    if (dropError && dropError.codeName == "NamespaceNotFound") {
+    if (dropError && dropError.codeName === "NamespaceNotFound") {
       let message =
         "Region borders collection doesn't exist in the database (was probably already deleted).";
       console.log(message);
@@ -140,7 +140,7 @@ export async function handleDeleteWeatherDates(request, response) {
     // Send successful response to the client
     sendResponseWithGoBackLink(response, message);
   } catch (dropError) {
-    if (dropError && dropError.codeName == "NamespaceNotFound") {
+    if (dropError && dropError.codeName === "NamespaceNotFound") {
       let message =
         "Weather saved dates collection doesn't exist in the database (was probably already deleted).";
       console.log(message);
@@ -157,7 +157,7 @@ export async function handleDeleteWeatherDates(request, response) {
 export async function handleDeleteWeather(request, response) {
   console.log("Client requested to drop the weather information collection.");
 
-  // Drop colletion and send response to the server
+  // Drop collection and send response to the server
   try {
     await DatabaseEngine.getWeatherCollection().drop();
     let message =
@@ -168,7 +168,7 @@ export async function handleDeleteWeather(request, response) {
     // Send successful response to the client
     sendResponseWithGoBackLink(response, message);
   } catch (dropError) {
-    if (dropError && dropError.codeName == "NamespaceNotFound") {
+    if (dropError && dropError.codeName === "NamespaceNotFound") {
       let message =
         "Weather information collection doesn't exist in the database (was probably already deleted).";
       console.log(message);
