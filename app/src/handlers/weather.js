@@ -30,12 +30,12 @@ export async function handleSaveWeather(request, response) {
     weatherDatesCollection
   );
 
-  //* Query for all the border regions features in the database that have a center field
+  //* Query for all the border regions features in the database
   // The server requests an API for the weather in the center (center field) of all individual features saved in the region borders collection.
   // The server needs to convert the center coordinates of each feature, from the associated database CRS (crsObjectId) to the latitude/longitude system, before fetching the weather API
   // The server will then save the weather information to the weather collection, and associate it to the corresponding feature id (_id).
   // As such, the geometry and properties of each region don't need to be returned.
-  let featuresQuery = { center: { $exists: true, $ne: null } };
+  let featuresQuery = { center: { $exists: true } };
   let featuresQueryProjection = { _id: 1, center: 1, crsObjectId: 1 };
   let regionBordersFeaturesWithCenter = await queryRegionBordersFeatures(
     featuresQuery,

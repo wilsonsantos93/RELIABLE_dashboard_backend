@@ -172,21 +172,10 @@ export async function handleCalculateCenters(request, response) {
             featuresQueryProjection
         );
 
-        let collectionHadMultiPolygonFeatures = false; // Is true if the collection had MultiPolygon features, and its centers couldn't be calculated as a result
+
         for (const feature of featuresQueryResults) {
-            let center;
 
-            // Can't calculate the center of a feature if the geoJSON of that feature has the geometry type of multi polygon
-            // TODO: Implement a way to separate the multi polygon feature into multiple features with a polygon type
-            if (feature.geometry.type === "MultiPolygon") {
-                center = null;
-                collectionHadMultiPolygonFeatures = true;
-            }
-
-            // Calculate the center
-            else if (feature.geometry.type === "Polygon") {
-                center = polygonCenter(feature.geometry);
-            }
+            let center = polygonCenter(feature.geometry);
 
             // Add the centre data to the feature in the database
             DatabaseEngine.getRegionBordersCollection().updateOne(
@@ -200,21 +189,16 @@ export async function handleCalculateCenters(request, response) {
         }
 
         let message = "";
-        if (collectionHadMultiPolygonFeatures) {
-            message +=
-                "Couldn't calculate center coordinates for every feature in the region borders collection (collection had MultiPolygon features).";
-            console.log(message);
-            sendResponseWithGoBackLink(response, message)
-        } else if (!collectionHadMultiPolygonFeatures) {
-            message +=
-                "Calculated the center coordinates for every feature in the region borders collection (every feature was of the type Polygon and not MultiPolygon).";
-            console.log(message);
-            sendResponseWithGoBackLink(response, message);
-        }
-
-        console.log(
-            "Server finished calculating the centers for each region border in the collection.\n"
-        );
+        message +=
+            "Calculated the center coordinates for every feature in the region borders collection.";
+        console.log(message);
+        sendResponseWithGoBackLink(response, message);
     }
+
+    console.log(
+        "Server finished calculating the centers for each region border in the collection.\n"
+    );
+
 }
+
 
