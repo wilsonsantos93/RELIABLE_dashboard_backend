@@ -1,4 +1,7 @@
 # Weather Data Backend Microservice
+
+<br>
+
 ## Map projections
 [geoJSONs Used.](https://github.com/nmota/caop_GeoJSON)
 
@@ -42,6 +45,7 @@ When fecthing the weatcher from the external API, it converts those coordinates 
 <p>WEATHER_DATA_PORT</p>
 <p>WEATHER_API_KEY</p>
 
+<br>
 
 ## MultiPolygon features
 Some features in a geoJSON are made of various regions.
