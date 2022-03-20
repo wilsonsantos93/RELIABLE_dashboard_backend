@@ -1,4 +1,4 @@
-import {CoordinatesReferenceSystemProperties} from "./CoordinatesReferenceSystemProperties";
+import {CoordinatesReferenceSystemProperties} from "./CoordinatesReferenceSystem/CoordinatesReferenceSystemProperties";
 
 export interface CoordinatesReferenceSystem {
     type: string;

@@ -4,7 +4,7 @@ import express from "express";
 //! Get region borders data route
 //! Client sends a geoJSON to be saved to the database
 //! Calculate centers of each feature in the database route
-import {handleCalculateCenters, handleGetRegionBorders, handleSaveRegionBorders} from "../handlers/regionBorders.js";
+import {handleCalculateCenters, handleGetRegionBorders, handleSaveRegionBorders} from "../handlers/regionBorders";
 import multer from "multer";
 
 export let regionBordersRouter = express.Router();

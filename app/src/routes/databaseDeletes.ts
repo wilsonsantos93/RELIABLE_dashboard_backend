@@ -4,7 +4,7 @@ import {
     handleDeleteRegionBorders,
     handleDeleteWeather,
     handleDeleteWeatherDates,
-} from "../handlers/databaseDeletes.js";
+} from "../handlers/databaseDeletes";
 
 //! Express
 import express from "express";
@@ -44,3 +44,4 @@ databaseDeletesRouter.post(
 databaseDeletesRouter.post("/deleteAll", async function (request, response) {
     handleDeleteAll(request, response);
 });
+

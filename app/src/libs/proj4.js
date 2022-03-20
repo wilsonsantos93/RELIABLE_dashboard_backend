@@ -870,7 +870,7 @@ datum.prototype = {
     var maxiter = 30;
 
     var P; /* distance between semi-minor axis and location */
-    var RR; /* distance between center and location */
+    var RR; /* distance between FeatureCenter and location */
     var CT; /* sin of geocentric latitude */
     var ST; /* cos of geocentric latitude */
     var RX;
@@ -903,7 +903,7 @@ datum.prototype = {
       Longitude = 0.0;
 
       /*  if (X,Y,Z)=(0.,0.,0.) then Height becomes semi-minor axis
-       *  of ellipsoid (=center of mass), Latitude becomes PI/2 */
+       *  of ellipsoid (=FeatureCenter of mass), Latitude becomes PI/2 */
       if (RR / this.a < genau) {
         Latitude = HALF_PI;
         Height = -this.b;
@@ -1011,7 +1011,7 @@ datum.prototype = {
         else if (Z < 0.0) { /* south pole */
           Latitude = -HALF_PI;
         }
-        else { /* center of earth */
+        else { /* FeatureCenter of earth */
           Latitude = HALF_PI;
           Height = -this.b;
           return;
@@ -2784,8 +2784,8 @@ var phi2z = _dereq_('../common/phi2z');
 exports.init = function() {
 
   // array of:  r_maj,r_min,lat1,lat2,c_lon,c_lat,false_east,false_north
-  //double c_lat;                   /* center latitude                      */
-  //double c_lon;                   /* center longitude                     */
+  //double c_lat;                   /* FeatureCenter latitude                      */
+  //double c_lon;                   /* FeatureCenter longitude                     */
   //double lat1;                    /* first standard parallel              */
   //double lat2;                    /* second standard parallel             */
   //double r_maj;                   /* major axis                           */

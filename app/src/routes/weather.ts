@@ -1,10 +1,10 @@
-import {handleGetWeatherDates, handleSaveWeather,} from "../handlers/weather.js";
+import {handleGetWeatherDates, handleSaveWeather,} from "../handlers/weather";
 
 //! Express
 import express from "express";
 export let weatherRouter = express.Router();
 
-//! Route that requests the current weather for each center of each feature found in the region borders collection
+//! Route that requests the current weather for each FeatureCenter of each feature found in the region borders collection
 weatherRouter.post("/saveWeather", async function (request, response) {
     await handleSaveWeather(request, response);
 });

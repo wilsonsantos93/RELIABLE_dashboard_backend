@@ -1,5 +1,5 @@
-import {DatabaseEngine} from "../configs/mongo.js";
-import {handleGetRegionBordersAndWeatherByDate} from "../handlers/map.js";
+import {DatabaseEngine} from "../configs/mongo";
+import {handleGetRegionBordersAndWeatherByDate} from "../handlers/map";
 
 //! Express
 import express from "express";

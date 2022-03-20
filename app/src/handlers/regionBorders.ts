@@ -1,4 +1,4 @@
-import {DatabaseEngine} from "../configs/mongo.js";
+import {DatabaseEngine} from "../configs/mongo";
 import sendResponseWithGoBackLink from "../utils/response.js";
 import {
     associateCRStoFeatures,
@@ -8,20 +8,26 @@ import {
     queryRegionBordersFeatures,
     saveCRS,
     saveFeatures,
-} from "../utils/database.js";
+} from "../utils/database";
+// @ts-ignore
 import polygonCenter from "geojson-polygon-center";
+import {Request, Response} from "express-serve-static-core";
+import {GeoJSON} from "../interfaces/GeoJSON/GeoJSON";
 
-//* Returns an array of geoJSONs.
-//* Each element of the array is a geoJSON with a different coordinates reference system found in the database.
-//* Each element of the array consists of a CRS and the region borders projected using that CRS.
-export async function handleGetRegionBorders(request, response) {
+
+/**
+ * Sends a response with an array of geoJSONs. <p>
+ * Each element of the array is a geoJSON with a different coordinates reference system found in the database. <p>
+ * Each element of the array consists of a CRS and the region borders projected using that CRS.
+ * @param request Client HTTP request object
+ * @param response Client HTTP response object
+ */
+export async function handleGetRegionBorders(request: Request, response: Response) {
     console.log("Client requested region borders.");
 
     //* Check if the region border collection exists
-    let regionBordersCollectionName =
-        DatabaseEngine.getRegionBordersCollectionName();
     let regionBordersCollectionExists = await collectionExistsInDatabase(
-        regionBordersCollectionName,
+        DatabaseEngine.getRegionBordersCollectionName(),
         DatabaseEngine.getDashboardDatabase()
     );
 
@@ -36,7 +42,7 @@ export async function handleGetRegionBorders(request, response) {
     //* If the region borders collection exists, send the various saved geoJSONs to the client
     else if (regionBordersCollectionExists) {
         console.log("Started sending geoJSONs to the client.");
-        let geoJSONs = [];
+        let geoJSONs: GeoJSON[] = [];
 
         //* Query the region borders collection for the crs
         //* The _id and the crs of each CRS document, is going to be used to return a geoJSON with the crs, and the associated region border features
@@ -56,14 +62,10 @@ export async function handleGetRegionBorders(request, response) {
             "Started query each CRS in the database for the associated border region features."
         );
         for (const crs of crsQueryResults) {
-            let geoJSON = {
-                type: "FeatureCollection",
-                crs: crs.crs,
-            };
 
             let regionBordersQuery = {crsObjectId: crs._id}; // Query for all the features that have the same crsObjectId as the current CRS _id
             // We are going to use the returning query parameters to build the geoJSON
-            // As such, the feature _id, center, and crsObjectId aren't needed
+            // As such, the feature _id, FeatureCenter, and crsObjectId aren't needed
             // We only need the type, properties and geometry
             let regionBordersQueryProjection = {
                 _id: 0,
@@ -77,7 +79,9 @@ export async function handleGetRegionBorders(request, response) {
             );
 
             // Add the queried features to the geoJSON
-            geoJSON.features = regionBordersFeaturesArray;
+            let geoJSON: GeoJSON = {
+                features: regionBordersFeaturesArray
+            };
 
             // Add the geoJSON to the geoJSONs array
             geoJSONs.push(geoJSON);
@@ -92,9 +96,13 @@ export async function handleGetRegionBorders(request, response) {
     }
 }
 
-//* Save a geoJSON information to the database.
 // TODO: Important. User saves empty geoJSON. Crashes program.
-export async function handleSaveRegionBorders(request, response) {
+/**
+ * Save a geoJSON information to the database.
+ * @param request Client HTTP request object
+ * @param response Client HTTP response object
+ */
+export async function handleSaveRegionBorders(request: Request, response: Response) {
     console.log("Received geoJSON from the client.");
 
     //* Parse received file bytes to geoJSON
@@ -135,8 +143,12 @@ export async function handleSaveRegionBorders(request, response) {
     sendResponseWithGoBackLink(response, "Server successfully saved geoJSON.");
 }
 
-//* Calculates the center coordinates of every feature in the region borders collection.
-export async function handleCalculateCenters(request, response) {
+/**
+ * Calculates the FeatureCenter coordinates of every feature in the region borders collection.
+ * @param request Client HTTP request object
+ * @param response Client HTTP response object
+ */
+export async function handleCalculateCenters(request: Request, response: Response) {
     console.log(
         "Client requested to calculate the centers for each region border in the collection."
     );
@@ -160,8 +172,8 @@ export async function handleCalculateCenters(request, response) {
     else if (regionBordersCollectionExists) {
         //* Query the region borders collection for the various features
 
-        // The query results are going to be used by server to calculate the center of each and all features (geometry field), and save it to the corresponding feature (using the id).
-        // As such, the properties don't need to be returned, and the center coordinates of each region don't need to be returned (because they shouldn't exist yet).
+        // The query results are going to be used by server to calculate the FeatureCenter of each and all features (geometry field), and save it to the corresponding feature (using the id).
+        // As such, the properties don't need to be returned, and the FeatureCenter coordinates of each region don't need to be returned (because they shouldn't exist yet).
         let featuresQueryProjection = {
             _id: 1,
             properties: 0,
@@ -178,7 +190,7 @@ export async function handleCalculateCenters(request, response) {
             let center = polygonCenter(feature.geometry);
 
             // Add the centre data to the feature in the database
-            DatabaseEngine.getRegionBordersCollection().updateOne(
+            await DatabaseEngine.getRegionBordersCollection().updateOne(
                 {_id: feature._id}, // Updates the region feature document that has the same id as the current feature
                 {
                     $set: {
@@ -190,7 +202,7 @@ export async function handleCalculateCenters(request, response) {
 
         let message = "";
         message +=
-            "Calculated the center coordinates for every feature in the region borders collection.";
+            "Calculated the FeatureCenter coordinates for every feature in the region borders collection.";
         console.log(message);
         sendResponseWithGoBackLink(response, message);
     }

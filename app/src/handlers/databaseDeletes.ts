@@ -1,9 +1,11 @@
 import sendResponseWithGoBackLink from "../utils/response.js";
-import { DatabaseEngine } from "../configs/mongo.js";
+import {DatabaseEngine} from "../configs/mongo.js";
+// @ts-ignore
 import newlineBr from "newline-br";
+import {Request, Response} from "express-serve-static-core";
 
 //* Client requests to delete all collections
-export async function handleDeleteAll(request, response) {
+export async function handleDeleteAll(request: Request, response: Response) {
   console.log("Client requested to drop the all collections.");
 
   let message = "";
@@ -69,7 +71,7 @@ export async function handleDeleteAll(request, response) {
 }
 
 //* Client requests the CRSs collection to be deleted
-export async function handleDeleteCRSs(request, response) {
+export async function handleDeleteCRSs(request: Request, response: Response) {
   console.log("Client requested to drop the CRSs collection.");
 
   // Drop collection and send response to the server
@@ -96,7 +98,7 @@ export async function handleDeleteCRSs(request, response) {
 }
 
 //* Deletes the region borders collection from the databaseResponse
-export async function handleDeleteRegionBorders(request, response) {
+export async function handleDeleteRegionBorders(request: Request, response: Response) {
   console.log("Client requested to drop the region borders collection.");
 
   // Drop collection and send response to the server
@@ -126,7 +128,7 @@ export async function handleDeleteRegionBorders(request, response) {
 }
 
 //* Client requests the weatherDates collection to be deleted
-export async function handleDeleteWeatherDates(request, response) {
+export async function handleDeleteWeatherDates(request: Request, response: Response) {
   console.log("Client requested to drop the weather saved dates collection.");
 
   // Drop collection and send response to the server
@@ -154,7 +156,7 @@ export async function handleDeleteWeatherDates(request, response) {
 }
 
 //* Client requests the weather collection to be deleted
-export async function handleDeleteWeather(request, response) {
+export async function handleDeleteWeather(request: Request, response: Response) {
   console.log("Client requested to drop the weather information collection.");
 
   // Drop collection and send response to the server

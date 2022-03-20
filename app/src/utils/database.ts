@@ -1,9 +1,16 @@
-import {DatabaseEngine} from "../configs/mongo.js";
+import {DatabaseEngine} from "../configs/mongo";
 import fetch from "cross-fetch";
 import {separateMultiPolygons} from "./regionBorders.js";
+import {Collection, Db, Document, Filter, FindOptions, ObjectId} from "mongodb";
+import {CoordinatesReferenceSystem} from "../interfaces/GeoJSON/CoordinatesReferenceSystem";
+import {GeoJSON} from "../interfaces/GeoJSON/GeoJSON";
+import {
+    CoordinatesReferenceSystemProperties
+} from "../interfaces/GeoJSON/CoordinatesReferenceSystem/CoordinatesReferenceSystemProperties";
+import {Feature} from "../interfaces/GeoJSON/Feature/Feature";
 
 //* Returns true if a collection exists in a database, false if it doesn't
-export async function collectionExistsInDatabase(collectionName, database) {
+export async function collectionExistsInDatabase(collectionName: string, database: Db) {
     let collectionExists = false;
 
     let collectionsInDatabase = await database.listCollections().toArray();
@@ -17,20 +24,16 @@ export async function collectionExistsInDatabase(collectionName, database) {
     return collectionExists;
 }
 
-//* Deletes a collection from database
-export async function deleteCollectionFromDatabase(collectionName, database) {
-
-}
-
 //* Returns a CRS database _id given that it already exists in the CRS collection
 //* Returns null otherwise
-export async function queryCrsCollectionID(CRS, crsCollection) {
-    let crsQuery = {crs: CRS}; // Query for the database document that has the same crs field as the CRS passed as argument
+// TODO: Throw error instead of returning null
+export async function queryCrsCollectionID(CRS: CoordinatesReferenceSystem, crsCollection: Collection) {
+    let crsQuery: Filter<Document> = {crs: CRS}; // Query for the database document that has the same crs field as the CRS passed as argument
     // We only want to verify if the CRS passed as argument already exists in the database
     // To do so, we only need a crs document field to be returned by the query, like the _id field
     // If no field is returned we know that the CRS argument doesn't exist in the database
     let crsQueryProjection = {_id: 1};
-    let crsQueryOptions = {
+    let crsQueryOptions: FindOptions = {
         projection: crsQueryProjection,
     };
 
@@ -48,8 +51,8 @@ export async function queryCrsCollectionID(CRS, crsCollection) {
 }
 
 //* Fetch the projection information of the feature associated CRS, and return it
-async function fetchProjectionInformation(crsName) {
-    let projectionNumber = crsName.split("::")[1]; // The number of the EPSG projection, used to fetch the projection information from an external API
+async function fetchProjectionInformation(crsProperties: CoordinatesReferenceSystemProperties) {
+    let projectionNumber = crsProperties.name.split("::")[1]; // The number of the EPSG projection, used to fetch the projection information from an external API
     let projectionInformationURL =
         "https://epsg.io/" + projectionNumber + ".proj4"; // The URL of the projection information
     const projectionResponse = await fetch(projectionInformationURL);
@@ -61,7 +64,7 @@ async function fetchProjectionInformation(crsName) {
 //* Save a coordinates reference system found on a geoJSON to the database
 //* Returns the database ObjectId of the crs document inserted
 //* If the crs already exists in the database, return its ObjectId
-export async function saveCRS(geoJSON) {
+export async function saveCRS(geoJSON: GeoJSON) {
     let crsCollection = DatabaseEngine.getCRScollection();
 
     // Verify if the crs already exists in the database
@@ -75,7 +78,7 @@ export async function saveCRS(geoJSON) {
     //* If the crs already doesn't already exist in the database, insert it and its projection information, and return its ObjectID.
     let databaseResponse = await crsCollection.insertOne({
         crs: geoJSON.crs,
-        crsProjection: await fetchProjectionInformation(geoJSON.crs.properties.name)
+        crsProjection: await fetchProjectionInformation(geoJSON.crs.properties)
     });
     // insertOne returns some unnecessary parameters
     // it also returns an ObjectId("62266b751239b26c92ec8858") accessed with "databaseResponse.insertedId"
@@ -84,7 +87,7 @@ export async function saveCRS(geoJSON) {
 
 //* Save each geoJSON feature to the collection individually
 //* Returns an array of the database ObjectIds of the features inserted
-export async function saveFeatures(geoJSON) {
+export async function saveFeatures(geoJSON: GeoJSON) {
     let regionBordersCollection = DatabaseEngine.getRegionBordersCollection();
 
     let separatedGeoJSON = separateMultiPolygons(geoJSON)  // Separates the geoJSON MultiPolygon features into multiple features
@@ -102,11 +105,13 @@ export async function saveFeatures(geoJSON) {
 }
 
 //* Create a field on each feature with its associated coordinates reference system
-export async function associateCRStoFeatures(crsObjectId, featureObjectIds) {
+export async function associateCRStoFeatures(crsObjectId: ObjectId, featureObjectIds: ObjectId[]) {
+
     //* For each feature that had its ID passed as parameter, associate a crs ID
     for (const featureObjectId of featureObjectIds) {
+
         // Update the crs ID of a feature in the database
-        DatabaseEngine.getRegionBordersCollection().updateOne(
+        await DatabaseEngine.getRegionBordersCollection().updateOne(
             {_id: featureObjectId}, // Updates the feature database document that has the same ObjectId as the current featureObjectId
             {
                 $set: {
@@ -114,28 +119,29 @@ export async function associateCRStoFeatures(crsObjectId, featureObjectIds) {
                 },
             }
         );
+
     }
 }
 
 //* Query the region borders collection for some features border coordinates and properties, and return them in an array
-export async function queryRegionBordersFeatures(query, queryProjection) {
-    query.type = "Feature"; // In addition to the query parameters passed as argument, query for various features in the region borders collection
-    let featuresQueryOptions = {
-        projection: queryProjection,
+export async function queryRegionBordersFeatures(featuresQuery: Filter<Document>, featuresQueryProjection: { _id: number; type?: number; properties?: number; geometry?: number; center?: number; crsObjectId?: number; }) {
+    featuresQuery.type = "Feature"; // In addition to the query parameters passed as argument, query for various features in the region borders collection
+    let featuresQueryOptions: FindOptions = {
+        projection: featuresQueryProjection,
     };
 
-
     // The following query returns [{type: "Feature",...}, {type:"Feature",...}]
-    let featuresQueryResults = await DatabaseEngine.getRegionBordersCollection()
-        .find(query, featuresQueryOptions)
+    let featuresQueryResults: Feature[] = await DatabaseEngine.getRegionBordersCollection()
+        .find(featuresQuery, featuresQueryOptions)
         .toArray();
+
     return featuresQueryResults;
 }
 
 //* Query the region borders collection for all features, and return them in an array
-export async function queryAllRegionBordersFeatures(queryProjection) {
-    let featuresQuery = {}; // Query for all documents in the region borders collection
-    let featuresQueryOptions = {
+export async function queryAllRegionBordersFeatures(queryProjection: { _id: number; properties: number; center: number; crsObjectId: number; }) {
+    let featuresQuery: Filter<Document> = {}; // Query for all documents in the region borders collection
+    let featuresQueryOptions: FindOptions = {
         projection: queryProjection,
     };
 
@@ -148,9 +154,9 @@ export async function queryAllRegionBordersFeatures(queryProjection) {
 }
 
 //* Query the coordinates reference systems collection for all CRSs, and return them in an array
-export async function queryAllCoordinatesReferenceSystems(queryProjection) {
-    let CRSsQuery = {}; // Query for all documents in the coordinates reference systems collection
-    let CRSsQueryOptions = {
+export async function queryAllCoordinatesReferenceSystems(queryProjection: { _id: number; crs: number; }) {
+    let CRSsQuery: Filter<Document> = {}; // Query for all documents in the coordinates reference systems collection
+    let CRSsQueryOptions: FindOptions = {
         projection: queryProjection,
     };
 

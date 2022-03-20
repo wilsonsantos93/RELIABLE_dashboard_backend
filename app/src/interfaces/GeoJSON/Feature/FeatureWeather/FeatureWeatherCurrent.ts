@@ -1,5 +1,5 @@
-import {FeatureWeatherCurrentCondition} from "./FeatureWeatherCurrentCondition";
-import {FeatureWeatherCurrentAirQuality} from "./FeatureWeatherCurrentAirQuality";
+import {FeatureWeatherCurrentCondition} from "./FeatureWeatherCurrent/FeatureWeatherCurrentCondition";
+import {FeatureWeatherCurrentAirQuality} from "./FeatureWeatherCurrent/FeatureWeatherCurrentAirQuality";
 
 export interface FeatureWeatherCurrent {
     last_updated_epoch: number;
