@@ -1,16 +1,17 @@
 import dotenv from "dotenv"; //! Importing environment variables to connect to the database engine
-import {DatabaseEngine} from "./configs/mongo.ts"; //! Database engine connection
+import {DatabaseEngine} from "./configs/mongo.js"; //! Database engine connection
 import express from "express";
 import cors from "cors"; //! Cross-origin resource sharing
-//! Routers
-import {regionBordersRouter} from "./routes/regionBorders.ts";
-import {weatherRouter} from "./routes/weather.ts";
-import {librariesRouter} from "./routes/libraries.ts";
-import {configRouter} from "./routes/config.ts";
-import {databaseDeletesRouter} from "./routes/databaseDeletes.ts";
-import {mapRouter} from "./routes/map.ts"
 
-dotenv.config({path: "./src/configs/.env"}); // Loads .env file contents into process.env
+//! Routers
+import {regionBordersRouter} from "./routes/regionBorders.js";
+import {weatherRouter} from "./routes/weather.js";
+import {librariesRouter} from "./routes/libraries.js";
+import {configRouter} from "./routes/config.js";
+import {databaseDeletesRouter} from "./routes/databaseDeletes.js";
+import {mapRouter} from "./routes/map.js"
+
+dotenv.config({path: "./.env"}); // Loads .env file contents into process.env
 
 await DatabaseEngine.connectToDatabaseEngine();
 

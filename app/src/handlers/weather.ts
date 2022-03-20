@@ -1,10 +1,10 @@
-import {queryRegionBordersFeatures} from "../utils/database";
-import {DatabaseEngine} from "../configs/mongo";
+import {queryRegionBordersFeatures} from "../utils/database.js";
+import {DatabaseEngine} from "../configs/mongo.js";
 import sendResponseWithGoBackLink from "../utils/response.js";
 import proj4 from "proj4";
 import {Request, Response} from "express-serve-static-core";
 import {Collection, Document, Filter, FindOptions} from "mongodb";
-import {requestWeather} from "../utils/weather";
+import {requestWeather} from "../utils/weather.js";
 
 //* Saves the current date to the weatherDates database
 async function saveCurrentDateToCollection(weatherDatesCollection: Collection) {

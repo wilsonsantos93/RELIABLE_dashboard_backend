@@ -4,7 +4,7 @@ import {
     handleDeleteRegionBorders,
     handleDeleteWeather,
     handleDeleteWeatherDates,
-} from "../handlers/databaseDeletes";
+} from "../handlers/databaseDeletes.js";
 
 //! Express
 import express from "express";

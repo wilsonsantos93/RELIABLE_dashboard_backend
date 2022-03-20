@@ -2,12 +2,12 @@ import {
     collectionExistsInDatabase,
     queryAllCoordinatesReferenceSystems,
     queryRegionBordersFeatures,
-} from "../utils/database";
-import {DatabaseEngine} from "../configs/mongo";
+} from "../utils/database.js";
+import {DatabaseEngine} from "../configs/mongo.js";
 import sendResponseWithGoBackLink from "../utils/response.js";
 import {Document, Filter, FindOptions, ObjectId} from "mongodb";
 import {Request, Response} from "express-serve-static-core";
-import {GeoJSON} from "../interfaces/GeoJSON/GeoJSON";
+import {GeoJSON} from "../interfaces/GeoJSON/GeoJSON.js";
 
 // Sends an array of geoJSONs with the border regions and its weather information on a certain date
 export async function handleGetRegionBordersAndWeatherByDate(

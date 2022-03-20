@@ -1,16 +1,16 @@
-import {DatabaseEngine} from "../configs/mongo";
+import {DatabaseEngine} from "../configs/mongo.js";
 import fetch from "cross-fetch";
 import {separateMultiPolygons} from "./regionBorders.js";
 import {Collection, Db, Document, Filter, FindOptions, ObjectId} from "mongodb";
-import {CoordinatesReferenceSystem} from "../interfaces/GeoJSON/CoordinatesReferenceSystem";
-import {GeoJSON} from "../interfaces/GeoJSON/GeoJSON";
+import {CoordinatesReferenceSystem} from "../interfaces/GeoJSON/CoordinatesReferenceSystem.js";
+import {GeoJSON} from "../interfaces/GeoJSON/GeoJSON.js";
 import {
     CoordinatesReferenceSystemProperties
-} from "../interfaces/GeoJSON/CoordinatesReferenceSystem/CoordinatesReferenceSystemProperties";
-import {Feature} from "../interfaces/GeoJSON/Feature/Feature";
-
+} from "../interfaces/GeoJSON/CoordinatesReferenceSystem/CoordinatesReferenceSystemProperties.js";
+import {Feature} from "../interfaces/GeoJSON/Feature/Feature.js";
 
 /**
+ * Checks if a collection exists in a database.
  * @param collectionName The collection's name to check.
  * @param database The database to check for the collection name.
  * @return <code>boolean<code>
@@ -34,13 +34,15 @@ export async function collectionExistsInDatabase(collectionName: string, databas
 }
 
 /**
- * Queries for a CRS database _id in a collection.
+ * Queries for a {@link CoordinatesReferenceSystem} _id in the <u>coordinatesReferenceSystem</u> collection.
  * @param CRS - The Coordinates Reference System to check the existence.
- * @param crsCollection - The collection to check in.
- * @return The Coordinates Reference System collection _id.
+ * @return The <u>coordinatesReferenceSystem</u> collection _id.
  * @throws {@link Error} - If the Coordinates Reference System doesn't exist in the collection.
  */
-export async function queryCrsCollectionID(CRS: CoordinatesReferenceSystem, crsCollection: Collection) {
+export async function queryCrsCollectionID(CRS: CoordinatesReferenceSystem) {
+
+    let crsCollection = DatabaseEngine.getCRScollection();
+
     let crsQuery: Filter<Document> = {crs: CRS}; // Query for the database document that has the same crs field as the CRS passed as argument
     // We only want to verify if the CRS passed as argument already exists in the database
     // To do so, we only need a crs document field to be returned by the query, like the _id field
@@ -63,7 +65,11 @@ export async function queryCrsCollectionID(CRS: CoordinatesReferenceSystem, crsC
     }
 }
 
-//* Fetch the projection information of the feature associated CRS, and return it
+/**
+ * Fetches and returns the projection information of a {@link CoordinatesReferenceSystem} from an external API.
+ * @param crsProperties The {@link CoordinatesReferenceSystem} to fetch the projection information.
+ * @return The {@link CoordinatesReferenceSystem} information.
+ */
 async function fetchProjectionInformation(crsProperties: CoordinatesReferenceSystemProperties) {
     let projectionNumber = crsProperties.name.split("::")[1]; // The number of the EPSG projection, used to fetch the projection information from an external API
     let projectionInformationURL =
@@ -74,21 +80,27 @@ async function fetchProjectionInformation(crsProperties: CoordinatesReferenceSys
     return projectionInformation;
 }
 
-//* Save a coordinates reference system found on a geoJSON to the database
-//* Returns the database ObjectId of the crs document inserted
-//* If the crs already exists in the database, return its ObjectId
-export async function saveCRS(geoJSON: GeoJSON) {
-    let crsCollection = DatabaseEngine.getCRScollection();
+/**
+ * Saves the {@link CoordinatesReferenceSystem} from a {@link geoJSON} to the <u>coordinatesReferenceSystem</u> collection,
+ * if it doesn't already exist.
+ * @param geoJSON The {@link GeoJSON} to save the CRS.
+ * @return {@link ObjectId}
+ * <ul>
+ * <li> Document already exists in the collection - {@link ObjectId} of the document already in the collection.</li>
+ * <li> Document doesn't already exist in the collection - Returns the collection {@link ObjectId} of the crs document inserted.</li>
+ * </ul>
+ */
+export async function saveCoordinatesReferenceSystem(geoJSON: GeoJSON) {
 
-    // Verify if the crs already exists in the database
+    //* Verify if the crs already exists in the database
     try {
-        let crsCollectionID = await queryCrsCollectionID(geoJSON.crs, crsCollection);
+        let crsCollectionID = await queryCrsCollectionID(geoJSON.crs);
 
         //* If the crs already exists in the database, return its ObjectID
         return crsCollectionID;
     }
 
-    //* If the crs already doesn't already exist in the database, insert it and its projection information, and return its ObjectID.
+    //* If the crs already doesn't already exist in the database, insert it and its projection information, and return its ObjectId.
     catch (exception) {
         let databaseResponse = await crsCollection.insertOne({
             crs: geoJSON.crs,
@@ -101,8 +113,11 @@ export async function saveCRS(geoJSON: GeoJSON) {
 
 }
 
-//* Save each geoJSON feature to the collection individually
-//* Returns an array of the database ObjectIds of the features inserted
+/**
+ * Save each {@link GeoJSON} {@link Feature} to the <u>regionBorders</u> collection individually.
+ * @param geoJSON {@link GeoJSON} to insert to the collection.
+ * @return Array of with each {@link ObjectId} of the features inserted in the collection.
+ */
 export async function saveFeatures(geoJSON: GeoJSON) {
     let regionBordersCollection = DatabaseEngine.getRegionBordersCollection();
 
@@ -120,7 +135,11 @@ export async function saveFeatures(geoJSON: GeoJSON) {
     return ObjectIdsArray;
 }
 
-//* Create a field on each feature with its associated coordinates reference system
+/**
+ * Create a field on each {@link Feature} of the <u>regionBordersCollection</u> with a {@link CoordinatesReferenceSystem} {@link ObjectId}.
+ * @param crsObjectId The {@link ObjectId} of the {@link CoordinatesReferenceSystem} to associate.
+ * @param featureObjectIds An array containing every {@link ObjectId} of every {@link Feature} to have associated with the {@link crsObjectId}.
+ */
 export async function associateCRStoFeatures(crsObjectId: ObjectId, featureObjectIds: ObjectId[]) {
 
     //* For each feature that had its ID passed as parameter, associate a crs ID
@@ -139,7 +158,12 @@ export async function associateCRStoFeatures(crsObjectId: ObjectId, featureObjec
     }
 }
 
-//* Query the region borders collection for some features border coordinates and properties, and return them in an array
+/**
+ * Query the <u>regionBorders</u> collection for some features border coordinates and properties, and
+ * @param featuresQuery The query to make to the region borders collection.
+ * @param featuresQueryProjection The fields of the collection {@link Feature} to return in the query.
+ * @return  Array containing each {@link Feature} queried.
+ */
 export async function queryRegionBordersFeatures(featuresQuery: Filter<Document>, featuresQueryProjection: { _id: number; type?: number; properties?: number; geometry?: number; center?: number; crsObjectId?: number; }) {
     featuresQuery.type = "Feature"; // In addition to the query parameters passed as argument, query for various features in the region borders collection
     let featuresQueryOptions: FindOptions = {
@@ -154,7 +178,11 @@ export async function queryRegionBordersFeatures(featuresQuery: Filter<Document>
     return featuresQueryResults;
 }
 
-//* Query the region borders collection for all features, and return them in an array
+/**
+ * Query the region borders collection for all features, and return them in an array.
+ * @param queryProjection The fields of the collection {@link Feature} to return in the query.
+ * @return Array containing every {@link Feature} in the <u>regionBorders</u> collection.
+ * */
 export async function queryAllRegionBordersFeatures(queryProjection: { _id: number; properties: number; center: number; crsObjectId: number; }) {
     let featuresQuery: Filter<Document> = {}; // Query for all documents in the region borders collection
     let featuresQueryOptions: FindOptions = {
@@ -169,7 +197,11 @@ export async function queryAllRegionBordersFeatures(queryProjection: { _id: numb
     return featuresQueryResults;
 }
 
-//* Query the coordinates reference systems collection for all CRSs, and return them in an array
+/**
+ * Query the coordinates reference systems collection for all CRSs, and return them in an array
+ * @param queryProjection The fields of the collection {@link CoordinatesReferenceSystem} to return in the query.
+ * @return Array containing every {@link {@link CoordinatesReferenceSystem}} in the <u>coordinatesReferenceSystem</u> collection.
+ */
 export async function queryAllCoordinatesReferenceSystems(queryProjection: { _id: number; crs: number; }) {
     let CRSsQuery: Filter<Document> = {}; // Query for all documents in the coordinates reference systems collection
     let CRSsQueryOptions: FindOptions = {
@@ -178,7 +210,7 @@ export async function queryAllCoordinatesReferenceSystems(queryProjection: { _id
 
     let CRSsQueryResults = await DatabaseEngine.getCRScollection()
         .find(CRSsQuery, CRSsQueryOptions)
-        .toArray();
+        .toArray() as CoordinatesReferenceSystem[];
 
     return CRSsQueryResults;
 }

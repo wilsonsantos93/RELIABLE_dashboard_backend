@@ -1,4 +1,4 @@
-import {DatabaseEngine} from "../configs/mongo";
+import {DatabaseEngine} from "../configs/mongo.js";
 import sendResponseWithGoBackLink from "../utils/response.js";
 import {
     associateCRStoFeatures,
@@ -6,13 +6,13 @@ import {
     queryAllCoordinatesReferenceSystems,
     queryAllRegionBordersFeatures,
     queryRegionBordersFeatures,
-    saveCRS,
+    saveCoordinatesReferenceSystem,
     saveFeatures,
-} from "../utils/database";
+} from "../utils/database.js";
 // @ts-ignore
 import polygonCenter from "geojson-polygon-center";
 import {Request, Response} from "express-serve-static-core";
-import {GeoJSON} from "../interfaces/GeoJSON/GeoJSON";
+import {GeoJSON} from "../interfaces/GeoJSON/GeoJSON.js";
 
 
 /**
@@ -80,6 +80,8 @@ export async function handleGetRegionBorders(request: Request, response: Respons
 
             // Add the queried features to the geoJSON
             let geoJSON: GeoJSON = {
+                type: "FeatureCollection",
+                crs: crs,
                 features: regionBordersFeaturesArray
             };
 
@@ -117,7 +119,7 @@ export async function handleSaveRegionBorders(request: Request, response: Respon
         console.log(
             "Started inserting geoJSON coordinate reference system in the database."
         );
-        insertedCRSObjectId = await saveCRS(geoJSON);
+        insertedCRSObjectId = await saveCoordinatesReferenceSystem(geoJSON);
         console.log(
             "Inserted geoJSON coordinate reference system in the database. CRS ID in database:",
             // To extract the ID string inside the ObjectId, we use ObjectId.toHexString
