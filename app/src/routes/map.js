@@ -1,5 +1,10 @@
+<<<<<<< bb9fe8223ebc664432392fb89b00131405563d5c:app/src/routes/map.js
 import {DatabaseEngine} from "../configs/mongo.js";
 import {handleGetRegionBordersAndWeatherByDate} from "../handlers/map.js";
+=======
+import {DatabaseEngine} from "../configs/mongo";
+import {handleGetRegionBordersAndWeatherByDate} from "../handlers/map";
+>>>>>>> Added Typescript interfaces for weather geojson:app/src/routes/map.ts
 
 //! Express
 import express from "express";

@@ -1,10 +1,14 @@
 //! Importing environment variables to connect to the database engine
-import dotenv from "dotenv";
-dotenv.config({ path: "./src/configs/.env" }); // Loads .env file contents into process.env
+import {config as dotenvConfig} from "dotenv"
+dotenvConfig({ path: "./src/configs/.env" }); // Loads .env file contents into process.env
 // console.log(process.env)
 
 //! Database engine connection
+<<<<<<< bb9fe8223ebc664432392fb89b00131405563d5c:app/src/server.js
 import { DatabaseEngine } from "./configs/mongo.js";
+=======
+import { DatabaseEngine } from "./configs/mongo";
+>>>>>>> Added Typescript interfaces for weather geojson:app/src/server.ts
 await DatabaseEngine.connectToDatabaseEngine();
 
 //! Express

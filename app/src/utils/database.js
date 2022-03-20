@@ -1,4 +1,8 @@
+<<<<<<< bb9fe8223ebc664432392fb89b00131405563d5c:app/src/utils/database.js
 import {DatabaseEngine} from "../configs/mongo.js";
+=======
+import {DatabaseEngine} from "../configs/mongo";
+>>>>>>> Added Typescript interfaces for weather geojson:app/src/utils/database.ts
 import fetch from "cross-fetch";
 import {separateMultiPolygons} from "./regionBorders.js";
 
@@ -106,7 +110,7 @@ export async function associateCRStoFeatures(crsObjectId, featureObjectIds) {
     //* For each feature that had its ID passed as parameter, associate a crs ID
     for (const featureObjectId of featureObjectIds) {
         // Update the crs ID of a feature in the database
-        DatabaseEngine.getRegionBordersCollection().updateOne(
+        await DatabaseEngine.getRegionBordersCollection().updateOne(
             {_id: featureObjectId}, // Updates the feature database document that has the same ObjectId as the current featureObjectId
             {
                 $set: {

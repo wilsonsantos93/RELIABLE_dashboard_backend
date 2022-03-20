@@ -4,7 +4,11 @@ import express from "express";
 //! Get region borders data route
 //! Client sends a geoJSON to be saved to the database
 //! Calculate centers of each feature in the database route
+<<<<<<< bb9fe8223ebc664432392fb89b00131405563d5c:app/src/routes/regionBorders.js
 import {handleCalculateCenters, handleGetRegionBorders, handleSaveRegionBorders} from "../handlers/regionBorders.js";
+=======
+import {handleCalculateCenters, handleGetRegionBorders, handleSaveRegionBorders} from "../handlers/regionBorders";
+>>>>>>> Added Typescript interfaces for weather geojson:app/src/routes/regionBorders.ts
 import multer from "multer";
 
 export let regionBordersRouter = express.Router();

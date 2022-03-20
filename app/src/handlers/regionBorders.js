@@ -1,4 +1,8 @@
+<<<<<<< bb9fe8223ebc664432392fb89b00131405563d5c:app/src/handlers/regionBorders.js
 import {DatabaseEngine} from "../configs/mongo.js";
+=======
+import {DatabaseEngine} from "../configs/mongo";
+>>>>>>> Added Typescript interfaces for weather geojson:app/src/handlers/regionBorders.ts
 import sendResponseWithGoBackLink from "../utils/response.js";
 import {
     associateCRStoFeatures,
@@ -178,7 +182,7 @@ export async function handleCalculateCenters(request, response) {
             let center = polygonCenter(feature.geometry);
 
             // Add the centre data to the feature in the database
-            DatabaseEngine.getRegionBordersCollection().updateOne(
+            await DatabaseEngine.getRegionBordersCollection().updateOne(
                 {_id: feature._id}, // Updates the region feature document that has the same id as the current feature
                 {
                     $set: {

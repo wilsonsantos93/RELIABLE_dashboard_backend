@@ -2,7 +2,10 @@
 // with a single Polygon each and the same properties of the MultiPolygon
 export function separateMultiPolygons(geoJSON) {
 
-    let separatedGeoJSON = {};
+    let separatedGeoJSON = {
+
+
+    };
 
     separatedGeoJSON.type = geoJSON.type;
     separatedGeoJSON.crs = geoJSON.crs;
@@ -20,7 +23,10 @@ export function separateMultiPolygons(geoJSON) {
 
             for (const polygon of currentFeature.geometry.coordinates) {
 
-                let tempFeature = {}
+                let tempFeature = {
+                    type: String,
+                    properties: Object,
+                }
 
                 tempFeature.type = currentFeature.type;
                 tempFeature.properties = currentFeature.properties;

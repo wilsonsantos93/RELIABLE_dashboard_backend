@@ -1,4 +1,8 @@
+<<<<<<< bb9fe8223ebc664432392fb89b00131405563d5c:app/src/routes/weather.js
 import {handleGetWeatherDates, handleSaveWeather,} from "../handlers/weather.js";
+=======
+import {handleGetWeatherDates, handleSaveWeather,} from "../handlers/weather";
+>>>>>>> Added Typescript interfaces for weather geojson:app/src/routes/weather.ts
 
 //! Express
 import express from "express";

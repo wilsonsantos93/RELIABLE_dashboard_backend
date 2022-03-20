@@ -1,8 +1,13 @@
 import { queryRegionBordersFeatures } from "../utils/database.js";
+<<<<<<< bb9fe8223ebc664432392fb89b00131405563d5c:app/src/handlers/weather.js
 import { DatabaseEngine } from "../configs/mongo.js";
+=======
+import { DatabaseEngine } from "../configs/mongo";
+>>>>>>> Added Typescript interfaces for weather geojson:app/src/handlers/weather.ts
 import sendResponseWithGoBackLink from "../utils/response.js";
 import * as proj4js from "../libs/proj4.js";
 import fetch from "cross-fetch";
+import * as proj4 from "proj4";
 
 //* Saves the current date to the weatherDates database
 async function saveCurrentDateToCollection(weatherDatesCollection) {
@@ -64,7 +69,7 @@ export async function handleSaveWeather(request, response) {
       crsQueryOptions
     );
 
-    // Convert the current feature coordinates from it's current CRS to latitude/longitude
+    // Convert the current feature coordinates from its current CRS to latitude/longitude
     let latitudeLongitudeProjection = "+proj=longlat +datum=WGS84 +no_defs"; // Latitude/Longitude projection
 
     let projectedCoordinates = proj4(
@@ -76,7 +81,7 @@ export async function handleSaveWeather(request, response) {
 
     //* Request the weather at the center of each feature from an external API
     const url =
-      "http://api.weatherapi.com/v1/current.json?key=a1f415612c9543ea80a151844220103&q=" +
+      "https://api.weatherapi.com/v1/current.json?key=a1f415612c9543ea80a151844220103&q=" +
       projectedCoordinates.reverse() + // The database coordinates are saved in [long,lat], the weather API acceps [lat,long]
       "&aqi=yes";
 
