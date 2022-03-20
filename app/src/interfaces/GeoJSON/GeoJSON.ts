@@ -1,5 +1,5 @@
 import {CoordinatesReferenceSystem} from "./CoordinatesReferenceSystem";
-import {Feature} from "./Feature/Feature";
+import {Feature} from "./Feature";
 
 
 export interface GeoJSON {

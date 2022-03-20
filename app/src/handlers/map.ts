@@ -9,7 +9,11 @@ import {Document, Filter, FindOptions, ObjectId} from "mongodb";
 import {Request, Response} from "express-serve-static-core";
 import {GeoJSON} from "../interfaces/GeoJSON/GeoJSON.js";
 
-// Sends an array of geoJSONs with the border regions and its weather information on a certain date
+/**
+ * Sends an array of geoJSONs with the border regions and its weather information on a certain date
+ * @param request Client HTTP request object
+ * @param response Client HTTP response object
+ */
 export async function handleGetRegionBordersAndWeatherByDate(
     request: Request,
     response: Response
@@ -25,10 +29,14 @@ export async function handleGetRegionBordersAndWeatherByDate(
     //! Error handling
 
     //* Check if the region border collection exists
-    let regionBordersCollectionName =
-        DatabaseEngine.getRegionBordersCollectionName();
     let regionBordersCollectionExists = await collectionExistsInDatabase(
-        regionBordersCollectionName,
+        DatabaseEngine.getRegionBordersCollectionName(),
+        DatabaseEngine.getDashboardDatabase()
+    );
+
+    //* Check if the weather collection exists
+    let weatherCollectionExists = await collectionExistsInDatabase(
+        DatabaseEngine.getWeatherCollectionName(),
         DatabaseEngine.getDashboardDatabase()
     );
 
@@ -37,13 +45,6 @@ export async function handleGetRegionBordersAndWeatherByDate(
         message +=
             "Couldn't get region borders because the collection doesn't exist.\n";
     }
-
-    //* Check if the weather collection exists
-    let weatherCollectionName = DatabaseEngine.getWeatherCollectionName();
-    let weatherCollectionExists = await collectionExistsInDatabase(
-        weatherCollectionName,
-        DatabaseEngine.getDashboardDatabase()
-    );
 
     //* If the weather collection doesn't exist, send error response to the client
     if (!regionBordersCollectionExists) {
@@ -85,7 +86,7 @@ export async function handleGetRegionBordersAndWeatherByDate(
         for (const crs of crsQueryResults) {
             let geoJSON: GeoJSON = {
                 type: "FeatureCollection",
-                crs: crs.crs,
+                crs: crs,
                 features: [],
             };
 

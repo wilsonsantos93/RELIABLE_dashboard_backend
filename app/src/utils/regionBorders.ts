@@ -1,7 +1,7 @@
 // Takes a geoJSON, and returns another geoJSON with the MultiPolygon features separated into multiple features
 // with a single Polygon each and the same properties of the MultiPolygon
 import {GeoJSON} from "../interfaces/GeoJSON/GeoJSON";
-import {Feature} from "../interfaces/GeoJSON/Feature/Feature";
+import {Feature} from "../interfaces/GeoJSON/Feature";
 
 /**
  * Separates a geoJSON MultiPolygon features into multiple Polygon features, if it has any.

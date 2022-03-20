@@ -1,13 +1,13 @@
 import {DatabaseEngine} from "../configs/mongo.js";
 import fetch from "cross-fetch";
 import {separateMultiPolygons} from "./regionBorders.js";
-import {Collection, Db, Document, Filter, FindOptions, ObjectId} from "mongodb";
+import {Db, Document, Filter, FindOptions, ObjectId} from "mongodb";
 import {CoordinatesReferenceSystem} from "../interfaces/GeoJSON/CoordinatesReferenceSystem.js";
 import {GeoJSON} from "../interfaces/GeoJSON/GeoJSON.js";
 import {
     CoordinatesReferenceSystemProperties
 } from "../interfaces/GeoJSON/CoordinatesReferenceSystem/CoordinatesReferenceSystemProperties.js";
-import {Feature} from "../interfaces/GeoJSON/Feature/Feature.js";
+import {Feature} from "../interfaces/GeoJSON/Feature.js";
 
 /**
  * Checks if a collection exists in a database.
@@ -102,7 +102,7 @@ export async function saveCoordinatesReferenceSystem(geoJSON: GeoJSON) {
 
     //* If the crs already doesn't already exist in the database, insert it and its projection information, and return its ObjectId.
     catch (exception) {
-        let databaseResponse = await crsCollection.insertOne({
+        let databaseResponse = await DatabaseEngine.getCRScollection().insertOne({
             crs: geoJSON.crs,
             crsProjection: await fetchProjectionInformation(geoJSON.crs.properties)
         });
@@ -193,7 +193,7 @@ export async function queryAllRegionBordersFeatures(queryProjection: { _id: numb
     console.log("Querying region borders collection for all features.");
     let featuresQueryResults = await DatabaseEngine.getRegionBordersCollection()
         .find(featuresQuery, featuresQueryOptions)
-        .toArray();
+        .toArray() as Feature[];
     return featuresQueryResults;
 }
 
