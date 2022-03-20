@@ -9,7 +9,16 @@ import {
 } from "../interfaces/GeoJSON/CoordinatesReferenceSystem/CoordinatesReferenceSystemProperties";
 import {Feature} from "../interfaces/GeoJSON/Feature/Feature";
 
-//* Returns true if a collection exists in a database, false if it doesn't
+
+/**
+ * @param collectionName The collection's name to check.
+ * @param database The database to check for the collection name.
+ * @return <code>boolean<code>
+ * <ul>
+ * <li> true - Collection exists in database. </li>
+ * <li> false - Collection doesn't in database. </li>
+ * <ul>
+ */
 export async function collectionExistsInDatabase(collectionName: string, database: Db) {
     let collectionExists = false;
 
@@ -24,9 +33,13 @@ export async function collectionExistsInDatabase(collectionName: string, databas
     return collectionExists;
 }
 
-//* Returns a CRS database _id given that it already exists in the CRS collection
-//* Returns null otherwise
-// TODO: Throw error instead of returning null
+/**
+ * Queries for a CRS database _id in a collection.
+ * @param CRS - The Coordinates Reference System to check the existence.
+ * @param crsCollection - The collection to check in.
+ * @return The Coordinates Reference System collection _id.
+ * @throws {@link Error} - If the Coordinates Reference System doesn't exist in the collection.
+ */
 export async function queryCrsCollectionID(CRS: CoordinatesReferenceSystem, crsCollection: Collection) {
     let crsQuery: Filter<Document> = {crs: CRS}; // Query for the database document that has the same crs field as the CRS passed as argument
     // We only want to verify if the CRS passed as argument already exists in the database
@@ -46,7 +59,7 @@ export async function queryCrsCollectionID(CRS: CoordinatesReferenceSystem, crsC
 
     //* Returns null otherwise
     if (databaseCRS == null) {
-        return null;
+        throw new Error("Coordinates Reference System doesn't exist in the collection.")
     }
 }
 
@@ -68,21 +81,24 @@ export async function saveCRS(geoJSON: GeoJSON) {
     let crsCollection = DatabaseEngine.getCRScollection();
 
     // Verify if the crs already exists in the database
-    let crsCollectionID = await queryCrsCollectionID(geoJSON.crs, crsCollection);
+    try {
+        let crsCollectionID = await queryCrsCollectionID(geoJSON.crs, crsCollection);
 
-    //* If the crs already exists in the database, return its ObjectID
-    if (crsCollectionID != null) {
+        //* If the crs already exists in the database, return its ObjectID
         return crsCollectionID;
     }
 
     //* If the crs already doesn't already exist in the database, insert it and its projection information, and return its ObjectID.
-    let databaseResponse = await crsCollection.insertOne({
-        crs: geoJSON.crs,
-        crsProjection: await fetchProjectionInformation(geoJSON.crs.properties)
-    });
-    // insertOne returns some unnecessary parameters
-    // it also returns an ObjectId("62266b751239b26c92ec8858") accessed with "databaseResponse.insertedId"
-    return databaseResponse.insertedId;
+    catch (exception) {
+        let databaseResponse = await crsCollection.insertOne({
+            crs: geoJSON.crs,
+            crsProjection: await fetchProjectionInformation(geoJSON.crs.properties)
+        });
+        // insertOne returns some unnecessary parameters
+        // it also returns an ObjectId("62266b751239b26c92ec8858") accessed with "databaseResponse.insertedId"
+        return databaseResponse.insertedId;
+    }
+
 }
 
 //* Save each geoJSON feature to the collection individually
