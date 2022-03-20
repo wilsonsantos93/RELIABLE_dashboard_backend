@@ -3,11 +3,17 @@ import {DatabaseEngine} from "../configs/mongo.js";
 import sendResponseWithGoBackLink from "../utils/response.js";
 import proj4 from "proj4";
 import {Request, Response} from "express-serve-static-core";
-import {Collection, Document, Filter, FindOptions} from "mongodb";
+import {Document, Filter, FindOptions, ObjectId} from "mongodb";
 import {requestWeather} from "../utils/weather.js";
 
-//* Saves the current date to the weatherDates database
-async function saveCurrentDateToCollection(weatherDatesCollection: Collection) {
+/**
+ * Saves the current date to the <u>weatherDates</u> collection.
+ * @return The saved date {@link ObjectId} in the <u>weatherDates</u> collection.
+ */
+async function saveCurrentDateToCollection() {
+
+    let weatherDatesCollection = DatabaseEngine.getWeatherDatesCollection()
+
     let currentDate = new Date();
     let databaseResponse = await weatherDatesCollection.insertOne({
         date: currentDate,
@@ -18,9 +24,6 @@ async function saveCurrentDateToCollection(weatherDatesCollection: Collection) {
     return insertedDateDatabaseID;
 }
 
-
-
-// TODO: 3000 weather JSONs take approximately 25 minutes to be fetched from the weather API
 // TODO: Doing the fetching in an asynchronous manner would optimize this process
 /**
  * Saves the weather of each region border feature to the weather collection. <p>
@@ -34,7 +37,6 @@ export async function handleSaveWeather(request: Request, response: Response) {
 
     //* Save the current date to the weatherDates collection
     let weatherDateDatabaseID = await saveCurrentDateToCollection(
-        DatabaseEngine.getWeatherDatesCollection()
     );
 
     //* Query for all the border regions features in the database
@@ -52,12 +54,12 @@ export async function handleSaveWeather(request: Request, response: Response) {
     let currentFeatureIndex = 1
     for (const currentFeature of regionBordersFeaturesWithCenter) {
 
-        if (currentFeatureIndex % 100 == 0) {
+        if (currentFeatureIndex % 10 == 0) {
             console.log("Saved weather of feature number:", currentFeatureIndex);
         }
 
         //* Query the database for the CRS associated with the current feature
-        let crsCollection = DatabaseEngine.getCRScollection();
+        let crsCollection = DatabaseEngine.getCrsCollection();
         let crsQuery: Filter<Document> = {_id: currentFeature.crsObjectId};
         // We are going to query the weather API for the weather at the FeatureCenter coordinates of this feature
         // The weather API uses latitude and longitude, so we need the CRS projection information that the database feature was saved with, to convert it to latitude/longitude
@@ -83,10 +85,10 @@ export async function handleSaveWeather(request: Request, response: Response) {
         let weatherDataJSON = await requestWeather(projectedCoordinates.reverse())// The database coordinates are saved in [long,lat], the weather API accepts [lat,long]
 
 
-        // //* Save the weather of each feature to the weather collection
+        //* Save the weather of each feature to the weather collection
         let weatherCollection = DatabaseEngine.getWeatherCollection();
-        let databaseResponse = await weatherCollection.insertOne({
-            weatherInformation: weatherDataJSON,
+        await weatherCollection.insertOne({
+            weather: weatherDataJSON,
             weatherDateObjectId: weatherDateDatabaseID,
             regionBorderFeatureObjectId: currentFeature._id,
         });
@@ -107,7 +109,9 @@ export async function handleSaveWeather(request: Request, response: Response) {
     if (regionBordersFeaturesWithNoCenter != []) {
         message =
             message +
-            "\nNot all features had their centers calculated beforehand, so their weather couldn't be fetched.\n";
+            "\nNot all features had their centers calculated beforehand, so their weather couldn't be fetched.\n"
+            + regionBordersFeaturesWithNoCenter.toString();
+
     }
     //* If all the features had their FeatureCenter calculated, and their weather fetched
     else if (regionBordersFeaturesWithNoCenter == []) {
@@ -119,8 +123,6 @@ export async function handleSaveWeather(request: Request, response: Response) {
     console.log(message);
     sendResponseWithGoBackLink(response, message);
 }
-
-
 
 /**
  * Sends a response with a JSON with the various dates the weather was saved in the database

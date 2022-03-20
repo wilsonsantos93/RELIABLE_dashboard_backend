@@ -1,11 +1,12 @@
 // Takes a geoJSON, and returns another geoJSON with the MultiPolygon features separated into multiple features
 // with a single Polygon each and the same properties of the MultiPolygon
-import {GeoJSON} from "../interfaces/GeoJSON/GeoJSON";
+import {GeoJSON} from "../interfaces/GeoJSON";
+import {RegionBordersDocument} from "../interfaces/DatabaseCollections/RegionBordersDocument";
 import {Feature} from "../interfaces/GeoJSON/Feature";
 
 /**
  * Separates a geoJSON MultiPolygon features into multiple Polygon features, if it has any.
- * Each new polygon feature has the same {@link Feature.properties} as the original MultiPolygon feature.
+ * Each new polygon feature has the same {@link RegionBordersDocument.properties} as the original MultiPolygon feature.
  * @param  geoJSON - to separate MultiPolygon features.
  * @return separatedGeoJSON - geoJSON with the MultiPolygon features separated.
  */

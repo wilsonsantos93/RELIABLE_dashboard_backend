@@ -4,7 +4,7 @@ import {
     associateCRStoFeatures,
     collectionExistsInDatabase,
     queryAllCoordinatesReferenceSystems,
-    queryAllRegionBordersFeatures,
+    queryAllRegionBorderDocuments,
     queryRegionBordersFeatures,
     saveCoordinatesReferenceSystem,
     saveFeatures,
@@ -12,8 +12,8 @@ import {
 // @ts-ignore
 import polygonCenter from "geojson-polygon-center";
 import {Request, Response} from "express-serve-static-core";
-import {GeoJSON} from "../interfaces/GeoJSON/GeoJSON.js";
-
+import {GeoJSON} from "../interfaces/GeoJSON.js";
+import {Feature} from "../interfaces/GeoJSON/Feature";
 
 /**
  * Sends a response with an array of geoJSONs. <p>
@@ -73,16 +73,20 @@ export async function handleGetRegionBorders(request: Request, response: Respons
                 properties: 1,
                 geometry: 1,
             };
-            let regionBordersFeaturesArray = await queryRegionBordersFeatures(
+            let regionBordersDocumentsArray = await queryRegionBordersFeatures(
                 regionBordersQuery,
                 regionBordersQueryProjection
             );
 
             // Add the queried features to the geoJSON
+            let queriedFeatures: Feature[] = []
+            for (const regionBorderDocument of regionBordersDocumentsArray) {
+                queriedFeatures.push(regionBorderDocument.feature)
+            }
             let geoJSON: GeoJSON = {
                 type: "FeatureCollection",
-                crs: crs,
-                features: regionBordersFeaturesArray
+                crs: crs.crs,
+                features: queriedFeatures
             };
 
             // Add the geoJSON to the geoJSONs array
@@ -182,18 +186,18 @@ export async function handleCalculateCenters(request: Request, response: Respons
             center: 0,
             crsObjectId: 0,
         };
-        let featuresQueryResults = await queryAllRegionBordersFeatures(
+        let regionBorderDocuments = await queryAllRegionBorderDocuments(
             featuresQueryProjection
         );
 
 
-        for (const feature of featuresQueryResults) {
+        for (const regionBorderDocument of regionBorderDocuments) {
 
-            let center = polygonCenter(feature.geometry);
+            let center = polygonCenter(regionBorderDocument.feature.geometry);
 
-            // Add the centre data to the feature in the database
+            // Add the centre data to the regionBorderDocument in the database
             await DatabaseEngine.getRegionBordersCollection().updateOne(
-                {_id: feature._id}, // Updates the region feature document that has the same id as the current feature
+                {_id: regionBorderDocument._id}, // Updates the region regionBorderDocument document that has the same id as the current regionBorderDocument
                 {
                     $set: {
                         center: center,
@@ -204,7 +208,7 @@ export async function handleCalculateCenters(request: Request, response: Respons
 
         let message = "";
         message +=
-            "Calculated the FeatureCenter coordinates for every feature in the region borders collection.";
+            "Calculated the center coordinates for every feature in the region borders collection.";
         console.log(message);
         sendResponseWithGoBackLink(response, message);
     }

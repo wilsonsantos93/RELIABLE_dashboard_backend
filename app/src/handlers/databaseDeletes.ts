@@ -4,7 +4,11 @@ import {DatabaseEngine} from "../configs/mongo.js";
 import newlineBr from "newline-br";
 import {Request, Response} from "express-serve-static-core";
 
-//* Client requests to delete all collections
+/**
+ * Client requests to delete all collections
+ * @param request Client HTTP request object
+ * @param response Client HTTP response object
+ */
 export async function handleDeleteAll(request: Request, response: Response) {
   console.log("Client requested to drop the all collections.");
 
@@ -12,7 +16,7 @@ export async function handleDeleteAll(request: Request, response: Response) {
 
   // Drop CRS collection
   try {
-    await DatabaseEngine.getCRScollection().drop();
+    await DatabaseEngine.getCrsCollection().drop();
     message += "Server successfully deleted CRSs from the database.\n";
   } catch (dropError) {
     if (dropError && dropError.codeName === "NamespaceNotFound") {
@@ -70,13 +74,17 @@ export async function handleDeleteAll(request: Request, response: Response) {
   sendResponseWithGoBackLink(response, newlineBr(message));
 }
 
-//* Client requests the CRSs collection to be deleted
+/**
+ * Client requests the CRSs collection to be deleted
+ * @param request Client HTTP request object
+ * @param response Client HTTP response object
+ */
 export async function handleDeleteCRSs(request: Request, response: Response) {
   console.log("Client requested to drop the CRSs collection.");
 
   // Drop collection and send response to the server
   try {
-    await DatabaseEngine.getCRScollection().drop();
+    await DatabaseEngine.getCrsCollection().drop();
     let message = "Server successfully deleted CRSs from the database.";
     console.log(message);
     console.log("");
@@ -97,7 +105,11 @@ export async function handleDeleteCRSs(request: Request, response: Response) {
   }
 }
 
-//* Deletes the region borders collection from the databaseResponse
+/**
+ * Deletes the region borders collection from the databaseResponse
+ * @param request Client HTTP request object
+ * @param response Client HTTP response object
+ */
 export async function handleDeleteRegionBorders(request: Request, response: Response) {
   console.log("Client requested to drop the region borders collection.");
 
@@ -127,7 +139,11 @@ export async function handleDeleteRegionBorders(request: Request, response: Resp
   }
 }
 
-//* Client requests the weatherDates collection to be deleted
+/**
+ * Client requests the weatherDates collection to be deleted
+ * @param request Client HTTP request object
+ * @param response Client HTTP response object
+ */
 export async function handleDeleteWeatherDates(request: Request, response: Response) {
   console.log("Client requested to drop the weather saved dates collection.");
 
@@ -155,7 +171,11 @@ export async function handleDeleteWeatherDates(request: Request, response: Respo
   }
 }
 
-//* Client requests the weather collection to be deleted
+/**
+ * Client requests the weather collection to be deleted
+ * @param request Client HTTP request object
+ * @param response Client HTTP response object
+ */
 export async function handleDeleteWeather(request: Request, response: Response) {
   console.log("Client requested to drop the weather information collection.");
 
