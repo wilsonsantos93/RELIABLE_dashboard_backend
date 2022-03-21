@@ -1,3 +1,3 @@
 export interface CoordinatesReferenceSystemProperties {
-    name: string;
+    readonly name: "urn:ogc:def:crs:EPSG::4258";
 }

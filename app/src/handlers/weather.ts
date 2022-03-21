@@ -1,4 +1,4 @@
-import {queryRegionBordersFeatures} from "../utils/database.js";
+import {queryFeatureDocuments} from "../utils/database.js";
 import {DatabaseEngine} from "../configs/mongo.js";
 import sendResponseWithGoBackLink from "../utils/response.js";
 import proj4 from "proj4";
@@ -46,7 +46,7 @@ export async function handleSaveWeather(request: Request, response: Response) {
     // As such, the geometry and properties of each region don't need to be returned.
     let featuresQuery: Filter<Document> = {center: {$exists: true}};
     let featuresQueryProjection = {_id: 1, center: 1, crsObjectId: 1};
-    let regionBordersFeaturesWithCenter = await queryRegionBordersFeatures(
+    let regionBordersFeaturesWithCenter = await queryFeatureDocuments(
         featuresQuery,
         featuresQueryProjection
     );
@@ -54,7 +54,7 @@ export async function handleSaveWeather(request: Request, response: Response) {
     let currentFeatureIndex = 1
     for (const currentFeature of regionBordersFeaturesWithCenter) {
 
-        if (currentFeatureIndex % 10 == 0) {
+        if (currentFeatureIndex / 10 == 0) {
             console.log("Saved weather of feature number:", currentFeatureIndex);
         }
 
@@ -73,6 +73,7 @@ export async function handleSaveWeather(request: Request, response: Response) {
             crsQueryOptions
         );
 
+        // TODO: Save latitude longitude projection to a global
         // Convert the current feature coordinates from its current CRS to latitude/longitude
         let latitudeLongitudeProjection = "+proj=longlat +datum=WGS84 +no_defs"; // Latitude/Longitude projection
         let projectedCoordinates: number[] = proj4(
@@ -98,7 +99,7 @@ export async function handleSaveWeather(request: Request, response: Response) {
     //* Query for features who don't have their FeatureCenter calculated
     let featuresWithNoCenterQuery = {center: {$exists: false}};
     let featuresWithNoCenterQueryProjection = {_id: 1};
-    let regionBordersFeaturesWithNoCenter = await queryRegionBordersFeatures(
+    let regionBordersFeaturesWithNoCenter = await queryFeatureDocuments(
         featuresWithNoCenterQuery,
         featuresWithNoCenterQueryProjection
     );

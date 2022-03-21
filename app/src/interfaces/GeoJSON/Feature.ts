@@ -3,9 +3,9 @@ import {FeatureProperties} from "./Feature/FeatureProperties";
 import {FeatureGeometryPolygon} from "./Feature/FeatureGeometry/FeatureGeometryPolygon";
 import {FeatureWeather} from "./Feature/FeatureWeather";
 
-export interface Feature {
+export interface Feature<TFeatureGeometry extends FeatureGeometryMultiPolygon | FeatureGeometryPolygon> {
     type?: "Feature";
     properties?: FeatureProperties;
-    geometry?: (FeatureGeometryMultiPolygon | FeatureGeometryPolygon);
+    geometry?: TFeatureGeometry;
     weather?: FeatureWeather;
 }

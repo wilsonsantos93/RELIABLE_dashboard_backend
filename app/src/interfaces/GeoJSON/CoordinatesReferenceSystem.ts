@@ -2,6 +2,6 @@ import {CoordinatesReferenceSystemProperties} from "./CoordinatesReferenceSystem
 import {ObjectId} from "mongodb";
 
 export interface CoordinatesReferenceSystem {
-    type?: "name";
-    properties?: CoordinatesReferenceSystemProperties;
+    readonly type?: "name";
+    readonly properties?: CoordinatesReferenceSystemProperties;
 }

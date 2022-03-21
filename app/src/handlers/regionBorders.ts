@@ -1,19 +1,13 @@
 import {DatabaseEngine} from "../configs/mongo.js";
 import sendResponseWithGoBackLink from "../utils/response.js";
-import {
-    associateCRStoFeatures,
-    collectionExistsInDatabase,
-    queryAllCoordinatesReferenceSystems,
-    queryAllRegionBorderDocuments,
-    queryRegionBordersFeatures,
-    saveCoordinatesReferenceSystem,
-    saveFeatures,
-} from "../utils/database.js";
+import {collectionExistsInDatabase, queryAllRegionBorderDocuments, saveFeatures,} from "../utils/database.js";
 // @ts-ignore
 import polygonCenter from "geojson-polygon-center";
 import {Request, Response} from "express-serve-static-core";
 import {GeoJSON} from "../interfaces/GeoJSON.js";
 import {Feature} from "../interfaces/GeoJSON/Feature";
+import {FeaturesProjection} from "../interfaces/DatabaseCollections/Projections/FeaturesProjection";
+import {FeatureGeometryPolygon} from "../interfaces/GeoJSON/Feature/FeatureGeometry/FeatureGeometryPolygon";
 
 /**
  * Sends a response with an array of geoJSONs. <p>
@@ -41,64 +35,39 @@ export async function handleGetRegionBorders(request: Request, response: Respons
 
     //* If the region borders collection exists, send the various saved geoJSONs to the client
     else if (regionBordersCollectionExists) {
-        console.log("Started sending geoJSONs to the client.");
-        let geoJSONs: GeoJSON[] = [];
 
-        //* Query the region borders collection for the crs
-        //* The _id and the crs of each CRS document, is going to be used to return a geoJSON with the crs, and the associated region border features
-        let crsQueryProjection = {_id: 1, crs: 1};
-        console.log(
-            "Started querying coordinates reference systems collection for all CRSs."
-        );
-        let crsQueryResults = await queryAllCoordinatesReferenceSystems(
-            crsQueryProjection
-        );
-        console.log(
-            "Finished querying coordinates reference systems collection for all CRSs."
+        // We are going to use the returning query parameters to build the geoJSON
+        // As such, the feature _id, FeatureCenter, and crsObjectId aren't needed
+        // We only need the feature
+        let regionBordersQueryProjection: FeaturesProjection = {
+            _id: 0,
+            feature: 1
+        };
+        let regionBordersDocumentsArray = await queryAllRegionBorderDocuments(
+            regionBordersQueryProjection
         );
 
-        //* Query each CRS in the database for the associated border region features
-        console.log(
-            "Started query each CRS in the database for the associated border region features."
-        );
-        for (const crs of crsQueryResults) {
-
-            let regionBordersQuery = {crsObjectId: crs._id}; // Query for all the features that have the same crsObjectId as the current CRS _id
-            // We are going to use the returning query parameters to build the geoJSON
-            // As such, the feature _id, FeatureCenter, and crsObjectId aren't needed
-            // We only need the type, properties and geometry
-            let regionBordersQueryProjection = {
-                _id: 0,
-                type: 1,
-                properties: 1,
-                geometry: 1,
-            };
-            let regionBordersDocumentsArray = await queryRegionBordersFeatures(
-                regionBordersQuery,
-                regionBordersQueryProjection
-            );
-
-            // Add the queried features to the geoJSON
-            let queriedFeatures: Feature[] = []
-            for (const regionBorderDocument of regionBordersDocumentsArray) {
-                queriedFeatures.push(regionBorderDocument.feature)
-            }
-            let geoJSON: GeoJSON = {
-                type: "FeatureCollection",
-                crs: crs.crs,
-                features: queriedFeatures
-            };
-
-            // Add the geoJSON to the geoJSONs array
-            geoJSONs.push(geoJSON);
+        // Add the queried features to the geoJSON
+        let queriedFeatures: Feature<FeatureGeometryPolygon>[] = [];
+        for (const regionBorderDocument of regionBordersDocumentsArray) {
+            queriedFeatures.push(regionBorderDocument.feature)
         }
-        console.log(
-            "Finished query each CRS in the database for the associated border region features."
-        );
 
-        console.log("Started sending geoJSONs to the client.");
-        response.send(geoJSONs);
-        console.log("Finished sending geoJSONs to the client.\n");
+        let geoJSON: GeoJSON<FeatureGeometryPolygon> = {
+            type: "FeatureCollection",
+            crs: {
+                type: "name",
+                properties: {
+                    name: "urn:ogc:def:crs:EPSG::4258",
+                },
+            },
+            features: queriedFeatures
+        }
+
+        console.log("Started sending geoJSON to the client.");
+        response.send(geoJSON);
+        console.log("Finished sending geoJSON to the client.\n");
+
     }
 }
 
@@ -116,34 +85,10 @@ export async function handleSaveRegionBorders(request: Request, response: Respon
     let trimmedFileBuffer = fileBuffer.toString().trimStart().trimEnd(); // Sometimes the geoJSON sent has unnecessary spaces that need to be trimmed
     let geoJSON = JSON.parse(trimmedFileBuffer); // Parse the trimmed file buffer to a correct geoJSON
 
-    //* Save geoJSON coordinate reference system to the collection, if it doesn't already exist
-    let insertedCRSObjectId;
-
-    try {
-        console.log(
-            "Started inserting geoJSON coordinate reference system in the database."
-        );
-        insertedCRSObjectId = await saveCoordinatesReferenceSystem(geoJSON);
-        console.log(
-            "Inserted geoJSON coordinate reference system in the database. CRS ID in database:",
-            // To extract the ID string inside the ObjectId, we use ObjectId.toHexString
-            insertedCRSObjectId.toHexString() // The ID string of the CRS document that was inserted in the database
-        );
-        console.log();
-    } catch (error) {
-        console.log(error);
-        response.send(error);
-    }
-
     //* Save each geoJSON feature to the collection individually
-    console.log("Starting inserting geoJSON features in the database.");
-    let insertedFeaturesObjectIds = await saveFeatures(geoJSON);
+    console.log("Started inserting geoJSON features in the database.");
+    await saveFeatures(geoJSON);
     console.log("Inserted geoJSON features in the database.");
-
-    //* Create a field with on each feature with its associated coordinates reference system
-    console.log("Starting associating each feature with its CRS.");
-    await associateCRStoFeatures(insertedCRSObjectId, insertedFeaturesObjectIds);
-    console.log("Finished associating each feature with its CRS.\n");
 
     // Send successful response to the client
     sendResponseWithGoBackLink(response, "Server successfully saved geoJSON.");
@@ -218,5 +163,3 @@ export async function handleCalculateCenters(request: Request, response: Respons
     );
 
 }
-
-
