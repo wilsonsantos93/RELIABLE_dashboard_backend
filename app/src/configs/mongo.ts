@@ -10,7 +10,6 @@ export class DatabaseEngine {
     private static databaseName = process.env.DB_NAME; // Name of the database in the mongo database engine
     private static weatherDatesCollectionName = process.env.DB_WEATHER_DATES_COLLECTION_NAME; // Name of the collection that contains the dates that the various weather data documents were saved, and the id of the corresponding weather data documents
     private static weatherCollectionName = process.env.DB_WEATHER_COLLECTION_NAME; // Name of the collection that contains the weather data of the various features, and the id of the corresponding features
-    private static crsCollectionName = process.env.DB_COORDINATES_REFERENCE_SYSTEM_COLLECTION_NAME; // Name of the collection that contains the various CRSs used by the features
     private static regionBordersCollectionName = process.env.DB_REGION_BORDERS_COLLECTION_NAME; // Name of the collection that contains region borders information such as the coordinates that make the border on the map, the region name, and those coordinates reference system
 
     /**
@@ -56,18 +55,15 @@ export class DatabaseEngine {
     }
 
     //! Region borders collection
-    static getRegionBordersCollectionName() {
+    static getFeaturesCollectionName() {
         return this.regionBordersCollectionName;
     }
 
-    static getRegionBordersCollection() {
+    static getFeaturesCollection() {
         return this.getDashboardDatabase().collection(
             this.regionBordersCollectionName
         );
     }
 
-    //! CRS collection
-    static getCrsCollection() {
-        return this.getDashboardDatabase().collection(this.crsCollectionName);
-    }
+
 }

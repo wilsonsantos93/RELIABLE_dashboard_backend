@@ -4,16 +4,14 @@ import {convertFeatureCoordinatesToLatLong, separateMultiPolygons} from "./regio
 import {Db, Document, Filter, FindOptions} from "mongodb";
 import {CoordinatesReferenceSystem} from "../interfaces/GeoJSON/CoordinatesReferenceSystem.js";
 import {GeoJSON} from "../interfaces/GeoJSON.js";
-import {
-    CoordinatesReferenceSystemProperties
-} from "../interfaces/GeoJSON/CoordinatesReferenceSystem/CoordinatesReferenceSystemProperties.js";
+import {CRSAnyProperties} from "../interfaces/GeoJSON/CoordinatesReferenceSystem/CRSAnyProperties.js";
 import {FeatureDocument} from "../interfaces/DatabaseCollections/FeatureDocument";
 import {WeatherCollectionDocument} from "../interfaces/DatabaseCollections/WeatherCollectionDocument";
 import {WeatherProjection} from "../interfaces/DatabaseCollections/Projections/WeatherProjection";
 import {FeaturesProjection} from "../interfaces/DatabaseCollections/Projections/FeaturesProjection";
-import proj4 from "proj4";
 import {FeatureGeometryMultiPolygon} from "../interfaces/GeoJSON/Feature/FeatureGeometry/FeatureGeometryMultiPolygon";
 import {FeatureGeometryPolygon} from "../interfaces/GeoJSON/Feature/FeatureGeometry/FeatureGeometryPolygon";
+import {Feature} from "../interfaces/GeoJSON/Feature";
 
 /**
  * Checks if a collection exists in a database.
@@ -44,7 +42,7 @@ export async function collectionExistsInDatabase(collectionName: string, databas
  * @param crsProperties The {@link CoordinatesReferenceSystem} to fetch the projection information.
  * @return The {@link CoordinatesReferenceSystem} information.
  */
-async function fetchProjectionInformation(crsProperties: CoordinatesReferenceSystemProperties) {
+async function fetchProjectionInformation(crsProperties: CRSAnyProperties) {
     let projectionNumber = crsProperties.name.split("::")[1]; // The number of the EPSG projection, used to fetch the projection information from an external API
     let projectionInformationURL =
         "https://epsg.io/" + projectionNumber + ".proj4"; // The URL of the projection information
@@ -58,26 +56,42 @@ async function fetchProjectionInformation(crsProperties: CoordinatesReferenceSys
  * Save each {@link GeoJSON} {@link Feature} to the <u>regionBorders</u> collection individually.
  * @param geoJSON {@link GeoJSON} to insert to the collection.
  */
-export async function saveFeatures(geoJSON: GeoJSON<FeatureGeometryMultiPolygon | FeatureGeometryPolygon>) {
-    let regionBordersCollection = DatabaseEngine.getRegionBordersCollection();
+export async function saveFeatures(geoJSON: GeoJSON<FeatureGeometryMultiPolygon | FeatureGeometryPolygon, CRSAnyProperties>) {
+    let regionBordersCollection = DatabaseEngine.getFeaturesCollection();
 
+    console.log("Started separating Multi Polygons.")
     let separatedGeoJSON = separateMultiPolygons(geoJSON)
+    console.log("Finished separating Multi Polygons.")
 
-    // Insert each feature of the geoJSON into the database
-    let index = 1;
+    let geoJSONProjection = await fetchProjectionInformation(geoJSON.crs.properties)
+
+    // Convert each feature of the geoJSON
+    let convertedFeatures: Feature<FeatureGeometryPolygon>[] = []
     for (const currentFeature of separatedGeoJSON.features) {
 
-        if (index / 10 == 0) {
-            console.log("Saved currentFeature:", index);
-        }
+        let convertedFeature = convertFeatureCoordinatesToLatLong(currentFeature, geoJSONProjection)
+        convertedFeatures.push(convertedFeature)
 
-        let convertedFeature = convertFeatureCoordinatesToLatLong(currentFeature, geoJSON.crs)
 
-        await regionBordersCollection.insertOne(
-            {feature: convertedFeature}
-        );
     }
 
+    let convertedFeaturesDocuments: FeatureDocument[] = []
+    for (const currentFeature of convertedFeatures) {
+
+        let featureDocument: FeatureDocument = {
+            feature: currentFeature
+        }
+
+        convertedFeaturesDocuments.push(featureDocument)
+
+
+    }
+
+
+    // Save the converted features to the database
+    await regionBordersCollection.insertMany(
+        convertedFeaturesDocuments
+    );
 }
 
 /**
@@ -95,7 +109,7 @@ export async function queryFeatureDocuments(featuresQuery: Filter<Document>, fea
     };
 
     // The following query returns [{type: "Feature",...}, {type:"Feature",...}]
-    let featuresQueryResults = await DatabaseEngine.getRegionBordersCollection()
+    let featuresQueryResults = await DatabaseEngine.getFeaturesCollection()
         .find(featuresQuery, featuresQueryOptions)
         .toArray() as FeatureDocument[];
 
@@ -107,7 +121,7 @@ export async function queryFeatureDocuments(featuresQuery: Filter<Document>, fea
  * @param queryProjection The fields of the collection {@link FeatureDocument} to return in the query.
  * @return Array containing every {@link FeatureDocument} in the <u>regionBorders</u> collection.
  * */
-export async function queryAllRegionBorderDocuments(queryProjection: FeaturesProjection) {
+export async function queryAllFeatureDocuments(queryProjection: FeaturesProjection) {
     let featuresQuery: Filter<Document> = {}; // Query for all documents in the region borders collection
     let featuresQueryOptions: FindOptions = {
         projection: queryProjection,
@@ -115,7 +129,7 @@ export async function queryAllRegionBorderDocuments(queryProjection: FeaturesPro
 
     // The following query returns [{type: "Feature",...}, {type:"Feature",...}]
     console.log("Querying features collection for all features.");
-    let featuresQueryResults = await DatabaseEngine.getRegionBordersCollection()
+    let featuresQueryResults = await DatabaseEngine.getFeaturesCollection()
         .find(featuresQuery, featuresQueryOptions)
         .toArray() as FeatureDocument[];
     return featuresQueryResults;

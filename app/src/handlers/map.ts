@@ -11,6 +11,7 @@ import {WeatherCollectionDocument} from "../interfaces/DatabaseCollections/Weath
 import {WeatherProjection} from "../interfaces/DatabaseCollections/Projections/WeatherProjection";
 import {FeaturesProjection} from "../interfaces/DatabaseCollections/Projections/FeaturesProjection";
 import {FeatureGeometryPolygon} from "../interfaces/GeoJSON/Feature/FeatureGeometry/FeatureGeometryPolygon";
+import {CRSLatLongProperties} from "../interfaces/GeoJSON/CoordinatesReferenceSystem/CRSLatLongProperties";
 
 /**
  * Sends an array of geoJSONs with the border regions and its weather information on a certain date
@@ -33,7 +34,7 @@ export async function handleGetRegionBordersAndWeatherByDate(
 
     //* Check if the region border collection exists
     let regionBordersCollectionExists = await collectionExistsInDatabase(
-        DatabaseEngine.getRegionBordersCollectionName(),
+        DatabaseEngine.getFeaturesCollectionName(),
         DatabaseEngine.getDashboardDatabase()
     );
 
@@ -79,7 +80,7 @@ export async function handleGetRegionBordersAndWeatherByDate(
     let weatherDocuments = await queryWeatherDocuments(weatherQuery, weatherQueryProjection)
 
     //* Query for the features associated with the weathers
-    let geoJSON: GeoJSON<FeatureGeometryPolygon> = {
+    let geoJSON: GeoJSON<FeatureGeometryPolygon, CRSLatLongProperties> = {
         features: []
     }
     for (const weather of weatherDocuments) {

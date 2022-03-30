@@ -14,22 +14,9 @@ export async function handleDeleteAll(request: Request, response: Response) {
 
   let message = "";
 
-  // Drop CRS collection
-  try {
-    await DatabaseEngine.getCrsCollection().drop();
-    message += "Server successfully deleted CRSs from the database.\n";
-  } catch (dropError) {
-    if (dropError && dropError.codeName === "NamespaceNotFound") {
-      message +=
-        "CRSs collection doesn't exist in the database (was probably already deleted).\n";
-    } else if (dropError) {
-      message += dropError;
-    }
-  }
-
   // Drop region borders collection
   try {
-    await DatabaseEngine.getRegionBordersCollection().drop();
+    await DatabaseEngine.getFeaturesCollection().drop();
 
     message +=
       "Server successfully deleted region borders from the database.\n";
@@ -75,37 +62,6 @@ export async function handleDeleteAll(request: Request, response: Response) {
 }
 
 /**
- * Client requests the CRSs collection to be deleted
- * @param request Client HTTP request object
- * @param response Client HTTP response object
- */
-export async function handleDeleteCRSs(request: Request, response: Response) {
-  console.log("Client requested to drop the CRSs collection.");
-
-  // Drop collection and send response to the server
-  try {
-    await DatabaseEngine.getCrsCollection().drop();
-    let message = "Server successfully deleted CRSs from the database.";
-    console.log(message);
-    console.log("");
-
-    // Send successful response to the client
-    sendResponseWithGoBackLink(response, message);
-  } catch (dropError) {
-    if (dropError && dropError.codeName === "NamespaceNotFound") {
-      let message =
-        "CRSs collection doesn't exist in the database (was probably already deleted).";
-      console.log(message);
-      console.log("\n");
-      sendResponseWithGoBackLink(response, message);
-    } else if (dropError) {
-      console.log(dropError);
-      response.send(dropError);
-    }
-  }
-}
-
-/**
  * Deletes the region borders collection from the databaseResponse
  * @param request Client HTTP request object
  * @param response Client HTTP response object
@@ -115,7 +71,7 @@ export async function handleDeleteRegionBorders(request: Request, response: Resp
 
   // Drop collection and send response to the server
   try {
-    await DatabaseEngine.getRegionBordersCollection().drop();
+    await DatabaseEngine.getFeaturesCollection().drop();
 
     let message =
       "Server successfully deleted region borders from the database.";

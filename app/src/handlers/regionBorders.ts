@@ -1,6 +1,6 @@
 import {DatabaseEngine} from "../configs/mongo.js";
 import sendResponseWithGoBackLink from "../utils/response.js";
-import {collectionExistsInDatabase, queryAllRegionBorderDocuments, saveFeatures,} from "../utils/database.js";
+import {collectionExistsInDatabase, queryFeatureDocuments, queryAllFeatureDocuments, saveFeatures,} from "../utils/database.js";
 // @ts-ignore
 import polygonCenter from "geojson-polygon-center";
 import {Request, Response} from "express-serve-static-core";
@@ -8,6 +8,10 @@ import {GeoJSON} from "../interfaces/GeoJSON.js";
 import {Feature} from "../interfaces/GeoJSON/Feature";
 import {FeaturesProjection} from "../interfaces/DatabaseCollections/Projections/FeaturesProjection";
 import {FeatureGeometryPolygon} from "../interfaces/GeoJSON/Feature/FeatureGeometry/FeatureGeometryPolygon";
+import {CRSLatLongProperties} from "../interfaces/GeoJSON/CoordinatesReferenceSystem/CRSLatLongProperties";
+import {FeatureGeometryMultiPolygon} from "../interfaces/GeoJSON/Feature/FeatureGeometry/FeatureGeometryMultiPolygon";
+import {CRSAnyProperties} from "../interfaces/GeoJSON/CoordinatesReferenceSystem/CRSAnyProperties";
+import {Document, Filter} from "mongodb";
 
 /**
  * Sends a response with an array of geoJSONs. <p>
@@ -21,7 +25,7 @@ export async function handleGetRegionBorders(request: Request, response: Respons
 
     //* Check if the region border collection exists
     let regionBordersCollectionExists = await collectionExistsInDatabase(
-        DatabaseEngine.getRegionBordersCollectionName(),
+        DatabaseEngine.getFeaturesCollectionName(),
         DatabaseEngine.getDashboardDatabase()
     );
 
@@ -43,7 +47,7 @@ export async function handleGetRegionBorders(request: Request, response: Respons
             _id: 0,
             feature: 1
         };
-        let regionBordersDocumentsArray = await queryAllRegionBorderDocuments(
+        let regionBordersDocumentsArray = await queryAllFeatureDocuments(
             regionBordersQueryProjection
         );
 
@@ -53,7 +57,7 @@ export async function handleGetRegionBorders(request: Request, response: Respons
             queriedFeatures.push(regionBorderDocument.feature)
         }
 
-        let geoJSON: GeoJSON<FeatureGeometryPolygon> = {
+        let geoJSON: GeoJSON<FeatureGeometryPolygon, CRSLatLongProperties> = {
             type: "FeatureCollection",
             crs: {
                 type: "name",
@@ -77,23 +81,24 @@ export async function handleGetRegionBorders(request: Request, response: Respons
  * @param request Client HTTP request object
  * @param response Client HTTP response object
  */
-export async function handleSaveRegionBorders(request: Request, response: Response) {
+export async function handleSaveFeatures(request: Request, response: Response) {
     console.log("Received geoJSON from the client.");
 
     //* Parse received file bytes to geoJSON
     let fileBuffer = request.file.buffer; // Multer enables the server to access the file sent by the client using "request.file.buffer". The file accessed is in bytes.
     let trimmedFileBuffer = fileBuffer.toString().trimStart().trimEnd(); // Sometimes the geoJSON sent has unnecessary spaces that need to be trimmed
-    let geoJSON = JSON.parse(trimmedFileBuffer); // Parse the trimmed file buffer to a correct geoJSON
+    let geoJSON: GeoJSON<FeatureGeometryMultiPolygon | FeatureGeometryPolygon, CRSAnyProperties | CRSLatLongProperties> = JSON.parse(trimmedFileBuffer); // Parse the trimmed file buffer to a correct geoJSON
 
     //* Save each geoJSON feature to the collection individually
     console.log("Started inserting geoJSON features in the database.");
     await saveFeatures(geoJSON);
-    console.log("Inserted geoJSON features in the database.");
+    console.log("Inserted geoJSON features in the database.\n");
 
     // Send successful response to the client
     sendResponseWithGoBackLink(response, "Server successfully saved geoJSON.");
 }
 
+// TODO: Calculate centers and update them with a single query
 /**
  * Calculates the FeatureCenter coordinates of every feature in the region borders collection.
  * @param request Client HTTP request object
@@ -106,7 +111,7 @@ export async function handleCalculateCenters(request: Request, response: Respons
 
     //* Check if the region border collection exists
     let regionBordersCollectionName =
-        DatabaseEngine.getRegionBordersCollectionName();
+        DatabaseEngine.getFeaturesCollectionName();
     let regionBordersCollectionExists = await collectionExistsInDatabase(
         regionBordersCollectionName,
         DatabaseEngine.getDashboardDatabase()
@@ -121,28 +126,29 @@ export async function handleCalculateCenters(request: Request, response: Respons
 
     //* If the region borders collection exists, calculate and update the centers of each feature in the collection
     else if (regionBordersCollectionExists) {
-        //* Query the region borders collection for the various features
 
+        //* Query the region borders collection for the various features
         // The query results are going to be used by server to calculate the FeatureCenter of each and all features (geometry field), and save it to the corresponding feature (using the id).
         // As such, the properties don't need to be returned, and the FeatureCenter coordinates of each region don't need to be returned (because they shouldn't exist yet).
+        let featuresQuery: Filter<Document> = {center: {$exists: false}};
         let featuresQueryProjection = {
             _id: 1,
             properties: 0,
             center: 0,
             crsObjectId: 0,
         };
-        let regionBorderDocuments = await queryAllRegionBorderDocuments(
+        let featureDocuments = await queryFeatureDocuments(
+            featuresQuery,
             featuresQueryProjection
         );
 
+        for (const feature of featureDocuments) {
 
-        for (const regionBorderDocument of regionBorderDocuments) {
-
-            let center = polygonCenter(regionBorderDocument.feature.geometry);
+            let center = polygonCenter(feature.feature.geometry);
 
             // Add the centre data to the regionBorderDocument in the database
-            await DatabaseEngine.getRegionBordersCollection().updateOne(
-                {_id: regionBorderDocument._id}, // Updates the region regionBorderDocument document that has the same id as the current regionBorderDocument
+            await DatabaseEngine.getFeaturesCollection().updateOne(
+                {_id: feature._id}, // Updates the region regionBorderDocument document that has the same id as the current regionBorderDocument
                 {
                     $set: {
                         center: center,

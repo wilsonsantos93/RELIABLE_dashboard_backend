@@ -4,8 +4,8 @@
   "description": "Server that gathers weather data and exposes the weather and region borders as API endpoints.",
   "main": "dist/server.js",
   "scripts": {
-    "start": "node app/server.js",
-    "dev": "nodemon app/server.js"
+    "start": "node dist/server.js",
+    "dev": "nodemon dist/server.js"
   },
   "keywords": [],
   "author": "Mistakx",

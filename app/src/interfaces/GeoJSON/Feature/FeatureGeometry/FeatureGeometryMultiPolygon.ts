@@ -1,4 +1,8 @@
 export interface FeatureGeometryMultiPolygon {
     type: "MultiPolygon";
-    coordinates: number[][][];
+    // Various regions array
+    // Region array
+    // Region array element that contains the coordinates array
+    // Coordinates array [x,y]
+    coordinates: [][][][];
 }

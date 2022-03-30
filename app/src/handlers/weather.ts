@@ -5,6 +5,7 @@ import proj4 from "proj4";
 import {Request, Response} from "express-serve-static-core";
 import {Document, Filter, FindOptions, ObjectId} from "mongodb";
 import {requestWeather} from "../utils/weather.js";
+import {FeaturesProjection} from "../interfaces/DatabaseCollections/Projections/FeaturesProjection";
 
 /**
  * Saves the current date to the <u>weatherDates</u> collection.
@@ -39,51 +40,25 @@ export async function handleSaveWeather(request: Request, response: Response) {
     let weatherDateDatabaseID = await saveCurrentDateToCollection(
     );
 
-    //* Query for all the border regions features in the database
-    // The server requests an API for the weather in the FeatureCenter (FeatureCenter field) of all individual features saved in the region borders collection.
-    // The server needs to convert the FeatureCenter coordinates of each feature, from the associated database CRS (crsObjectId) to the latitude/longitude system, before fetching the weather API
-    // The server will then save the weather information to the weather collection, and associate it to the corresponding feature id (_id).
-    // As such, the geometry and properties of each region don't need to be returned.
+    // The server requests an API for the weather in the FeatureCenter (FeatureCenter field) of all individual features with their center calculated saved in the collection.
+    // The server will then save the weather to the weather collection, and associate it to the corresponding feature id (_id).
+    // As such, only the _id and the center need to be returned.
     let featuresQuery: Filter<Document> = {center: {$exists: true}};
-    let featuresQueryProjection = {_id: 1, center: 1, crsObjectId: 1};
-    let regionBordersFeaturesWithCenter = await queryFeatureDocuments(
+    let featuresQueryProjection: FeaturesProjection = {_id: 1, center: 1};
+    let featureDocumentsWithCenter = await queryFeatureDocuments(
         featuresQuery,
         featuresQueryProjection
     );
 
     let currentFeatureIndex = 1
-    for (const currentFeature of regionBordersFeaturesWithCenter) {
+    for (const currentFeature of featureDocumentsWithCenter) {
 
-        if (currentFeatureIndex / 10 == 0) {
+        if ((currentFeatureIndex % 10) == 0) {
             console.log("Saved weather of feature number:", currentFeatureIndex);
         }
 
-        //* Query the database for the CRS associated with the current feature
-        let crsCollection = DatabaseEngine.getCrsCollection();
-        let crsQuery: Filter<Document> = {_id: currentFeature.crsObjectId};
-        // We are going to query the weather API for the weather at the FeatureCenter coordinates of this feature
-        // The weather API uses latitude and longitude, so we need the CRS projection information that the database feature was saved with, to convert it to latitude/longitude
-        let crsQueryProjection = {_id: 1, crsProjection: 1};
-        let crsQueryOptions: FindOptions = {
-            projection: crsQueryProjection,
-        };
-
-        let currentFeatureCRS = await crsCollection.findOne(
-            crsQuery,
-            crsQueryOptions
-        );
-
-        // TODO: Save latitude longitude projection to a global
-        // Convert the current feature coordinates from its current CRS to latitude/longitude
-        let latitudeLongitudeProjection = "+proj=longlat +datum=WGS84 +no_defs"; // Latitude/Longitude projection
-        let projectedCoordinates: number[] = proj4(
-            currentFeatureCRS.crsProjection,
-            latitudeLongitudeProjection,
-            currentFeature.center.coordinates
-        );
-
         //* Request the weather at the FeatureCenter of each feature from an external API
-        let weatherDataJSON = await requestWeather(projectedCoordinates.reverse())// The database coordinates are saved in [long,lat], the weather API accepts [lat,long]
+        let weatherDataJSON = await requestWeather(currentFeature.center.coordinates.reverse())// The database coordinates are saved in [long,lat], the weather API accepts [lat,long]
 
 
         //* Save the weather of each feature to the weather collection
@@ -93,6 +68,8 @@ export async function handleSaveWeather(request: Request, response: Response) {
             weatherDateObjectId: weatherDateDatabaseID,
             regionBorderFeatureObjectId: currentFeature._id,
         });
+
+        currentFeatureIndex++;
 
     }
 

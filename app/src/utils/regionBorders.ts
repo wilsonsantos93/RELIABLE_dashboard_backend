@@ -7,6 +7,7 @@ import proj4 from "proj4";
 import {CoordinatesReferenceSystem} from "../interfaces/GeoJSON/CoordinatesReferenceSystem";
 import {FeatureGeometryMultiPolygon} from "../interfaces/GeoJSON/Feature/FeatureGeometry/FeatureGeometryMultiPolygon";
 import {FeatureGeometryPolygon} from "../interfaces/GeoJSON/Feature/FeatureGeometry/FeatureGeometryPolygon";
+import {CRSAnyProperties} from "../interfaces/GeoJSON/CoordinatesReferenceSystem/CRSAnyProperties";
 
 /**
  * Separates a geoJSON MultiPolygon features into multiple Polygon features, if it has any.
@@ -14,9 +15,9 @@ import {FeatureGeometryPolygon} from "../interfaces/GeoJSON/Feature/FeatureGeome
  * @param  geoJSON - to separate MultiPolygon features.
  * @return separatedGeoJSON - geoJSON with the MultiPolygon features separated.
  */
-export function separateMultiPolygons(geoJSON: GeoJSON<FeatureGeometryMultiPolygon | FeatureGeometryPolygon>) {
+export function separateMultiPolygons(geoJSON: GeoJSON<FeatureGeometryMultiPolygon | FeatureGeometryPolygon, CRSAnyProperties>) {
 
-    let separatedGeoJSON: GeoJSON<FeatureGeometryPolygon> = {
+    let separatedGeoJSON: GeoJSON<FeatureGeometryPolygon, CRSAnyProperties> = {
         type: geoJSON.type,
         crs: geoJSON.crs,
         features: []
@@ -69,37 +70,40 @@ export function separateMultiPolygons(geoJSON: GeoJSON<FeatureGeometryMultiPolyg
 
 }
 
-// TODO: Change interface so we can say this function can only be used by a feature of type Polygon
 /**
  * Converts a feature's {@link coordinates} to Latitude/Longitude projection.
  * @param feature {@link Feature} to convert to Latitude/Longitude.
  * @param featureCRS {@link Feature} {@link CoordinatesReferenceSystem} to be used when converting.
  * @return The feature's {@link coordinates} in Latitude/Longitude.
- * @throws Error when trying to convert feature not of type polygon.
  */
-export function convertFeatureCoordinatesToLatLong(feature: Feature<FeatureGeometryPolygon>, featureCRS: CoordinatesReferenceSystem) {
+export function convertFeatureCoordinatesToLatLong(feature: Feature<FeatureGeometryPolygon>, featureProjection: string) {
 
-    if (feature.geometry.type === "Polygon") {
-
-        let convertedFeature: Feature<FeatureGeometryPolygon> = {
-            type: feature.type,
-            properties: feature.properties,
-            weather: feature.weather,
-            geometry: {
-                type: feature.geometry.type,
-                coordinates: []
-            }
+    let convertedFeature: Feature<FeatureGeometryPolygon> = {
+        type: feature.type,
+        properties: feature.properties,
+        // Weather isn't needed because it hasn't been calculated at the moment of conversion
+        geometry: {
+            type: feature.geometry.type,
+            coordinates: []
         }
-
-        for (let coordinates of feature.geometry.coordinates) {
-            let latitudeLongitudeProjection = "+proj=longlat +datum=WGS84 +no_defs"; // Latitude/Longitude projection
-            convertedFeature.geometry.coordinates.push(proj4(featureCRS.properties.name, latitudeLongitudeProjection, coordinates));
-        }
-
-        return convertedFeature;
-
-    } else {
-        throw new Error("Feature not of type Polygon.");
     }
+
+    for (let region of feature.geometry.coordinates) {
+
+        let convertedRegion: [][] = []
+
+        for (let currentCoordinatePair of region) {
+
+            let latitudeLongitudeProjection = "+proj=longlat +datum=WGS84 +no_defs"; // Latitude/Longitude projection
+            convertedRegion.push(proj4(featureProjection, latitudeLongitudeProjection, currentCoordinatePair));
+
+        }
+
+        convertedFeature.geometry.coordinates.push(convertedRegion)
+
+    }
+
+    return convertedFeature;
+
 
 }
