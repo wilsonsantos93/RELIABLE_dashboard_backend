@@ -1,13 +1,9 @@
-import {
-    collectionExistsInDatabase,
-    queryFeatureDocuments, queryWeatherDocuments,
-} from "../utils/database.js";
+import {collectionExistsInDatabase, queryFeatureDocuments, queryWeatherDocuments,} from "../utils/database.js";
 import {DatabaseEngine} from "../configs/mongo.js";
 import sendResponseWithGoBackLink from "../utils/response.js";
-import {Document, Filter, FindOptions, ObjectId} from "mongodb";
+import {Document, Filter, ObjectId} from "mongodb";
 import {Request, Response} from "express-serve-static-core";
 import {GeoJSON} from "../interfaces/GeoJSON.js";
-import {WeatherCollectionDocument} from "../interfaces/DatabaseCollections/WeatherCollectionDocument";
 import {WeatherProjection} from "../interfaces/DatabaseCollections/Projections/WeatherProjection";
 import {FeaturesProjection} from "../interfaces/DatabaseCollections/Projections/FeaturesProjection";
 import {FeatureGeometryPolygon} from "../interfaces/GeoJSON/Feature/FeatureGeometry/FeatureGeometryPolygon";
@@ -63,16 +59,16 @@ export async function handleGetRegionBordersAndWeatherByDate(
 
     //! End of error handling
 
-    // TODO: Query for all the weathers saved in the date passed as argument
     let weatherDateID = request.params.weatherDateID; //https://stackoverflow.com/questions/20089582/how-to-get-a-url-parameter-in-express
     let weatherQuery: Filter<Document> = {
         weatherDateObjectId: new ObjectId(weatherDateID),
+        "weather.error.code": {$exists: false}
     };
 
     // We are going to use the returning query parameters to add the weather information and associated feature to the current geoJSON
     // As such, the _id, weatherDateObjectId aren't needed
     // We only need the weather field and the regionBorderFeatureObjectId
-    let weatherQueryProjection: WeatherProjection= {
+    let weatherQueryProjection: WeatherProjection = {
         _id: 0,
         weatherDateObjectId: 0,
     };
@@ -80,30 +76,42 @@ export async function handleGetRegionBordersAndWeatherByDate(
     let weatherDocuments = await queryWeatherDocuments(weatherQuery, weatherQueryProjection)
 
     //* Query for the features associated with the weathers
-    let geoJSON: GeoJSON<FeatureGeometryPolygon, CRSLatLongProperties> = {
+    let weatherGeoJSON: GeoJSON<FeatureGeometryPolygon, CRSLatLongProperties> = {
+        type: "FeatureCollection",
+        crs: {
+            type: "name",
+            properties: {
+                name: "urn:ogc:def:crs:EPSG::4258"
+            }
+        },
         features: []
+
     }
-    for (const weather of weatherDocuments) {
+    for (const weatherDocument of weatherDocuments) {
 
         let featuresBordersQuery: Filter<Document> = {
-            _id: weather.regionBorderFeatureObjectId
+            _id: weatherDocument.regionBorderFeatureObjectId
         }
 
         // The GeoJSON only needs the weather information
         let featuresQueryProjection: FeaturesProjection = {
             _id: 0,
-            center:0
+            center: 0
         }
 
-        let featureDocuments = await queryFeatureDocuments(
-            weatherQuery,
+        // Find the weather's associated feature, returned as an array with only one element
+        let featureDocument = await queryFeatureDocuments(
+            featuresBordersQuery,
             featuresQueryProjection
         );
+
+        featureDocument[0].feature.weather = weatherDocument.weather;
+        weatherGeoJSON.features.push(featureDocument[0].feature)
 
     }
 
     console.log("Started sending geoJSONs to the client.");
-    response.send(geoJSON);
+    response.send(weatherGeoJSON);
     console.log("Finished sending geoJSONs to the client.\n");
 
 }

@@ -1,27 +1,27 @@
 <!-- https://www.section.io/engineering-education/building-simple-maps-using-leaflet-js/ -->
 
 <html lang="en">
-  <head>
+<head>
     <!--! Meta Information -->
 
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <meta http-equiv="X-UA-Compatible" content="IE=edge"/>
     <title>Document</title>
 
     <!--! Dependencies -->
 
     <!-- https://leafletjs.com/SlavaUkraini/examples/quick-start/ -->
     <link
-      rel="stylesheet"
-      href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css"
-      integrity="sha512-xodZBNTC5n17Xt2atTPuE1HxjVMSvLVW9ocqUKLsCC5CXdbqCmblAshOMAS6/keqq/sMZMZ19scR4PsZChSR7A=="
-      crossorigin=""
+            rel="stylesheet"
+            href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css"
+            integrity="sha512-xodZBNTC5n17Xt2atTPuE1HxjVMSvLVW9ocqUKLsCC5CXdbqCmblAshOMAS6/keqq/sMZMZ19scR4PsZChSR7A=="
+            crossorigin=""
     />
     <script
-      src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"
-      integrity="sha512-XQoYMqMTK8LvdxXYG3nZ448hOEQiglfqkJs1NOQV44cWnUrBc8PkAOcXy20w0vlaXaVUearIOBhiXZ5V3ynxwA=="
-      crossorigin=""
+            src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"
+            integrity="sha512-XQoYMqMTK8LvdxXYG3nZ448hOEQiglfqkJs1NOQV44cWnUrBc8PkAOcXy20w0vlaXaVUearIOBhiXZ5V3ynxwA=="
+            crossorigin=""
     ></script>
 
     <!-- http://kartena.github.io/Proj4Leaflet/ -->
@@ -31,15 +31,15 @@
 
     <!-- Bootstrap  -->
     <link
-      href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css"
-      rel="stylesheet"
-      integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC"
-      crossorigin="anonymous"
+            href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css"
+            rel="stylesheet"
+            integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC"
+            crossorigin="anonymous"
     />
     <script
-      src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js"
-      integrity="sha384-MrcW6ZMFYlzcLA8Nl+NtUVF0sA7MsXsP1UyJoMp4YLEuNSfAP+JcXn/tWtIaxVXM"
-      crossorigin="anonymous"
+            src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js"
+            integrity="sha384-MrcW6ZMFYlzcLA8Nl+NtUVF0sA7MsXsP1UyJoMp4YLEuNSfAP+JcXn/tWtIaxVXM"
+            crossorigin="anonymous"
     ></script>
 
     <!-- https://github.com/digidem/leaflet-bing-layer -->
@@ -47,155 +47,157 @@
 
     <!--! Style -->
     <style>
-      body {
-        margin: 0;
-        padding: 0;
-      }
+        body {
+            margin: 0;
+            padding: 0;
+        }
 
-      #map {
-        width: 100%;
-        height: 90%;
-      }
+        #map {
+            width: 100%;
+            height: 90%;
+        }
 
-      /* https://leafletjs.com/SlavaUkraini/examples/choropleth/ */
-      .info {
-        padding: 6px 8px;
-        font: 14px/16px Arial, Helvetica, sans-serif;
-        background: white;
-        background: rgba(255, 255, 255, 0.8);
-        box-shadow: 0 0 15px rgba(0, 0, 0, 0.2);
-        border-radius: 5px;
-      }
-      .info h4 {
-        margin: 0 0 5px;
-        color: #777;
-      }
+        /* https://leafletjs.com/SlavaUkraini/examples/choropleth/ */
+        .info {
+            padding: 6px 8px;
+            font: 14px/16px Arial, Helvetica, sans-serif;
+            background: white;
+            background: rgba(255, 255, 255, 0.8);
+            box-shadow: 0 0 15px rgba(0, 0, 0, 0.2);
+            border-radius: 5px;
+        }
+
+        .info h4 {
+            margin: 0 0 5px;
+            color: #777;
+        }
     </style>
-  </head>
+</head>
 
-  <body>
-    <!-- Weather dates dropdown menu -->
-    <div class="dropdown">
-      <a
-        class="btn btn-secondary dropdown-toggle"
-        href="#"
-        role="button"
-        id="dropdownMenuLink"
-        data-bs-toggle="dropdown"
-        aria-expanded="false"
-      >
+<body>
+<!-- Weather dates dropdown menu -->
+<div class="dropdown">
+    <a
+            class="btn btn-secondary dropdown-toggle"
+            href="#"
+            role="button"
+            id="dropdownMenuLink"
+            data-bs-toggle="dropdown"
+            aria-expanded="false"
+    >
         Weather dates
-      </a>
+    </a>
 
-      <ul class="dropdown-menu" aria-labelledby="dropdownMenuLink">
+    <ul class="dropdown-menu" aria-labelledby="dropdownMenuLink">
         <% for (let index = 0; index < weatherDates.length; index++) { %>
-        <li>
-          <input
-            id="clickMe"
-            type="button"
-            value="<%=
-          weatherDates[index].date%>"
-            onclick='loadDateGeoJSONs("<%-weatherDates[index]._id %>")'
-          />
-        </li>
+            <li>
+                <input
+                        id="clickMe"
+                        type="button"
+                        value="<%=
+                            weatherDates[index].date %>"
+                        onclick='loadDateGeoJSON("<%- weatherDates[index]._id %>")'
+                />
+            </li>
         <% } %>
-      </ul>
-    </div>
+    </ul>
+</div>
 
-    <div id="map"></div>
-  </body>
+<div id="map"></div>
+</body>
 
-  <script>
-    // Feature highlighting
+<script>
+    let leafletGeoJSON;
 
     // Returns the temperature of a given color
     function getTemperatureColor(temperature) {
-      return temperature > 30
-        ? "#800026"
-        : temperature > 25
-        ? "#BD0026"
-        : temperature > 20
-        ? "#E31A1C"
-        : temperature > 15
-        ? "#FC4E2A"
-        : temperature > 10
-        ? "#FD8D3C"
-        : temperature > 5
-        ? "#FEB24C"
-        : temperature > 0
-        ? "#FED976"
-        : "#FFEDA0";
+        return temperature > 30
+            ? "#800026"
+            : temperature > 25
+                ? "#BD0026"
+                : temperature > 20
+                    ? "#E31A1C"
+                    : temperature > 15
+                        ? "#FC4E2A"
+                        : temperature > 10
+                            ? "#FD8D3C"
+                            : temperature > 5
+                                ? "#FEB24C"
+                                : temperature > 0
+                                    ? "#FED976"
+                                    : "#FFEDA0";
     }
+
 
     // Returns the style of a region in the map
     function style(feature) {
-      let featureColor;
-      if ("weather" in feature) {
-        featureColor = getTemperatureColor(feature.weather.current.temp_c);
-      } else if ("weather" in feature == false) {
-        featureColor = "#808080";
-      }
+        let featureColor;
+        if ("weather" in feature) {
+            featureColor = getTemperatureColor(feature.weather.current.temp_c);
+        } else if ("weather" in feature == false) {
+            featureColor = "#808080";
+        }
 
-      let featureStyle = {};
+        let featureStyle = {};
 
-      return {
-        fillColor: featureColor,
-        weight: 2,
-        opacity: 1,
-        color: "white",
-        dashArray: "3",
-        fillOpacity: 0.7,
-      };
+        return {
+            fillColor: featureColor,
+            weight: 2,
+            opacity: 1,
+            color: "white",
+            dashArray: "3",
+            fillOpacity: 0.7,
+        };
     }
 
     // Highlights a feature of the map when hovered over
     function highlightFeature(event) {
-      let mapRegionBorderCurrentlyHovered = event.target;
-      let mapFeatureCurrentlyHovered = mapRegionBorderCurrentlyHovered.feature;
+        let mapRegionBorderCurrentlyHovered = event.target;
+        let mapFeatureCurrentlyHovered = mapRegionBorderCurrentlyHovered.feature;
 
-      mapRegionBorderCurrentlyHovered.setStyle({
-        weight: 5,
-        // color: "#666",
-        dashArray: "",
-        fillOpacity: 0.7,
-      });
+        mapRegionBorderCurrentlyHovered.setStyle({
+            weight: 5,
+            // color: "#666",
+            dashArray: "",
+            fillOpacity: 0.7,
+        });
 
-      if (!L.Browser.ie && !L.Browser.opera && !L.Browser.edge) {
-        mapRegionBorderCurrentlyHovered.bringToFront();
-      }
+        if (!L.Browser.ie && !L.Browser.opera && !L.Browser.edge) {
+            mapRegionBorderCurrentlyHovered.bringToFront();
+        }
 
-      if ("weather" in mapFeatureCurrentlyHovered) {
-        updateInformationMenuWithWeather(mapFeatureCurrentlyHovered);
-      } else if ("weather" in mapFeatureCurrentlyHovered == false) {
-        updateInformationMenuWithName(mapFeatureCurrentlyHovered);
-      }
+        if ("weather" in mapFeatureCurrentlyHovered) {
+            updateInformationMenuWithWeather(mapFeatureCurrentlyHovered);
+        } else if ("weather" in mapFeatureCurrentlyHovered == false) {
+            updateInformationMenuWithName(mapFeatureCurrentlyHovered);
+        }
     }
 
     // Stops highlighting a feature when it stops being hovered over
     function resetHighlight(event) {
-      let mapFeatureCurrentlyHovered = event.target;
+        let mapFeatureCurrentlyHovered = event.target;
 
-      geojson.resetStyle(mapFeatureCurrentlyHovered);
+        leafletGeoJSON.resetStyle(mapFeatureCurrentlyHovered);
 
-      if ("weather" in mapFeatureCurrentlyHovered) {
-        updateInformationMenuWithWeather();
-      } else if ("weather" in mapFeatureCurrentlyHovered == false) {
-        updateInformationMenuWithName();
-      }
+        if ("weather" in mapFeatureCurrentlyHovered) {
+            updateInformationMenuWithWeather();
+        } else if ("weather" in mapFeatureCurrentlyHovered == false) {
+            updateInformationMenuWithName();
+        }
     }
 
     // Zooms to the feature clicked
     function zoomToFeature(e) {
-      worldMap.fitBounds(e.target.getBounds());
+        worldMap.fitBounds(e.target.getBounds());
     }
 
     // The events associated with each feature
     function onEachFeature(feature, layer) {
-      layer.on({
-        mouseover: highlightFeature,
-        mouseout: resetHighlight,
-        click: zoomToFeature,
-      });
+        layer.on({
+            mouseover: highlightFeature,
+            mouseout: resetHighlight,
+            click: zoomToFeature,
+        });
     }
 
     //! Information menu
@@ -203,166 +205,128 @@
     // Update the information menu with the weather based on feature properties passed
     // TODO: Make the geoJSON property field name more dynamic
     function updateInformationMenuWithName(mapFeatureCurrentlyHovered) {
-      mapInformationMenu._div.innerHTML =
-        "<h4>Weather</h4>" +
-        (mapFeatureCurrentlyHovered
-          ? "<b>" +
-            mapFeatureCurrentlyHovered.properties.Freguesia +
-            "</b><br />"
-          : "Hover over a state");
+        mapInformationMenu._div.innerHTML =
+            "<h4>Weather</h4>" +
+            (mapFeatureCurrentlyHovered
+                ? "<b>" +
+                mapFeatureCurrentlyHovered.properties.Freguesia +
+                "</b><br />"
+                : "Hover over a state");
     }
 
     // Update the information menu based with the weather information on feature properties passed
     // TODO: Make the geoJSON property field name more dynamic
     function updateInformationMenuWithWeather(mapFeatureCurrentlyHovered) {
-      mapInformationMenu._div.innerHTML =
-        "<h4>Weather</h4>" +
-        (mapFeatureCurrentlyHovered
-          ? "<b>" +
-            mapFeatureCurrentlyHovered.properties.Freguesia +
-            "</b><br />" +
-            mapFeatureCurrentlyHovered.weather.current.temp_c +
-            " degrees Celsius"
-          : "Hover over a state");
+        mapInformationMenu._div.innerHTML =
+            "<h4>Weather</h4>" +
+            (mapFeatureCurrentlyHovered
+                ? "<b>" +
+                mapFeatureCurrentlyHovered.properties.Freguesia +
+                "</b><br />" +
+                mapFeatureCurrentlyHovered.weather.current.temp_c +
+                " degrees Celsius"
+                : "Hover over a state");
     }
 
     //! Loading geoJSONs
 
     // Loads all the region borders saved on the database upon loading
-    async function loadGeoJSONsUponMapLoad() {
-      //! Fetch the geoJSON from the backend
-      console.log("Started fetching the geoJSONs from the backend.");
-      let url = "http://localhost:8000/getRegionBorders/";
+    async function loadGeoJSONUponMapLoad() {
+        //! Fetch the geoJSON from the backend
+        console.log("Started fetching the geoJSON from the backend.");
+        let url = "http://localhost:8000/getRegionBorders/";
 
-      const geoJSONsResponse = await fetch(url);
+        const geoJSONsResponse = await fetch(url);
 
-      console.log("Finished fetching the geoJSONs from the backend.");
-      // Note that despite the method being named json(),
-      //the result is not JSON but is instead the result of taking JSON as input and parsing it to produce a JavaScript object.
-      geoJSONsArray = await geoJSONsResponse.json();
-      for (const geoJSON of geoJSONsArray) {
-        console.log(
-          "Received geoJON with the following projection: ",
-          geoJSON.crs.properties.name
-        );
-
-        //! Fetch the projection information to use in the proj4 library, so the coordinates can be correctly projected to the map
-        console.log(
-          "Started fetching the projection information from epsg.io."
-        );
-
-        let projectionNumber = geoJSON.crs.properties.name.split("::")[1]; // The number of the EPSG projection, used to fetch the projection information from an external API
-        let projectionInformationURL =
-          "https://epsg.io/" + projectionNumber + ".proj4"; // The URL of the projection information
-        const projectionResponse = await fetch(projectionInformationURL);
-        projectionInformation = await projectionResponse.text();
-
-        let projectionName = "urn:ogc:def:crs:EPSG::" + projectionNumber; // Parses the projection name, to be used by the proj4 library
-        proj4.defs(projectionName, projectionInformation); // Tells the proj4 library to use the projection information returned from the external API
+        console.log("Finished fetching the geoJSON from the backend.");
+        // Note that despite the method being named json(),
+        //the result is not JSON but is instead the result of taking JSON as input and parsing it to produce a JavaScript object.
+        let geoJSON = await geoJSONsResponse.json();
 
         // Adds the projection to the map
-        geojson = L.Proj.geoJson(geoJSON, {
-          style: style,
-          onEachFeature: onEachFeature,
+        leafletGeoJSON = L.geoJson(geoJSON, {
+            style: style,
+            onEachFeature: onEachFeature,
         }).addTo(worldMap);
-      }
+
     }
 
     // Cleans all the features that were added to the map
     function cleanMap() {
-      worldMap.eachLayer(function (layer) {
-        if (layer instanceof L.GeoJSON) {
-          worldMap.removeLayer(layer);
-        }
-      });
+        worldMap.eachLayer(function (layer) {
+            if (layer instanceof L.GeoJSON) {
+                worldMap.removeLayer(layer);
+            }
+        });
     }
 
     // Load geoJSONs with the weather information of a given date, and project them to the map
-    async function loadDateGeoJSONs(weatherDate) {
+    async function loadDateGeoJSON(weatherDate) {
 
-      // TODO: It's possible to click on a date button before the website has finished loading the region borders 
-      // If the user does so, it doesn't properly clean the map.
-      cleanMap()
+        // TODO: It's possible to click on a date button before the website has finished loading the region borders
+        // If the user does so, it doesn't properly clean the map.
+        cleanMap()
 
-      //! Fetch the geoJSON from the backend
-      console.log("Started fetching the geoJSONs from the backend.");
-      let url =
-        "http://localhost:8000/getRegionBordersAndWeather/" + weatherDate;
+        //! Fetch the geoJSON from the backend
+        console.log("Started fetching the geoJSON from the backend.");
+        let url =
+            "http://localhost:8000/getRegionBordersAndWeather/" + weatherDate;
 
-      const geoJSONsResponse = await fetch(url);
+        const geoJSONsResponse = await fetch(url);
 
-      console.log("Finished fetching the geoJSONs from the backend.");
-      // Note that despite the method being named json(),
-      //the result is not JSON but is instead the result of taking JSON as input and parsing it to produce a JavaScript object.
-      geoJSONsArray = await geoJSONsResponse.json();
-      for (const geoJSON of geoJSONsArray) {
-        console.log(
-          "Received geoJON with the following projection: ",
-          geoJSON.crs.properties.name
-        );
-
-        //! Fetch the projection information to use in the proj4 library, so the coordinates can be correctly projected to the map
-        console.log(
-          "Started fetching the projection information from epsg.io."
-        );
-
-        let projectionNumber = geoJSON.crs.properties.name.split("::")[1]; // The number of the EPSG projection, used to fetch the projection information from an external API
-        let projectionInformationURL =
-          "https://epsg.io/" + projectionNumber + ".proj4"; // The URL of the projection information
-        const projectionResponse = await fetch(projectionInformationURL);
-        projectionInformation = await projectionResponse.text();
-
-        let projectionName = "urn:ogc:def:crs:EPSG::" + projectionNumber; // Parses the projection name, to be used by the proj4 library
-        proj4.defs(projectionName, projectionInformation); // Tells the proj4 library to use the projection information returned from the external API
+        console.log("Finished fetching the geoJSON from the backend.");
+        // Note that despite the method being named json(),
+        //the result is not JSON but is instead the result of taking JSON as input and parsing it to produce a JavaScript object.
+        let geoJSON = await geoJSONsResponse.json();
 
         // Adds the projection to the map
-        geojson = L.Proj.geoJson(geoJSON, {
-          style: style,
-          onEachFeature: onEachFeature,
+        leafletGeoJSON = L.geoJson(geoJSON, {
+            style: style,
+            onEachFeature: onEachFeature,
         }).addTo(worldMap);
-      }
+
     }
 
-    let geoJSONsArray;
-    var mapInformationMenu = L.control();
 
-    loadGeoJSONsUponMapLoad();
+    loadGeoJSONUponMapLoad();
 
     //! Map
     let worldMap = L.map("map", {
-      center: [38.686796, -9.128914], // The coordinates the map is in when first loaded
-      zoom: 8, // The zoom level the map has when first loaded
+        center: [38.686796, -9.128914], // The coordinates the map is in when first loaded
+        zoom: 8, // The zoom level the map has when first loaded
     });
 
     //! Map tile layer
     let openStreetMapLayer = L.tileLayer(
-      "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
-      {
-        noWrap: true, // If false, the map wraps around itself, repeating itself
-      }
+        "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
+        {
+            noWrap: true, // If false, the map wraps around itself, repeating itself
+        }
     ).addTo(worldMap);
 
-    mapInformationMenu.onAdd = function (map) {
-      this._div = L.DomUtil.create("div", "info"); // create a div with a class "info"
-      updateInformationMenuWithName();
-      return this._div;
+    //! Information menu
+    let mapInformationMenu = L.control();
+    mapInformationMenu.onAdd = function(worldMap) {
+        this._div = L.DomUtil.create("div", "info"); // create a div with a class "info"
+        updateInformationMenuWithName();
+        return this._div;
     };
-
     mapInformationMenu.addTo(worldMap);
+
 
     // let marker = L.marker([9.082, 8.6753]).addTo(map);
 
     // Choose map layer
     let Basemaps = {
-      OpenStreetMap: openStreetMapLayer,
+        OpenStreetMap: openStreetMapLayer,
     };
 
     // Choose map markers
     let Overlaymaps = {
-      // Marker: marker,
+        // Marker: marker,
     };
 
     // Add control for map layer and markers
     L.control.layers(Basemaps, Overlaymaps).addTo(worldMap);
-  </script>
+</script>
 </html>
