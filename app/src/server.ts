@@ -4,11 +4,10 @@ import express from "express";
 import cors from "cors"; //! Cross-origin resource sharing
 
 //! Routers
-import {regionBordersRouter} from "./routes/regionBorders.js";
+import {regionBordersRouter} from "./routes/features.js";
 import {weatherRouter} from "./routes/weather.js";
 import {librariesRouter} from "./routes/libraries.js";
 import {configRouter} from "./routes/config.js";
-import {databaseDeletesRouter} from "./routes/databaseDeletes.js";
 import {mapRouter} from "./routes/map.js"
 
 dotenv.config({path: "./.env"}); // Loads .env file contents into process.env
@@ -27,7 +26,6 @@ app.use("/", regionBordersRouter); // Import region border routes into the root 
 app.use("/", weatherRouter); // Import weather routes into the root path '/'
 app.use("/", librariesRouter); // Import libraries routes into the root path '/'
 app.use("/", configRouter); // Import config routes into the root path '/'
-app.use("/", databaseDeletesRouter); // Import database deletes routes into the root path '/'
 app.use("/", mapRouter); // Import map routes into the root path '/'
 
 //! Start server

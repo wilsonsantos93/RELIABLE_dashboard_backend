@@ -3,11 +3,11 @@ import {DatabaseEngine} from "../configs/mongo.js";
 import sendResponseWithGoBackLink from "../utils/response.js";
 import {Document, Filter, ObjectId} from "mongodb";
 import {Request, Response} from "express-serve-static-core";
-import {GeoJSON} from "../interfaces/GeoJSON.js";
-import {WeatherProjection} from "../interfaces/DatabaseCollections/Projections/WeatherProjection";
-import {FeaturesProjection} from "../interfaces/DatabaseCollections/Projections/FeaturesProjection";
-import {FeatureGeometryPolygon} from "../interfaces/GeoJSON/Feature/FeatureGeometry/FeatureGeometryPolygon";
-import {CRSLatLongProperties} from "../interfaces/GeoJSON/CoordinatesReferenceSystem/CRSLatLongProperties";
+import {WeatherProjection} from "../models/DatabaseCollections/Projections/WeatherProjection";
+import {FeaturesProjection} from "../models/DatabaseCollections/Projections/FeaturesProjection";
+import {FeatureCollectionWithCRS} from "../models/FeatureCollectionWithCRS";
+import {FeatureCollection, Polygon} from "geojson";
+import {FeatureProperties} from "../models/FeatureProperties";
 
 /**
  * Sends an array of geoJSONs with the border regions and its weather information on a certain date
@@ -60,14 +60,14 @@ export async function handleGetRegionBordersAndWeatherByDate(
     //! End of error handling
 
     let weatherDateID = request.params.weatherDateID; //https://stackoverflow.com/questions/20089582/how-to-get-a-url-parameter-in-express
-    let weatherQuery: Filter<Document> = {
-        weatherDateObjectId: new ObjectId(weatherDateID),
-        "weather.error.code": {$exists: false}
-    };
 
     // We are going to use the returning query parameters to add the weather information and associated feature to the current geoJSON
     // As such, the _id, weatherDateObjectId aren't needed
     // We only need the weather field and the regionBorderFeatureObjectId
+    let weatherQuery: Filter<Document> = {
+        weatherDateObjectId: new ObjectId(weatherDateID),
+        "weather.error.code": {$exists: false}
+    };
     let weatherQueryProjection: WeatherProjection = {
         _id: 0,
         weatherDateObjectId: 0,
@@ -76,17 +76,11 @@ export async function handleGetRegionBordersAndWeatherByDate(
     let weatherDocuments = await queryWeatherDocuments(weatherQuery, weatherQueryProjection)
 
     //* Query for the features associated with the weathers
-    let weatherGeoJSON: GeoJSON<FeatureGeometryPolygon, CRSLatLongProperties> = {
+    let weatherGeoJSON: FeatureCollection<Polygon, FeatureProperties> = {
         type: "FeatureCollection",
-        crs: {
-            type: "name",
-            properties: {
-                name: "urn:ogc:def:crs:EPSG::4258"
-            }
-        },
         features: []
-
     }
+
     for (const weatherDocument of weatherDocuments) {
 
         let featuresBordersQuery: Filter<Document> = {
@@ -105,7 +99,7 @@ export async function handleGetRegionBordersAndWeatherByDate(
             featuresQueryProjection
         );
 
-        featureDocument[0].feature.weather = weatherDocument.weather;
+        featureDocument[0].feature.properties.weather = weatherDocument.weather;
         weatherGeoJSON.features.push(featureDocument[0].feature)
 
     }

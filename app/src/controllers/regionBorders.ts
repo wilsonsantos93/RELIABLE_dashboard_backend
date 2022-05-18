@@ -4,14 +4,11 @@ import {collectionExistsInDatabase, queryFeatureDocuments, queryAllFeatureDocume
 // @ts-ignore
 import polygonCenter from "geojson-polygon-center";
 import {Request, Response} from "express-serve-static-core";
-import {GeoJSON} from "../interfaces/GeoJSON.js";
-import {Feature} from "../interfaces/GeoJSON/Feature";
-import {FeaturesProjection} from "../interfaces/DatabaseCollections/Projections/FeaturesProjection";
-import {FeatureGeometryPolygon} from "../interfaces/GeoJSON/Feature/FeatureGeometry/FeatureGeometryPolygon";
-import {CRSLatLongProperties} from "../interfaces/GeoJSON/CoordinatesReferenceSystem/CRSLatLongProperties";
-import {FeatureGeometryMultiPolygon} from "../interfaces/GeoJSON/Feature/FeatureGeometry/FeatureGeometryMultiPolygon";
-import {CRSAnyProperties} from "../interfaces/GeoJSON/CoordinatesReferenceSystem/CRSAnyProperties";
+import {FeaturesProjection} from "../models/DatabaseCollections/Projections/FeaturesProjection";
 import {Document, Filter} from "mongodb";
+import {FeatureCollectionWithCRS} from "../models/FeatureCollectionWithCRS";
+import {Feature, FeatureCollection, MultiPolygon, Polygon} from "geojson";
+import {FeatureProperties} from "../models/FeatureProperties";
 
 /**
  * Sends a response with an array of geoJSONs. <p>
@@ -52,19 +49,13 @@ export async function handleGetRegionBorders(request: Request, response: Respons
         );
 
         // Add the queried features to the geoJSON
-        let queriedFeatures: Feature<FeatureGeometryPolygon>[] = [];
+        let queriedFeatures: Feature<Polygon, FeatureProperties>[] = [];
         for (const regionBorderDocument of regionBordersDocumentsArray) {
             queriedFeatures.push(regionBorderDocument.feature)
         }
 
-        let geoJSON: GeoJSON<FeatureGeometryPolygon, CRSLatLongProperties> = {
+        let geoJSON: FeatureCollection<Polygon, FeatureProperties> = {
             type: "FeatureCollection",
-            crs: {
-                type: "name",
-                properties: {
-                    name: "urn:ogc:def:crs:EPSG::4258",
-                },
-            },
             features: queriedFeatures
         }
 
@@ -87,7 +78,7 @@ export async function handleSaveFeatures(request: Request, response: Response) {
     //* Parse received file bytes to geoJSON
     let fileBuffer = request.file.buffer; // Multer enables the server to access the file sent by the client using "request.file.buffer". The file accessed is in bytes.
     let trimmedFileBuffer = fileBuffer.toString().trimStart().trimEnd(); // Sometimes the geoJSON sent has unnecessary spaces that need to be trimmed
-    let geoJSON: GeoJSON<FeatureGeometryMultiPolygon | FeatureGeometryPolygon, CRSAnyProperties | CRSLatLongProperties> = JSON.parse(trimmedFileBuffer); // Parse the trimmed file buffer to a correct geoJSON
+    let geoJSON: FeatureCollectionWithCRS<MultiPolygon | Polygon, FeatureProperties> = JSON.parse(trimmedFileBuffer); // Parse the trimmed file buffer to a correct geoJSON
 
     //* Save each geoJSON feature to the collection individually
     console.log("Started inserting geoJSON features in the database.");
@@ -142,19 +133,26 @@ export async function handleCalculateCenters(request: Request, response: Respons
             featuresQueryProjection
         );
 
-        for (const feature of featureDocuments) {
+        let currentFeatureIndex = 1;
+        for (const currentFeature of featureDocuments) {
+            if ((currentFeatureIndex % 10) === 0) {
+                console.log("Calculating center of feature number: " + currentFeatureIndex)
+            }
 
-            let center = polygonCenter(feature.feature.geometry);
+            let center = polygonCenter(currentFeature.feature.geometry);
 
             // Add the centre data to the regionBorderDocument in the database
             await DatabaseEngine.getFeaturesCollection().updateOne(
-                {_id: feature._id}, // Updates the region regionBorderDocument document that has the same id as the current regionBorderDocument
+                {_id: currentFeature._id}, // Updates the region regionBorderDocument document that has the same id as the current regionBorderDocument
                 {
                     $set: {
                         center: center,
                     },
                 }
             );
+
+            currentFeatureIndex++;
+
         }
 
         let message = "";

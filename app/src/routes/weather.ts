@@ -1,4 +1,4 @@
-import {handleGetWeatherDates, handleSaveWeather,} from "../handlers/weather.js";
+import {handleGetWeatherDates, handleSaveWeather,} from "../controllers/weather.js";
 
 //! Express
 import express from "express";

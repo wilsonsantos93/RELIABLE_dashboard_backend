@@ -1,11 +1,11 @@
 import {queryFeatureDocuments} from "../utils/database.js";
 import {DatabaseEngine} from "../configs/mongo.js";
 import sendResponseWithGoBackLink from "../utils/response.js";
-import proj4 from "proj4";
 import {Request, Response} from "express-serve-static-core";
 import {Document, Filter, FindOptions, ObjectId} from "mongodb";
 import {requestWeather} from "../utils/weather.js";
-import {FeaturesProjection} from "../interfaces/DatabaseCollections/Projections/FeaturesProjection";
+import {FeaturesProjection} from "../models/DatabaseCollections/Projections/FeaturesProjection";
+import async from "async";
 
 /**
  * Saves the current date to the <u>weatherDates</u> collection.
@@ -51,8 +51,7 @@ export async function handleSaveWeather(request: Request, response: Response) {
     );
 
     let currentFeatureIndex = 1
-    for (const currentFeature of featureDocumentsWithCenter) {
-
+    await async.each(featureDocumentsWithCenter,async (currentFeature) => {
         if ((currentFeatureIndex % 10) == 0) {
             console.log("Saved weather of feature number:", currentFeatureIndex);
         }
@@ -70,8 +69,7 @@ export async function handleSaveWeather(request: Request, response: Response) {
         });
 
         currentFeatureIndex++;
-
-    }
+    })
 
     //* Query for features who don't have their FeatureCenter calculated
     let featuresWithNoCenterQuery = {center: {$exists: false}};
@@ -109,7 +107,7 @@ export async function handleSaveWeather(request: Request, response: Response) {
  */
 export async function handleGetWeatherDates(request: Request, response: Response) {
     let weatherDatesQuery = {}; // Query all weather dates to return to the client
-    let weatherDatesProjection = {_id: 0, date: 1}; // Only the date itself needs to be returned by the query
+    let weatherDatesProjection = {_id: 1, date: 1}; // Only the date itself needs to be returned by the query
     let weatherDatesQueryOptions: FindOptions = {
         projection: weatherDatesProjection,
     };

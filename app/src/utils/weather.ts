@@ -1,8 +1,8 @@
 import fetch from "cross-fetch";
-import {FeatureWeather} from "../interfaces/GeoJSON/Feature/FeatureWeather";
+import {FeatureWeather} from "../models/FeatureProperties";
 
 /**
- * Fetch the weather of a location, and return it.
+ * Fetch the weather of a location from an external API, and return it.
  * @param locationCoordinates The array of the location to fetch the weather.
  * @return weatherDataJSON A JSON with the weather information of a location.
  */

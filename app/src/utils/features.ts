@@ -1,13 +1,26 @@
 // Takes a geoJSON, and returns another geoJSON with the MultiPolygon features separated into multiple features
 // with a single Polygon each and the same properties of the MultiPolygon
-import {GeoJSON} from "../interfaces/GeoJSON";
-import {FeatureDocument} from "../interfaces/DatabaseCollections/FeatureDocument";
-import {Feature} from "../interfaces/GeoJSON/Feature";
+import {FeatureDocument} from "../models/DatabaseCollections/FeatureDocument";
 import proj4 from "proj4";
-import {CoordinatesReferenceSystem} from "../interfaces/GeoJSON/CoordinatesReferenceSystem";
-import {FeatureGeometryMultiPolygon} from "../interfaces/GeoJSON/Feature/FeatureGeometry/FeatureGeometryMultiPolygon";
-import {FeatureGeometryPolygon} from "../interfaces/GeoJSON/Feature/FeatureGeometry/FeatureGeometryPolygon";
-import {CRSAnyProperties} from "../interfaces/GeoJSON/CoordinatesReferenceSystem/CRSAnyProperties";
+import fetch from "cross-fetch";
+import {Feature, FeatureCollection, MultiPolygon, Polygon, Position} from "geojson";
+import {FeatureProperties} from "../models/FeatureProperties";
+import {CRS} from "../models/FeatureCollectionWithCRS";
+
+/**
+ * Requests and returns the projection information of a {@link CoordinatesReferenceSystem} from an external API.
+ * @param crs The {@link CoordinatesReferenceSystem} to fetch the projection information.
+ * @return The {@link CoordinatesReferenceSystem} information.
+ */
+export async function requestProjectionInformation(crs: CRS) {
+    let projectionNumber = crs.properties.name.split("::")[1]; // The number of the EPSG projection, used to fetch the projection information from an external API
+    let projectionInformationURL =
+        "https://epsg.io/" + projectionNumber + ".proj4"; // The URL of the projection information
+    const projectionResponse = await fetch(projectionInformationURL);
+    let projectionInformation = await projectionResponse.text();
+
+    return projectionInformation;
+}
 
 /**
  * Separates a geoJSON MultiPolygon features into multiple Polygon features, if it has any.
@@ -15,11 +28,10 @@ import {CRSAnyProperties} from "../interfaces/GeoJSON/CoordinatesReferenceSystem
  * @param  geoJSON - to separate MultiPolygon features.
  * @return separatedGeoJSON - geoJSON with the MultiPolygon features separated.
  */
-export function separateMultiPolygons(geoJSON: GeoJSON<FeatureGeometryMultiPolygon | FeatureGeometryPolygon, CRSAnyProperties>) {
+export function separateMultiPolygons(geoJSON: FeatureCollection<MultiPolygon | Polygon, FeatureProperties> ) {
 
-    let separatedGeoJSON: GeoJSON<FeatureGeometryPolygon, CRSAnyProperties> = {
+    let separatedGeoJSON: FeatureCollection<Polygon, FeatureProperties> = {
         type: geoJSON.type,
-        crs: geoJSON.crs,
         features: []
     };
 
@@ -28,7 +40,7 @@ export function separateMultiPolygons(geoJSON: GeoJSON<FeatureGeometryMultiPolyg
         // If the feature is of the type Polygon, then simply append it to the separated geoJSON
         if (currentFeature.geometry.type === "Polygon") {
 
-            let tempFeature: Feature<FeatureGeometryPolygon> = {
+            let tempFeature: Feature<Polygon, FeatureProperties> ={
 
                 type: currentFeature.type,
                 properties: currentFeature.properties,
@@ -47,7 +59,7 @@ export function separateMultiPolygons(geoJSON: GeoJSON<FeatureGeometryMultiPolyg
 
             for (const polygon of currentFeature.geometry.coordinates) {
 
-                let tempFeature: Feature<FeatureGeometryPolygon> = {
+                let tempFeature: Feature<Polygon, FeatureProperties> = {
 
                     type: currentFeature.type,
                     properties: currentFeature.properties,
@@ -76,9 +88,9 @@ export function separateMultiPolygons(geoJSON: GeoJSON<FeatureGeometryMultiPolyg
  * @param featureCRS {@link Feature} {@link CoordinatesReferenceSystem} to be used when converting.
  * @return The feature's {@link coordinates} in Latitude/Longitude.
  */
-export function convertFeatureCoordinatesToLatLong(feature: Feature<FeatureGeometryPolygon>, featureProjection: string) {
+export function convertFeatureCoordinatesToLatLong(feature: Feature<Polygon, FeatureProperties>, featureProjection: string) {
 
-    let convertedFeature: Feature<FeatureGeometryPolygon> = {
+    let convertedFeature: Feature<Polygon, FeatureProperties> = {
         type: feature.type,
         properties: feature.properties,
         // Weather isn't needed because it hasn't been calculated at the moment of conversion
@@ -95,7 +107,7 @@ export function convertFeatureCoordinatesToLatLong(feature: Feature<FeatureGeome
         for (let currentCoordinatePair of region) {
 
             let latitudeLongitudeProjection = "+proj=longlat +datum=WGS84 +no_defs"; // Latitude/Longitude projection
-            convertedRegion.push(proj4(featureProjection, latitudeLongitudeProjection, currentCoordinatePair));
+            convertedRegion.push(proj4(featureProjection, latitudeLongitudeProjection, currentCoordinatePair as []));
 
         }
 

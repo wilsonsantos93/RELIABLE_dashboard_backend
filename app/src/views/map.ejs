@@ -224,9 +224,14 @@
                 mapFeatureCurrentlyHovered.properties.Freguesia +
                 "</b><br />" +
                 mapFeatureCurrentlyHovered.weather.current.temp_c +
-                " degrees Celsius"
-                : "Hover over a state");
+                " degrees Celsius" +
+                "</b><br />" +
+                mapFeatureCurrentlyHovered.weather.current.last_updated +
+                " last updated"
+                : "Hover over a state")
+        ;
     }
+
 
     //! Loading geoJSONs
 
@@ -306,7 +311,7 @@
 
     //! Information menu
     let mapInformationMenu = L.control();
-    mapInformationMenu.onAdd = function(worldMap) {
+    mapInformationMenu.onAdd = function (worldMap) {
         this._div = L.DomUtil.create("div", "info"); // create a div with a class "info"
         updateInformationMenuWithName();
         return this._div;

@@ -1,17 +1,13 @@
 import {DatabaseEngine} from "../configs/mongo.js";
-import fetch from "cross-fetch";
-import {convertFeatureCoordinatesToLatLong, separateMultiPolygons} from "./regionBorders.js";
+import {convertFeatureCoordinatesToLatLong, requestProjectionInformation, separateMultiPolygons} from "./features.js";
 import {Db, Document, Filter, FindOptions} from "mongodb";
-import {CoordinatesReferenceSystem} from "../interfaces/GeoJSON/CoordinatesReferenceSystem.js";
-import {GeoJSON} from "../interfaces/GeoJSON.js";
-import {CRSAnyProperties} from "../interfaces/GeoJSON/CoordinatesReferenceSystem/CRSAnyProperties.js";
-import {FeatureDocument} from "../interfaces/DatabaseCollections/FeatureDocument";
-import {WeatherCollectionDocument} from "../interfaces/DatabaseCollections/WeatherCollectionDocument";
-import {WeatherProjection} from "../interfaces/DatabaseCollections/Projections/WeatherProjection";
-import {FeaturesProjection} from "../interfaces/DatabaseCollections/Projections/FeaturesProjection";
-import {FeatureGeometryMultiPolygon} from "../interfaces/GeoJSON/Feature/FeatureGeometry/FeatureGeometryMultiPolygon";
-import {FeatureGeometryPolygon} from "../interfaces/GeoJSON/Feature/FeatureGeometry/FeatureGeometryPolygon";
-import {Feature} from "../interfaces/GeoJSON/Feature";
+import {FeatureDocument} from "../models/DatabaseCollections/FeatureDocument";
+import {WeatherCollectionDocument} from "../models/DatabaseCollections/WeatherCollectionDocument";
+import {WeatherProjection} from "../models/DatabaseCollections/Projections/WeatherProjection";
+import {FeaturesProjection} from "../models/DatabaseCollections/Projections/FeaturesProjection";
+import {Feature, MultiPolygon, Polygon} from "geojson";
+import {FeatureProperties} from "../models/FeatureProperties";
+import {FeatureCollectionWithCRS} from "../models/FeatureCollectionWithCRS";
 
 /**
  * Checks if a collection exists in a database.
@@ -38,38 +34,23 @@ export async function collectionExistsInDatabase(collectionName: string, databas
 }
 
 /**
- * Fetches and returns the projection information of a {@link CoordinatesReferenceSystem} from an external API.
- * @param crsProperties The {@link CoordinatesReferenceSystem} to fetch the projection information.
- * @return The {@link CoordinatesReferenceSystem} information.
- */
-async function fetchProjectionInformation(crsProperties: CRSAnyProperties) {
-    let projectionNumber = crsProperties.name.split("::")[1]; // The number of the EPSG projection, used to fetch the projection information from an external API
-    let projectionInformationURL =
-        "https://epsg.io/" + projectionNumber + ".proj4"; // The URL of the projection information
-    const projectionResponse = await fetch(projectionInformationURL);
-    let projectionInformation = await projectionResponse.text();
-
-    return projectionInformation;
-}
-
-/**
  * Save each {@link GeoJSON} {@link Feature} to the <u>regionBorders</u> collection individually.
  * @param geoJSON {@link GeoJSON} to insert to the collection.
  */
-export async function saveFeatures(geoJSON: GeoJSON<FeatureGeometryMultiPolygon | FeatureGeometryPolygon, CRSAnyProperties>) {
-    let regionBordersCollection = DatabaseEngine.getFeaturesCollection();
+export async function saveFeatures(geoJSON: FeatureCollectionWithCRS<MultiPolygon | Polygon, FeatureProperties>) {
+
+    let geoJSONProjectionInformation = await requestProjectionInformation(geoJSON.crs)
 
     console.log("Started separating Multi Polygons.")
     let separatedGeoJSON = separateMultiPolygons(geoJSON)
     console.log("Finished separating Multi Polygons.")
 
-    let geoJSONProjection = await fetchProjectionInformation(geoJSON.crs.properties)
 
     // Convert each feature of the geoJSON
-    let convertedFeatures: Feature<FeatureGeometryPolygon>[] = []
+    let convertedFeatures: Feature<Polygon, FeatureProperties>[] = []
     for (const currentFeature of separatedGeoJSON.features) {
 
-        let convertedFeature = convertFeatureCoordinatesToLatLong(currentFeature, geoJSONProjection)
+        let convertedFeature = convertFeatureCoordinatesToLatLong(currentFeature, geoJSONProjectionInformation)
         convertedFeatures.push(convertedFeature)
 
 
@@ -84,11 +65,10 @@ export async function saveFeatures(geoJSON: GeoJSON<FeatureGeometryMultiPolygon 
 
         convertedFeaturesDocuments.push(featureDocument)
 
-
     }
 
-
     // Save the converted features to the database
+    let regionBordersCollection = DatabaseEngine.getFeaturesCollection();
     await regionBordersCollection.insertMany(
         convertedFeaturesDocuments
     );
@@ -152,4 +132,20 @@ export async function queryWeatherDocuments(featuresQuery: Filter<Document>, fea
         .toArray() as WeatherCollectionDocument[];
 
     return weatherDocuments;
+}
+
+// Returns a JSON with the various dates the weather was saved in the database
+export async function queryAllWeatherDates() {
+    let weatherDatesQuery = {}; // Query all weather dates to return to the client
+    let weatherDatesProjection = {_id: 1, date: 1}; // Only the date itself needs to be returned by the query
+    let weatherDatesQueryOptions = {
+        projection: weatherDatesProjection,
+    };
+
+    // The following query returns [{type: "Feature",...}, {type:"Feature",...}]
+    let featuresQueryResults = await DatabaseEngine.getWeatherDatesCollection()
+        .find(weatherDatesQuery, weatherDatesQueryOptions)
+        .toArray();
+
+    return featuresQueryResults;
 }

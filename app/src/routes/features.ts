@@ -4,7 +4,7 @@ import express from "express";
 //! Get region borders data route
 //! Client sends a geoJSON to be saved to the database
 //! Calculate centers of each feature in the database route
-import {handleCalculateCenters, handleGetRegionBorders, handleSaveFeatures} from "../handlers/regionBorders.js";
+import {handleCalculateCenters, handleGetRegionBorders, handleSaveFeatures} from "../controllers/regionBorders.js";
 import multer from "multer";
 
 export let regionBordersRouter = express.Router();
@@ -27,7 +27,6 @@ regionBordersRouter.post(
     }
 );
 
-// TODO: If the centers were already calculated, warn the client, and don't calculate them again
 regionBordersRouter.post(
     "/calculateCenters",
     async function (request, response) {
