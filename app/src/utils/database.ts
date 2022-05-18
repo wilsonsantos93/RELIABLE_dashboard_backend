@@ -1,8 +1,11 @@
 import {DatabaseEngine} from "../configs/mongo.js";
 import {convertFeatureCoordinatesToLatLong, requestProjectionInformation, separateMultiPolygons} from "./features.js";
-import {Db, Document, Filter, FindOptions} from "mongodb";
+import {Db, Document, Filter, FindOptions, ObjectId} from "mongodb";
 import {FeatureDocument} from "../models/DatabaseCollections/FeatureDocument";
-import {WeatherCollectionDocument} from "../models/DatabaseCollections/WeatherCollectionDocument";
+import {
+    WeatherCollectionDocument,
+    WeatherCollectionDocumentWithFeature
+} from "../models/DatabaseCollections/WeatherCollectionDocument";
 import {WeatherProjection} from "../models/DatabaseCollections/Projections/WeatherProjection";
 import {FeaturesProjection} from "../models/DatabaseCollections/Projections/FeaturesProjection";
 import {Feature, MultiPolygon, Polygon} from "geojson";
@@ -121,15 +124,30 @@ export async function queryAllFeatureDocuments(queryProjection: FeaturesProjecti
  * @param featuresQueryProjection The fields of the collection {@link FeatureDocument} to return in the query.
  * @return  Array containing each {@link FeatureDocument} queried.
  */
-export async function queryWeatherDocuments(featuresQuery: Filter<Document>, featuresQueryProjection: WeatherProjection) {
-
-    let featuresQueryOptions: FindOptions = {
-        projection: featuresQueryProjection,
-    };
+export async function queryWeatherDocuments(weatherDateID: ObjectId, featuresQueryProjection: WeatherProjection) {
 
     let weatherDocuments = await DatabaseEngine.getWeatherCollection()
-        .find(featuresQuery, featuresQueryOptions)
-        .toArray() as WeatherCollectionDocument[];
+        .aggregate([
+
+            {
+                $match: {weatherDateObjectId: weatherDateID}
+            },
+            {
+                $match: {"weather.error.code": {$exists: false}}
+            },
+            {
+                $project: {_id:0}
+            },
+            {
+                $lookup: {
+                    from: 'regionBordersCollection',
+                    localField: 'regionBorderFeatureObjectId',
+                    foreignField: '_id',
+                    as: 'feature'
+                }
+            }
+        ])
+        .toArray() as WeatherCollectionDocumentWithFeature[];
 
     return weatherDocuments;
 }

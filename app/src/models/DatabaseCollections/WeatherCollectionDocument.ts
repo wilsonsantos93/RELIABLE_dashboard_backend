@@ -7,3 +7,7 @@ export interface WeatherCollectionDocument {
     weatherDateObjectId: ObjectId;
     regionBorderFeatureObjectId: ObjectId;
 }
+
+export interface WeatherCollectionDocumentWithFeature extends WeatherCollectionDocument {
+    feature: any;
+}

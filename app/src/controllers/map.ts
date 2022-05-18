@@ -5,9 +5,9 @@ import {Document, Filter, ObjectId} from "mongodb";
 import {Request, Response} from "express-serve-static-core";
 import {WeatherProjection} from "../models/DatabaseCollections/Projections/WeatherProjection";
 import {FeaturesProjection} from "../models/DatabaseCollections/Projections/FeaturesProjection";
-import {FeatureCollectionWithCRS} from "../models/FeatureCollectionWithCRS";
 import {FeatureCollection, Polygon} from "geojson";
 import {FeatureProperties} from "../models/FeatureProperties";
+import async from "async";
 
 /**
  * Sends an array of geoJSONs with the border regions and its weather information on a certain date
@@ -19,7 +19,7 @@ export async function handleGetRegionBordersAndWeatherByDate(
     response: Response
 ) {
     console.log(
-        "Client requested region borders and weather (Date:" +
+        "\nClient requested region borders and weather (Date:" +
         request.params.weatherDateID +
         ")"
     );
@@ -73,39 +73,23 @@ export async function handleGetRegionBordersAndWeatherByDate(
         weatherDateObjectId: 0,
     };
 
-    let weatherDocuments = await queryWeatherDocuments(weatherQuery, weatherQueryProjection)
+    let weatherDocuments = await queryWeatherDocuments(new ObjectId(weatherDateID), weatherQueryProjection)
 
-    //* Query for the features associated with the weathers
-    let weatherGeoJSON: FeatureCollection<Polygon, FeatureProperties> = {
+    let featuresWithWeather = []
+    for (let weatherDocument of weatherDocuments) {
+        let featureWithWeather = weatherDocument.feature;
+        featureWithWeather[0].feature.properties.weather = weatherDocument.weather;
+        featuresWithWeather.push(featureWithWeather[0])
+    }
+
+    let geoJsonArrayWithWeather = {
         type: "FeatureCollection",
-        features: []
-    }
+        features: featuresWithWeather
+    };
 
-    for (const weatherDocument of weatherDocuments) {
-
-        let featuresBordersQuery: Filter<Document> = {
-            _id: weatherDocument.regionBorderFeatureObjectId
-        }
-
-        // The GeoJSON only needs the weather information
-        let featuresQueryProjection: FeaturesProjection = {
-            _id: 0,
-            center: 0
-        }
-
-        // Find the weather's associated feature, returned as an array with only one element
-        let featureDocument = await queryFeatureDocuments(
-            featuresBordersQuery,
-            featuresQueryProjection
-        );
-
-        featureDocument[0].feature.properties.weather = weatherDocument.weather;
-        weatherGeoJSON.features.push(featureDocument[0].feature)
-
-    }
 
     console.log("Started sending geoJSONs to the client.");
-    response.send(weatherGeoJSON);
+    response.send(geoJsonArrayWithWeather);
     console.log("Finished sending geoJSONs to the client.\n");
 
 }

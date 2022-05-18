@@ -9,6 +9,7 @@ import {Document, Filter} from "mongodb";
 import {FeatureCollectionWithCRS} from "../models/FeatureCollectionWithCRS";
 import {Feature, FeatureCollection, MultiPolygon, Polygon} from "geojson";
 import {FeatureProperties} from "../models/FeatureProperties";
+import async from "async";
 
 /**
  * Sends a response with an array of geoJSONs. <p>
@@ -18,7 +19,7 @@ import {FeatureProperties} from "../models/FeatureProperties";
  * @param response Client HTTP response object
  */
 export async function handleGetRegionBorders(request: Request, response: Response) {
-    console.log("Client requested region borders.");
+    console.log("\nClient requested region borders.");
 
     //* Check if the region border collection exists
     let regionBordersCollectionExists = await collectionExistsInDatabase(
@@ -83,7 +84,7 @@ export async function handleSaveFeatures(request: Request, response: Response) {
     //* Save each geoJSON feature to the collection individually
     console.log("Started inserting geoJSON features in the database.");
     await saveFeatures(geoJSON);
-    console.log("Inserted geoJSON features in the database.\n");
+    console.log("Inserted geoJSON features in the database.");
 
     // Send successful response to the client
     sendResponseWithGoBackLink(response, "Server successfully saved geoJSON.");
@@ -97,7 +98,7 @@ export async function handleSaveFeatures(request: Request, response: Response) {
  */
 export async function handleCalculateCenters(request: Request, response: Response) {
     console.log(
-        "Client requested to calculate the centers for each region border in the collection."
+        "\nClient requested to calculate the centers for each region border in the collection."
     );
 
     //* Check if the region border collection exists
@@ -134,7 +135,7 @@ export async function handleCalculateCenters(request: Request, response: Respons
         );
 
         let currentFeatureIndex = 1;
-        for (const currentFeature of featureDocuments) {
+        await async.each(featureDocuments, async (currentFeature) => {
             if ((currentFeatureIndex % 10) === 0) {
                 console.log("Calculating center of feature number: " + currentFeatureIndex)
             }
@@ -152,8 +153,7 @@ export async function handleCalculateCenters(request: Request, response: Respons
             );
 
             currentFeatureIndex++;
-
-        }
+        })
 
         let message = "";
         message +=

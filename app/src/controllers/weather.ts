@@ -52,7 +52,7 @@ export async function handleSaveWeather(request: Request, response: Response) {
 
     let currentFeatureIndex = 1
     await async.each(featureDocumentsWithCenter,async (currentFeature) => {
-        if ((currentFeatureIndex % 10) == 0) {
+        try {if ((currentFeatureIndex % 10) == 0) {
             console.log("Saved weather of feature number:", currentFeatureIndex);
         }
 
@@ -68,7 +68,11 @@ export async function handleSaveWeather(request: Request, response: Response) {
             regionBorderFeatureObjectId: currentFeature._id,
         });
 
-        currentFeatureIndex++;
+        currentFeatureIndex++;}
+        catch (error) {
+            console.log("Error while saving weather of feature number:", currentFeatureIndex);
+            console.log(error);
+        }
     })
 
     //* Query for features who don't have their FeatureCenter calculated
@@ -106,6 +110,9 @@ export async function handleSaveWeather(request: Request, response: Response) {
  * @param response Client HTTP response object
  */
 export async function handleGetWeatherDates(request: Request, response: Response) {
+
+    console.log("\nQuerying for weather dates.")
+
     let weatherDatesQuery = {}; // Query all weather dates to return to the client
     let weatherDatesProjection = {_id: 1, date: 1}; // Only the date itself needs to be returned by the query
     let weatherDatesQueryOptions: FindOptions = {
@@ -118,5 +125,6 @@ export async function handleGetWeatherDates(request: Request, response: Response
         .toArray();
 
     response.send(featuresQueryResults)
+    console.log("Finished for weather dates.")
 
 }
