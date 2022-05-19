@@ -79,7 +79,7 @@ export async function handleGetRegionBordersAndWeatherByDate(
     for (let weatherDocument of weatherDocuments) {
         let featureWithWeather = weatherDocument.feature;
         featureWithWeather[0].feature.properties.weather = weatherDocument.weather;
-        featuresWithWeather.push(featureWithWeather[0])
+        featuresWithWeather.push(featureWithWeather[0].feature)
     }
 
     let geoJsonArrayWithWeather = {

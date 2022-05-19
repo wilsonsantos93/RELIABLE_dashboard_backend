@@ -144,7 +144,11 @@ export async function queryWeatherDocuments(weatherDateID: ObjectId, featuresQue
                     localField: 'regionBorderFeatureObjectId',
                     foreignField: '_id',
                     as: 'feature'
-                }
+                },
+                // $project: {
+                //     _id: 0,
+                //     center: 0,
+                // }
             }
         ])
         .toArray() as WeatherCollectionDocumentWithFeature[];
