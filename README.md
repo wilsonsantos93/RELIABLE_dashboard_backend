@@ -1,5 +1,6 @@
 # Weather Data Backend Microservice
-
+For my last university project, I was invited by the course's lead teacher to build a weather dashboard for the University of Lisbon.
+Graded in 18.0/20.
 <br>
 
 ## Map projections
