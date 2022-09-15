@@ -3,6 +3,7 @@ For my last university project, I was invited by the course's lead teacher to bu
 <br>
 Graded in 18.0/20.
 <br>
+
 This is the backend for the frontend found [here.](https://github.com/Mistakx/weather_dashboard_frontend/)
 
 ## Map projections
