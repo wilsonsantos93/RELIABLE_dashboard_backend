@@ -86,7 +86,8 @@ export async function handleSaveWeather(request: Request, response: Response) {
     let message = "Weather information saved to database.";
 
     //* If not all the features had their FeatureCenter calculated, and didn't have their weather fetched
-    if (regionBordersFeaturesWithNoCenter != []) {
+    /* if (regionBordersFeaturesWithNoCenter != []) { */
+    if (regionBordersFeaturesWithNoCenter.length > 0) {
         message =
             message +
             "\nNot all features had their centers calculated beforehand, so their weather couldn't be fetched.\n"
@@ -94,7 +95,7 @@ export async function handleSaveWeather(request: Request, response: Response) {
 
     }
     //* If all the features had their FeatureCenter calculated, and their weather fetched
-    else if (regionBordersFeaturesWithNoCenter == []) {
+    else /* if (regionBordersFeaturesWithNoCenter == []) */ {
         message =
             message +
             "\nAll features had their centers calculated beforehand, so their weather was fetched.\n";
