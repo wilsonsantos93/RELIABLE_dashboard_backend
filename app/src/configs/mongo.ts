@@ -1,9 +1,8 @@
 //! Mongo database engine class
 import {MongoClient} from "mongodb";
-
 import dotenv from "dotenv";
 
-dotenv.config({path: "./.env"}); // Loads .env file contents into process.env
+dotenv.config({ path: "./.env" }); // Loads .env file contents into process.env
 
 export class DatabaseEngine {
     private static databaseEngineConnection: MongoClient;
@@ -18,12 +17,8 @@ export class DatabaseEngine {
     static async connectToDatabaseEngine() {
         // Connect to the database engine
         let databaseConnectionString =
-            "mongodb+srv://" +
-            process.env.DB_USERNAME +
-            ":" +
-            process.env.DB_PASSWORD +
-            "@" +
-            process.env.DB_URL;
+            `mongodb://${process.env.DB_USERNAME}:${process.env.DB_PASSWORD}@${process.env.DB_URL}/${process.env.DB_NAME}`;
+            
         this.databaseEngineConnection = new MongoClient(databaseConnectionString);
         await this.databaseEngineConnection.connect();
 
@@ -64,6 +59,4 @@ export class DatabaseEngine {
             this.regionBordersCollectionName
         );
     }
-
-
 }

@@ -25,6 +25,7 @@ async function saveCurrentDateToCollection() {
     return insertedDateDatabaseID;
 }
 
+
 // TODO: Doing the fetching in an asynchronous manner would optimize this process
 /**
  * Saves the weather of each region border feature to the weather collection. <p>
@@ -37,8 +38,7 @@ export async function handleSaveWeather(request: Request, response: Response) {
     console.log("Started saving weather of each feature to the database.");
 
     //* Save the current date to the weatherDates collection
-    let weatherDateDatabaseID = await saveCurrentDateToCollection(
-    );
+    let weatherDateDatabaseID = await saveCurrentDateToCollection();
 
     // The server requests an API for the weather in the FeatureCenter (FeatureCenter field) of all individual features with their center calculated saved in the collection.
     // The server will then save the weather to the weather collection, and associate it to the corresponding feature id (_id).
@@ -51,24 +51,27 @@ export async function handleSaveWeather(request: Request, response: Response) {
     );
 
     let currentFeatureIndex = 1
-    await async.each(featureDocumentsWithCenter,async (currentFeature) => {
-        try {if ((currentFeatureIndex % 10) == 0) {
-            console.log("Saved weather of feature number:", currentFeatureIndex);
+    await async.each(featureDocumentsWithCenter, async (currentFeature) => {
+        try {
+            
+            if ((currentFeatureIndex % 10) == 0) {
+                console.log("Saved weather of feature number:", currentFeatureIndex);
+            }
+
+            //* Request the weather at the FeatureCenter of each feature from an external API
+            let weatherDataJSON = await requestWeather(currentFeature.center.coordinates.reverse())// The database coordinates are saved in [long,lat], the weather API accepts [lat,long]
+
+
+            //* Save the weather of each feature to the weather collection
+            let weatherCollection = DatabaseEngine.getWeatherCollection();
+            await weatherCollection.insertOne({
+                weather: weatherDataJSON,
+                weatherDateObjectId: weatherDateDatabaseID,
+                regionBorderFeatureObjectId: currentFeature._id,
+            });
+
+            currentFeatureIndex++;
         }
-
-        //* Request the weather at the FeatureCenter of each feature from an external API
-        let weatherDataJSON = await requestWeather(currentFeature.center.coordinates.reverse())// The database coordinates are saved in [long,lat], the weather API accepts [lat,long]
-
-
-        //* Save the weather of each feature to the weather collection
-        let weatherCollection = DatabaseEngine.getWeatherCollection();
-        await weatherCollection.insertOne({
-            weather: weatherDataJSON,
-            weatherDateObjectId: weatherDateDatabaseID,
-            regionBorderFeatureObjectId: currentFeature._id,
-        });
-
-        currentFeatureIndex++;}
         catch (error) {
             console.log("Error while saving weather of feature number:", currentFeatureIndex);
             console.log(error);
@@ -127,5 +130,4 @@ export async function handleGetWeatherDates(request: Request, response: Response
 
     response.send(featuresQueryResults)
     console.log("Finished for weather dates.")
-
 }

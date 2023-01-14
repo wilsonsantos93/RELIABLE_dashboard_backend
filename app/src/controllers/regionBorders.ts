@@ -29,8 +29,7 @@ export async function handleGetRegionBorders(request: Request, response: Respons
 
     //* If the region borders collection doesn't exist, send error response to the client
     if (!regionBordersCollectionExists) {
-        let message =
-            "Couldn't get region borders because the collection doesn't exist.";
+        let message = "Couldn't get region borders because the collection doesn't exist.";
         console.log(message);
         sendResponseWithGoBackLink(response, message);
     }
@@ -97,13 +96,10 @@ export async function handleSaveFeatures(request: Request, response: Response) {
  * @param response Client HTTP response object
  */
 export async function handleCalculateCenters(request: Request, response: Response) {
-    console.log(
-        "\nClient requested to calculate the centers for each region border in the collection."
-    );
+    console.log("\nClient requested to calculate the centers for each region border in the collection.");
 
     //* Check if the region border collection exists
-    let regionBordersCollectionName =
-        DatabaseEngine.getFeaturesCollectionName();
+    let regionBordersCollectionName = DatabaseEngine.getFeaturesCollectionName();
     let regionBordersCollectionExists = await collectionExistsInDatabase(
         regionBordersCollectionName,
         DatabaseEngine.getDashboardDatabase()
@@ -111,9 +107,7 @@ export async function handleCalculateCenters(request: Request, response: Respons
 
     //* If the region borders collection doesn't exist, send error response to the client
     if (!regionBordersCollectionExists) {
-        response.send(
-            "Can't calculate centers because the region borders collection doesn't exist."
-        );
+        response.send("Can't calculate centers because the region borders collection doesn't exist.");
     }
 
     //* If the region borders collection exists, calculate and update the centers of each feature in the collection

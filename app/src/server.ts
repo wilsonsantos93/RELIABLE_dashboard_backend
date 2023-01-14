@@ -29,8 +29,6 @@ app.use("/", configRouter); // Import config routes into the root path '/'
 app.use("/", mapRouter); // Import map routes into the root path '/'
 
 //! Start server
-app.listen(process.env.WEATHER_DATA_PORT, function () {
-    console.log(
-        "Weather data server started listening on port " + process.env.WEATHER_DATA_PORT + ".\n"
-    );
+app.listen(process.env.PORT, function () {
+    console.log("Weather data server started listening on port " + process.env.PORT + ".\n");
 });

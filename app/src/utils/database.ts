@@ -37,8 +37,8 @@ export async function collectionExistsInDatabase(collectionName: string, databas
 }
 
 /**
- * Save each {@link GeoJSON} {@link Feature} to the <u>regionBorders</u> collection individually.
- * @param geoJSON {@link GeoJSON} to insert to the collection.
+ * Save each {@link \"GeoJSON\"} {@link Feature} to the <u>regionBorders</u> collection individually.
+ * @param geoJSON {@link \"GeoJSON\"} to insert to the collection.
  */
 export async function saveFeatures(geoJSON: FeatureCollectionWithCRS<MultiPolygon | Polygon, FeatureProperties>) {
 
@@ -52,22 +52,16 @@ export async function saveFeatures(geoJSON: FeatureCollectionWithCRS<MultiPolygo
     // Convert each feature of the geoJSON
     let convertedFeatures: Feature<Polygon, FeatureProperties>[] = []
     for (const currentFeature of separatedGeoJSON.features) {
-
         let convertedFeature = convertFeatureCoordinatesToLatLong(currentFeature, geoJSONProjectionInformation)
         convertedFeatures.push(convertedFeature)
-
-
     }
 
     let convertedFeaturesDocuments: FeatureDocument[] = []
     for (const currentFeature of convertedFeatures) {
-
         let featureDocument: FeatureDocument = {
             feature: currentFeature
         }
-
         convertedFeaturesDocuments.push(featureDocument)
-
     }
 
     // Save the converted features to the database
