@@ -10,6 +10,7 @@ export class DatabaseEngine {
     private static weatherDatesCollectionName = process.env.DB_WEATHER_DATES_COLLECTION_NAME; // Name of the collection that contains the dates that the various weather data documents were saved, and the id of the corresponding weather data documents
     private static weatherCollectionName = process.env.DB_WEATHER_COLLECTION_NAME; // Name of the collection that contains the weather data of the various features, and the id of the corresponding features
     private static regionBordersCollectionName = process.env.DB_REGION_BORDERS_COLLECTION_NAME; // Name of the collection that contains region borders information such as the coordinates that make the border on the map, the region name, and those coordinates reference system
+    private static usersCollectionName = process.env.DB_USERS_COLLECTION_NAME;
 
     /**
      * Connects node to the database engine
@@ -57,6 +58,17 @@ export class DatabaseEngine {
     static getFeaturesCollection() {
         return this.getDashboardDatabase().collection(
             this.regionBordersCollectionName
+        );
+    }
+
+    //! Users collection
+    static getUsersCollectionName() {
+        return this.usersCollectionName;
+    }
+
+    static getUsersCollection() {
+        return this.getDashboardDatabase().collection(
+            this.usersCollectionName
         );
     }
 }

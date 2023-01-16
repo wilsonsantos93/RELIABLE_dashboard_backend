@@ -156,8 +156,5 @@ export async function handleCalculateCenters(request: Request, response: Respons
         sendResponseWithGoBackLink(response, message);
     }
 
-    console.log(
-        "Server finished calculating the centers for each region border in the collection.\n"
-    );
-
+    console.log("Server finished calculating the centers for each region border in the collection.\n");
 }

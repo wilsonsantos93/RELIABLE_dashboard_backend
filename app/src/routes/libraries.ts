@@ -1,7 +1,7 @@
 //! Express
-import express from "express";
+import { Router } from "express";
 
-export let librariesRouter = express.Router();
+const librariesRouter = Router();
 
 //! Get proj4.js library route
 librariesRouter.get("/proj4.js", function (_request, response) {
@@ -12,3 +12,5 @@ librariesRouter.get("/proj4.js", function (_request, response) {
 librariesRouter.get("/proj4leaflet.js", function (_request, response) {
     response.sendFile("proj4leaflet.js", {root: "./src/libs"});
 });
+
+export default librariesRouter;
