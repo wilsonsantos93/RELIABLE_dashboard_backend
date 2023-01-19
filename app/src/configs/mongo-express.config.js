@@ -192,7 +192,7 @@ module.exports = {
       : false,
 
     // logger: this object will be used to initialize router logger (morgan)
-    logger: {},
+    logger: {skip: function(req, res) {return true;}},
 
     // confirmDelete: if confirmDelete is set to 'true', a modal for confirming deletion is
     // displayed before deleting a document/collection
