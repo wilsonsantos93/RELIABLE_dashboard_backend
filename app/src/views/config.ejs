@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <%- include('partials/head.ejs') %>
+  </head>
+
+  <body>
+    <header>    
+      <%- include('partials/navbar.ejs') %>
+    </header>
+
+    <main style="margin-top: 50px;">
+      <div class="container">
+      <% if ((error && error.length > 0) || (error_message && error_message.length > 0)) { %>
+          <div class="alert alert-danger"><%= error || error_message %></div>
+      <% } %>
+
+      <% if (success_alert_message && success_alert_message.length > 0) { %>
+          <div class="alert alert-success"><%= success_alert_message %></div>
+      <% } %>
+
+      <div class="row">
+        <div class="col-xs-12 col-lg-4">
+          <div class="card">
+            <div class="card-header">GeoJSON</div>
+            <div class="card-body d-grid gap-2">
+              <!-- Form to import and submit geoJSON -->
+              <form action="/saveRegionBorders" method="post" enctype="multipart/form-data">
+                <label for="geojsonImportButton">Importar ficheiro geoJSON:</label>
+                <br />
+                <!--* Button to select the geoJSON to send to the server -->
+                <!-- Only accept files with the .geojson extension -->
+                <input
+                  type="file"
+                  id="geojsonImportButton"
+                  name="geojson"
+                  accept=".geojson"
+                />
+
+                <!--* Button to send the geoJSON to the server -->
+                <div class="d-grid mt-1"> 
+                  <button class="btn btn-primary">Enviar</button> 
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+
+
+        <div class="col-xs-12 col-lg-4">
+          <div class="card card-primary">
+            <div class="card-header">Base de dados</div>
+            <div class="card-body d-grid gap-2">
+                <!-- Form to delete the weather collection -->
+                <form action="/deleteAll" method="post">
+                  <!--* Button to send the post request to the server -->
+                  <div class="d-grid">
+                    <button class="btn btn-primary">Delete all database collections</button>
+                  </div>
+                </form>
+
+                <!-- Form to delete the coordinates reference system collection -->
+                <form action="/deleteCRS" method="post">
+                  <!--* Button to send the post request to the server -->
+                  <div class="d-grid">
+                    <button class="btn btn-primary">Delete CRSs in database</button>
+                  </div>
+                </form>
+
+                <!-- Form to delete the region borders collection -->
+                <form action="/deleteRegionBorders" method="post">
+                  <!--* Button to send the post request to the server -->
+                  <div class="d-grid">
+                    <button class="btn btn-primary">Delete region borders in database</button>
+                  </div>
+                </form>
+
+                <!-- Form to delete the weatherDates collection -->
+                <form  action="/deleteWeatherDates" method="post">
+                  <!--* Button to send the post request to the server -->
+                  <div class="d-grid">
+                    <button class="btn btn-primary">Delete weather dates in database</button>
+                  </div>
+                </form>
+
+                <!-- Form to delete the weather collection -->
+                <form action="/deleteWeather" method="post">
+                  <!--* Button to send the post request to the server -->
+                  <div class="d-grid">
+                    <button class="btn btn-primary">Delete weather of regions in the database</button>
+                  </div>
+                </form>
+            </div>
+          </div>
+        </div>
+
+
+        <div class="col-xs-12 col-lg-4">
+          <div class="card">
+            <div class="card-header">Outras opções</div>
+            <div class="card-body d-grid gap-2">
+              <!-- Form to calculate the centers of the features saved in the regionBorders collection -->
+              <form action="/calculateCenters" method="post">
+                <!--* Button to send the post request to the server -->
+                <div class="d-grid">
+                  <button class="btn btn-primary">Calculate center of features in the database</button>
+                </div>
+              </form>
+
+              <!-- Form to save the weather information of each feature in the region borders collection -->
+              <!-- <form action="/saveWeather" method="post">
+                <div class="d-grid">
+                  <button class="btn btn-primary">Save weather of regions in the database</button>
+                </div>
+              </form> -->
+            </div>
+          </div>
+        </div>
+
+
+      </div>
+      </div>
+    </main>
+
+    <footer>
+      <%- include('partials/footer.ejs') %>
+    </footer>
+  </body>
+  <%- include('partials/scripts.ejs') %>
+</html>

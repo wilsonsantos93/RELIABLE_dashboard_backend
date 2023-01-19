@@ -7,12 +7,6 @@ import passport from "passport";
 import passportConfig from "./auth/index.js";
 import bodyParser from "body-parser";
 
-// Mongo-Express UI imports
-import { createRequire } from "module";
-const require = createRequire(import.meta.url);
-const mongo_express = require('mongo-express/lib/middleware.js');
-const mongo_express_config = require('mongo-express/config.js');
-
 dotenv.config({path: "./.env"}); // Loads .env file contents into process.env
 
 // Connect to database
@@ -39,9 +33,6 @@ app.use(cors());
 
 //use Router
 app.use(router);
-
-// MongoExpress UI
-app.use("/mongo-express", await mongo_express(mongo_express_config));
 
 //! Start server
 app.listen(process.env.PORT, function () {
