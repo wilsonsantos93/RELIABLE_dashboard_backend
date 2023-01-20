@@ -22,12 +22,12 @@ const reliableSession = session({
         mongoUrl: `mongodb://${process.env.DB_USERNAME}:${process.env.DB_PASSWORD}@${process.env.DB_URL}/${process.env.DB_NAME}`,
         collectionName: 'sessions'
     }),
-    cookie: { secure:false, maxAge: 30 * 60 * 1000 } // 30min
+    cookie: { secure: false, maxAge: 30 * 60 * 1000 } // 30min
 })
 
 // Use flash messages
 function flashLocals(req: Request, res: Response, next: NextFunction) {
-    res.locals.success_alert_message = req.flash('success_alert_message');
+    res.locals.success_message = req.flash('success_message');
     res.locals.error_message = req.flash('error_message');
     res.locals.error = req.flash('error');
     return next();

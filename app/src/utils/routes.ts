@@ -41,7 +41,7 @@ export const forwardAuthenticatedAdmin = (req: Request, res: Response, next: Nex
     if (!req.isAuthenticated()) {
         return next();
     }
-    return res.redirect('/admin/config');     
+    return res.redirect('/admin/home');     
 }
 
 export const authenticateAdmin = (req: Request, res: Response, next: NextFunction) => {
@@ -50,7 +50,7 @@ export const authenticateAdmin = (req: Request, res: Response, next: NextFunctio
         if (user.isAdmin) return next();
     }
     else { 
-        req.flash('error', 'Please log in to access the requested page.');
+        req.flash('error_message', 'Please log in to access the requested page.');
     }
     return res.redirect('/admin/login');
 }

@@ -12,13 +12,7 @@
 
     <main style="margin-top: 50px;">
       <div class="container">
-      <% if ((error && error.length > 0) || (error_message && error_message.length > 0)) { %>
-          <div class="alert alert-danger"><%= error || error_message %></div>
-      <% } %>
-
-      <% if (success_alert_message && success_alert_message.length > 0) { %>
-          <div class="alert alert-success"><%= success_alert_message %></div>
-      <% } %>
+      <%- include('partials/alerts.ejs') %>
 
       <div class="row">
         <div class="col-xs-12 col-lg-4">
@@ -50,45 +44,42 @@
 
         <div class="col-xs-12 col-lg-4">
           <div class="card card-primary">
-            <div class="card-header">Base de dados</div>
-            <div class="card-body d-grid gap-2">
+            <div class="card-header">
+              <i class="fa fa-database text-dark" aria-hidden="true"></i> Base de dados
+            </div>
+            <div class="card-body d-grid gap-2 text-center">
                 <!-- Form to delete the weather collection -->
-                <form action="/deleteAll" method="post">
-                  <!--* Button to send the post request to the server -->
+               <!--  <form action="/admin/deleteAll" method="post">
                   <div class="d-grid">
-                    <button class="btn btn-primary">Delete all database collections</button>
+                    <button class="btn btn-primary">Limpar todas as coleções</button>
                   </div>
-                </form>
+                </form> -->
 
                 <!-- Form to delete the coordinates reference system collection -->
-                <form action="/deleteCRS" method="post">
-                  <!--* Button to send the post request to the server -->
+                <!-- <form action="/deleteCRS" method="post">
                   <div class="d-grid">
                     <button class="btn btn-primary">Delete CRSs in database</button>
                   </div>
                 </form>
-
-                <!-- Form to delete the region borders collection -->
-                <form action="/deleteRegionBorders" method="post">
-                  <!--* Button to send the post request to the server -->
+ -->
+                <!-- Form to clear the region borders collection -->
+                <form action="/admin/deleteRegionBorders" method="post">
                   <div class="d-grid">
-                    <button class="btn btn-primary">Delete region borders in database</button>
+                    <button class="btn btn-primary">Limpar regiões</button>
                   </div>
                 </form>
 
-                <!-- Form to delete the weatherDates collection -->
-                <form  action="/deleteWeatherDates" method="post">
-                  <!--* Button to send the post request to the server -->
+                <!-- Form to clear the weatherDates collection -->
+                <form  action="/admin/deleteWeatherDates" method="post">
                   <div class="d-grid">
-                    <button class="btn btn-primary">Delete weather dates in database</button>
+                    <button class="btn btn-primary">Limpar datas</button>
                   </div>
                 </form>
 
-                <!-- Form to delete the weather collection -->
-                <form action="/deleteWeather" method="post">
-                  <!--* Button to send the post request to the server -->
+                <!-- Form to clear the weather collection -->
+                <form action="/admin/deleteWeather" method="post">
                   <div class="d-grid">
-                    <button class="btn btn-primary">Delete weather of regions in the database</button>
+                    <button class="btn btn-primary">Limpar dados clima</button>
                   </div>
                 </form>
             </div>
@@ -104,7 +95,7 @@
               <form action="/calculateCenters" method="post">
                 <!--* Button to send the post request to the server -->
                 <div class="d-grid">
-                  <button class="btn btn-primary">Calculate center of features in the database</button>
+                  <button class="btn btn-primary">Calcular centro das regiões</button>
                 </div>
               </form>
 

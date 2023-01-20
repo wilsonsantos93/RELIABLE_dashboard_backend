@@ -1,0 +1,15 @@
+<% if ((error && error.length) || (error_message && error_message.length > 0)) { 
+    (error.concat(error_message)).forEach(function(msg) { 
+%>
+    <div class="alert alert-danger" role="alert">
+        <%= msg %>
+    </div>
+<% }) } %>
+
+<% if (success_message && success_message.length > 0) { 
+    success_message.forEach(function(msg) { 
+%>
+    <div class="alert alert-success" role="alert">
+        <%= msg %>
+    </div>
+<% }) } %>

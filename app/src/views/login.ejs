@@ -8,13 +8,8 @@
             <div class="container h-100">
                 <div class="row justify-content-sm-center h-100">
                     <div class="col-xxl-4 col-xl-5 col-lg-5 col-md-7 col-sm-9">
-                        <% if ((error && error.length > 0) || (error_message && error_message.length > 0)) { %>
-                            <div class="alert alert-danger"><%= error || error_message %></div>
-                        <% } %>
-        
-                        <% if (success_alert_message && success_alert_message.length > 0) { %>
-                            <div class="alert alert-success"><%= success_alert_message %></div>
-                        <% } %>
+                        <%- include('partials/alerts.ejs') %>
+                        
                         <div class="card shadow-lg">
                             <div class="card-body p-5">
                                 <h1 class="fs-4 card-title fw-bold mb-4">Login</h1>

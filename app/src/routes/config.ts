@@ -16,64 +16,64 @@ const require = createRequire(import.meta.url);
 const mongo_express = require('mongo-express/lib/middleware.js');
 const mongo_express_config = require('mongo-express/config.js');
 
-const configRouter = Router();
+const router = Router();
 
-configRouter.get('/', function (request: Request, response: Response) {
-  response.redirect('/admin/login');
+router.get('/', function (req: Request, res: Response) {
+  res.redirect('/admin/login');
 });  
 
-configRouter.get('/login', forwardAuthenticatedAdmin, function(request: Request, response: Response) {
-  response.render("login.ejs");
+router.get('/login', forwardAuthenticatedAdmin, function(req: Request, res: Response) {
+  res.render("login.ejs");
 });
 
-configRouter.post('/login', passport.authenticate('admin-local', { 
+router.post('/login', passport.authenticate('admin-local', { 
   failureRedirect:'/admin/login',
-  successRedirect:'/admin/config',
+  successRedirect:'/admin/home',
   failureFlash: true
 }));
 
-configRouter.get('/logout', authenticateAdmin, function(request: Request, response: Response, next: NextFunction) {
-  request.logout(function(err) {
+router.get('/logout', authenticateAdmin, function(req: Request, res: Response, next: NextFunction) {
+  req.logout(function(err) {
     if (err) { 
-      request.flash('error', 'An error occurred.');
+      req.flash('error_message', 'An error occurred.');
       return next();
     }
-    request.flash('success_alert_message', 'You are succesfully logged out');
-    return response.redirect('/admin/login');
+    req.flash('success_message', 'You are succesfully logged out.');
+    return res.redirect('/admin/login');
   });
 });
 
 //! Page that allows a client to send geoJSONs to the server, or delete database collections
-configRouter.get("/config", authenticateAdmin, function (request: Request, response: Response) {
-  response.render("config.ejs");
+router.get("/home", authenticateAdmin, function (req: Request, res: Response) {
+  res.render("home.ejs");
 });
 
 //! Client requests the region borders collection to be deleted
-configRouter.post("/deleteRegionBorders", authenticateAdmin, async function (request: Request, response: Response) {
-    await handleDeleteRegionBorders(request, response);
+router.post("/deleteRegionBorders", authenticateAdmin, async function (req: Request, res: Response) {
+    await handleDeleteRegionBorders(req, res);
   }
 );
 
 //! Route that requests the weather saved dates in the database to be deleted
-configRouter.post("/deleteWeatherDates", authenticateAdmin, async function (request: Request, response: Response) {
-    await handleDeleteWeatherDates(request, response);
+router.post("/deleteWeatherDates", authenticateAdmin, async function (req: Request, res: Response) {
+    await handleDeleteWeatherDates(req, res);
   }
 );
 
 //! Route that requests the weather information in the database to be deleted
-configRouter.post("/deleteWeather", authenticateAdmin, async function (request: Request, response: Response) {
-    await handleDeleteWeather(request, response);
+router.post("/deleteWeather", authenticateAdmin, async function (req: Request, res: Response) {
+    await handleDeleteWeather(req, res);
   }
 );
 
 //! Route that requests the weather information in the database to be deleted
-configRouter.post("/deleteAll", authenticateAdmin, async function (request: Request, response: Response) {
-  await handleDeleteAll(request, response);
+router.post("/deleteAll", authenticateAdmin, async function (req: Request, res: Response) {
+  await handleDeleteAll(req, res);
 });
 
 
 // MongoExpress UI
-configRouter.use("/mongo-express", authenticateAdmin, await mongo_express(mongo_express_config));
+router.use("/mongo-express", authenticateAdmin, await mongo_express(mongo_express_config));
 
 
-export default configRouter;
+export default router;
