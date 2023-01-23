@@ -34,7 +34,7 @@ async function saveCurrentDateToCollection() {
  * @param request Client HTTP request object
  * @param response Client HTTP response object
  */
-export async function handleSaveWeather(request: Request, response: Response) {
+export async function handleFetchWeather(request: Request, response: Response) {
     console.log("Started saving weather of each feature to the database.");
 
     //* Save the current date to the weatherDates collection
@@ -43,8 +43,8 @@ export async function handleSaveWeather(request: Request, response: Response) {
     // The server requests an API for the weather in the FeatureCenter (FeatureCenter field) of all individual features with their center calculated saved in the collection.
     // The server will then save the weather to the weather collection, and associate it to the corresponding feature id (_id).
     // As such, only the _id and the center need to be returned.
-    let featuresQuery: Filter<Document> = {center: {$exists: true}};
-    let featuresQueryProjection: FeaturesProjection = {_id: 1, center: 1};
+    let featuresQuery: Filter<Document> = { center: {$exists: true} };
+    let featuresQueryProjection: FeaturesProjection = { _id: 1, center: 1 };
     let featureDocumentsWithCenter = await queryFeatureDocuments(
         featuresQuery,
         featuresQueryProjection
@@ -130,4 +130,46 @@ export async function handleGetWeatherDates(request: Request, response: Response
 
     response.send(featuresQueryResults)
     console.log("Finished for weather dates.")
+}
+
+
+/**
+ * Sends a response with a JSON with the various dates the weather was saved in the database
+ * @param request Client HTTP request object
+ * @param response Client HTTP response object
+ */
+export async function handleSaveWeather(req: Request, res: Response) {
+    // Transform to Array if not Array
+    let data = [];
+    if (Array.isArray(req.body)) {
+        data = [...req.body]
+    }
+    else {
+        data.push(req.body);
+    }
+
+    // Upsert timestamps on weather dates collection
+    const datesCollection = await DatabaseEngine.getWeatherDatesCollection();
+    datesCollection.bulkWrite(
+        data.map(d => { 
+          return { 
+            updateOne:
+            {
+              filter: { "date": d.date },
+              update: { $set: { "date": d.date }},
+              upsert : true
+            }
+          }
+        }),
+        { ordered : false }
+    );
+
+    // Write data in collection
+    const weatherCollection = await DatabaseEngine.getWeatherCollection();
+    try {
+        const result = await weatherCollection.insertMany(data);
+        return res.json(result);
+    } catch (e) {
+        return res.status(500).json('DB error');
+    }
 }

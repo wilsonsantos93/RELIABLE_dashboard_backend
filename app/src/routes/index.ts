@@ -48,9 +48,9 @@ function setLocals(req: Request, res: Response, next: NextFunction) {
 
 // Use routes
 router.use('/admin', reliableSession, passport.initialize(), passport.session(), flash(), flashLocals, setLocals, configRoutes);
+router.use('/weather', reliableSession, passport.initialize(), passport.session(), weatherRouter);
 /* router.use('/regions', reliableSession, passport.initialize(), passport.session(), regionBordersRouter);
 router.use("/libraries", reliableSession, passport.initialize(), passport.session(), librariesRouter);
-router.use('/weather', reliableSession, passport.initialize(), passport.session(), weatherRouter);
 router.use("/map", reliableSession, passport.initialize(), passport.session(), mapRouter); */
 
 export default router;
