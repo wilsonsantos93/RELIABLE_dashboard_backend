@@ -69,7 +69,7 @@ export default (passport: PassportStatic) => {
     passport.use('local', new LocalStrategy(
         function(username, password, done) {
             const UserCollection = DatabaseEngine.getUsersCollection();
-            UserCollection.findOne({ username: username }, async function (err, user) {
+            UserCollection.findOne({ $or: [ { username: username }, { email: username } ] }, async function (err, user) {
                 if (err) return done(err)
                 if (!user) return done(null, false, { message: 'Nome de utilizador incorreto.' })
 

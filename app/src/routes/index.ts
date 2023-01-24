@@ -1,5 +1,5 @@
 import { NextFunction, Request, Response, Router } from "express";
-import configRouter from "./config.js";
+import adminRouter from "./admin.js";
 import regionBordersRouter from "./features.js";
 import librariesRouter from "./libraries.js";
 import mapRouter from "./map.js";
@@ -48,7 +48,7 @@ function setLocals(req: Request, res: Response, next: NextFunction) {
 }
 
 // Use routes
-router.use('/admin', reliableSession, passport.initialize(), passport.session(), flash(), flashLocals, setLocals, configRouter);
+router.use('/admin', reliableSession, passport.initialize(), passport.session(), flash(), flashLocals, setLocals, adminRouter);
 router.use('/api', apiRouter);
 router.use('/api/weather', reliableSession, passport.initialize(), passport.session(), weatherRouter);
 //router.use('/api/region', reliableSession, passport.initialize(), passport.session(), regionBordersRouter);

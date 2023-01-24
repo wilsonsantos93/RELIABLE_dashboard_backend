@@ -19,20 +19,55 @@ const mongo_express_config = require('mongo-express/config.js');
 
 const router = Router();
 
+// Get home page
 router.get('/', function (req: Request, res: Response) {
   res.redirect('/admin/login');
 });  
 
+// Get login page
 router.get('/login', forwardAuthenticatedAdmin, function(req: Request, res: Response) {
   res.render("login.ejs");
 });
 
-router.post('/login', passport.authenticate('admin-local', { 
+/* router.post('/login', passport.authenticate('admin-local', { 
   failureRedirect:'/admin/login',
   successRedirect:'/admin/home',
   failureFlash: true
-}));
+})); */
 
+// Route that handles admin login
+router.post('/login', function(req: Request, res: Response) { 
+  passport.authenticate("local", (error, user, info) => {
+
+      if (error) {
+        req.flash("error", error.message);
+        return res.redirect("/admin/login");
+      }
+
+      if (!user) {
+        req.flash("error", info.message);
+        return res.redirect("/admin/login");
+      }
+
+      if (user) {
+        if (user.role == Role.ADMIN) {
+          req.logIn(user, { session: true }, (error) => {
+            if (error) {
+              req.flash("error", error); 
+              res.redirect("/admin/login");
+            } 
+            return res.redirect("/admin/home"); 
+          })
+        }
+        else {
+          req.flash("error", "Utilizador não autorizado.");
+          return res.redirect("/admin/login"); 
+        }
+      } 
+  })(req, res)
+});
+
+// Route to logout admin
 router.get('/logout', authenticateAdmin, function(req: Request, res: Response, next: NextFunction) {
   req.logout(function(err) {
     if (err) { 

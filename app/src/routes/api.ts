@@ -4,6 +4,7 @@ import jwt from "jsonwebtoken";
 
 const router = Router();
 
+// Route that handles user login
 router.post('/login', function(req, res, next) { 
     passport.authenticate("local", (error, user, info) => {
 

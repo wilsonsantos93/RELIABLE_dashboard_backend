@@ -22,13 +22,11 @@ export function authenticateAPI(...allowed_roles: string[] | null) {
         // Try to authenticate through Cookies if theres is no Authorization Header present
         if (req.isAuthenticated() && !req.headers['authorization']) {
             const user = req.user as User;
-            console.log("REQ", allowed_roles, user.role)
             if (!allowed_roles.length || isAuthorized(allowed_roles, user.role)) return next();
             else return res.status(403).json({ error: 'Forbidden' });
         }
         // Authentication through Authorization Header allowing multiple strategies
         else return passport.authenticate(['api-basic', 'api-jwt'], (error, user: User) => {
-            console.log("passport", allowed_roles, user.role)
             if (error) return res.status(500).json({ error: 'Authentication error' });
             if (!user) return res.status(401).json({ error: 'Unauthorized' });
             if (!allowed_roles.length || isAuthorized(allowed_roles, user.role)) {
@@ -41,7 +39,9 @@ export function authenticateAPI(...allowed_roles: string[] | null) {
     }
 }
 
-// Forward admin
+/**
+ * Forward home if authenticated, login if not
+ */
 export const forwardAuthenticatedAdmin = (req: Request, res: Response, next: NextFunction) => {
     if (!req.isAuthenticated()) {
         return next();
@@ -49,7 +49,9 @@ export const forwardAuthenticatedAdmin = (req: Request, res: Response, next: Nex
     return res.redirect('/admin/home');     
 }
 
-// Check if user is logged in and is admin
+/**
+ * Check if user is authenticated and is admin
+ */
 export const authenticateAdmin = (req: Request, res: Response, next: NextFunction) => {
     if (req.isAuthenticated()) {
         const user = req.user as User;
