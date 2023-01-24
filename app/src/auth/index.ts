@@ -2,7 +2,7 @@
  * Module dependencies
  */
 import { DatabaseEngine } from "../configs/mongo.js";
-import { User, Role } from "../models/User";
+import { User, Role } from "../models/User.js";
 import { Strategy as LocalStrategy } from "passport-local";
 import { BasicStrategy } from "passport-http";
 import { Strategy as JwtStrategy, ExtractJwt } from "passport-jwt"; 
@@ -47,16 +47,16 @@ export default (passport: PassportStatic) => {
     passport.use('api-basic', new BasicStrategy(
         function (username, password, done) {
             const UserCollection = DatabaseEngine.getUsersCollection();
-            UserCollection.findOne({ username: username }, function (err, user) {
-                if (err) return done(err)
-                if (!user) return done(null, false)
+            UserCollection.findOne({ username: username }, async function (err, user) {
+                if (err) return done(err);
+                if (!user) return done(null, false);
 
                 try {
-                    const result = comparePassword(user.password, password)
-                    if (!result) return done(null, false)
-                    done(null, user)
+                    const result = await comparePassword(user.password, password);
+                    if (!result) return done(null, false);
+                    done(null, user);
                 } catch (err) {
-                    return done(err)
+                    return done(err);
                 }
             })
         }
@@ -64,12 +64,12 @@ export default (passport: PassportStatic) => {
 
 
     /**
-     * Local Admin Authentication (stateful)
+     * Local Authentication
      */
-    passport.use('admin-local', new LocalStrategy(
+    passport.use('local', new LocalStrategy(
         function(username, password, done) {
             const UserCollection = DatabaseEngine.getUsersCollection();
-            UserCollection.findOne({ username: username, role: Role.ADMIN }, async function (err, user) {
+            UserCollection.findOne({ username: username }, async function (err, user) {
                 if (err) return done(err)
                 if (!user) return done(null, false, { message: 'Nome de utilizador incorreto.' })
 
@@ -104,7 +104,7 @@ export default (passport: PassportStatic) => {
     /**
      * API Authentication (API key)
      */
-    passport.use('api-key', new UniqueTokenStrategy((token, done) => {
+    /* passport.use('api-key', new UniqueTokenStrategy((token, done) => {
         const UserCollection = DatabaseEngine.getUsersCollection();
         UserCollection.findOne({ token: token, //expireToken: { $gt: Date.now() },
         }, function (err, user) {
@@ -114,5 +114,5 @@ export default (passport: PassportStatic) => {
             },
         );
         }),
-    )
+    ) */
 }

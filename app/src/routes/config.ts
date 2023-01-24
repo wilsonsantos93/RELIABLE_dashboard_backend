@@ -12,6 +12,7 @@ import passport from "passport";
 
 // Mongo-Express UI imports
 import { createRequire } from "module";
+import { Role } from "../models/User.js";
 const require = createRequire(import.meta.url);
 const mongo_express = require('mongo-express/lib/middleware.js');
 const mongo_express_config = require('mongo-express/config.js');
