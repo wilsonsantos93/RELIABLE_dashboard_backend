@@ -14,10 +14,6 @@ function isAuthorized(allowedRoles: string[], userRole: string) {
  * Authentication Middleware
  */
 export function authenticateAPI(...allowed_roles: string[] | null) {
-    if (typeof allowed_roles === 'string') {
-        allowed_roles = [allowed_roles];
-    }
-
     return (req: Request, res: Response, next: NextFunction) => {
         // Try to authenticate through Cookies if theres is no Authorization Header present
         if (req.isAuthenticated() && !req.headers['authorization']) {

@@ -51,9 +51,12 @@ function setLocals(req: Request, res: Response, next: NextFunction) {
 router.use('/admin', reliableSession, passport.initialize(), passport.session(), flash(), flashLocals, setLocals, adminRouter);
 router.use('/api', apiRouter);
 router.use('/api/weather', reliableSession, passport.initialize(), passport.session(), weatherRouter);
-//router.use('/api/region', reliableSession, passport.initialize(), passport.session(), regionBordersRouter);
+router.use('/api/region', reliableSession, passport.initialize(), passport.session(), regionBordersRouter);
+router.use("/api/map", reliableSession, passport.initialize(), passport.session(), mapRouter);
+router.use("/libs", librariesRouter);
+
 /* router.use('/regions', reliableSession, passport.initialize(), passport.session(), regionBordersRouter);
 router.use("/libraries", reliableSession, passport.initialize(), passport.session(), librariesRouter);
-router.use("/map", reliableSession, passport.initialize(), passport.session(), mapRouter); */
+router.use("/map", reliableSession, passport.initialize(), passport.session(), mapRouter);  */
 
 export default router;
