@@ -89,8 +89,10 @@ export async function handleSaveFeatures(request: Request, response: Response) {
     console.log("Inserted geoJSON features in the database.");
 
     // Send successful response to the client
-    sendResponseWithGoBackLink(response, "Server successfully saved geoJSON.");
+    request.flash("success_message", "Server successfully saved geoJSON.");
+    return response.redirect("/admin");
 }
+
 
 // TODO: Calculate centers and update them with a single query
 /**
@@ -110,11 +112,11 @@ export async function handleCalculateCenters(request: Request, response: Respons
 
     //* If the region borders collection doesn't exist, send error response to the client
     if (!regionBordersCollectionExists) {
-        response.send("Can't calculate centers because the region borders collection doesn't exist.");
+        request.flash("error", "Can't calculate centers because the region borders collection doesn't exist.");
     }
 
     //* If the region borders collection exists, calculate and update the centers of each feature in the collection
-    else if (regionBordersCollectionExists) {
+    else {
 
         //* Query the region borders collection for the various features
         // The query results are going to be used by server to calculate the FeatureCenter of each and all features (geometry field), and save it to the corresponding feature (using the id).
@@ -153,11 +155,12 @@ export async function handleCalculateCenters(request: Request, response: Respons
         })
 
         let message = "";
-        message +=
-            "Calculated the center coordinates for every feature in the region borders collection.";
+        message += "Calculated the center coordinates for every feature in the region borders collection.";
         console.log(message);
-        sendResponseWithGoBackLink(response, message);
+
+        request.flash("success_message", message);
     }
 
     console.log("Server finished calculating the centers for each region border in the collection.\n");
+    return response.redirect("/admin");
 }

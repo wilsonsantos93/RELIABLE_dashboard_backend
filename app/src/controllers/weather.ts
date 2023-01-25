@@ -91,17 +91,14 @@ export async function handleFetchWeather(request: Request, response: Response) {
     //* If not all the features had their FeatureCenter calculated, and didn't have their weather fetched
     /* if (regionBordersFeaturesWithNoCenter != []) { */
     if (regionBordersFeaturesWithNoCenter.length > 0) {
-        message =
-            message +
+        message = message +
             "\nNot all features had their centers calculated beforehand, so their weather couldn't be fetched.\n"
             + regionBordersFeaturesWithNoCenter.toString();
 
     }
     //* If all the features had their FeatureCenter calculated, and their weather fetched
     else /* if (regionBordersFeaturesWithNoCenter == []) */ {
-        message =
-            message +
-            "\nAll features had their centers calculated beforehand, so their weather was fetched.\n";
+        message = message + "\nAll features had their centers calculated beforehand, so their weather was fetched.\n";
     }
 
     console.log(message);
@@ -115,21 +112,21 @@ export async function handleFetchWeather(request: Request, response: Response) {
  */
 export async function handleGetWeatherDates(request: Request, response: Response) {
 
-    console.log("\nQuerying for weather dates.")
+    console.log("\nQuerying for weather dates.");
 
-    let weatherDatesQuery = {}; // Query all weather dates to return to the client
-    let weatherDatesProjection = {_id: 1, date: 1}; // Only the date itself needs to be returned by the query
-    let weatherDatesQueryOptions: FindOptions = {
+    const weatherDatesQuery = {}; // Query all weather dates to return to the client
+    const weatherDatesProjection = { _id: 1, date: 1 }; // Only the date itself needs to be returned by the query
+    const weatherDatesQueryOptions: FindOptions = {
         projection: weatherDatesProjection,
     };
 
     // The following query returns [{type: "Feature",...}, {type:"Feature",...}]
-    let featuresQueryResults = await DatabaseEngine.getWeatherDatesCollection()
+    const featuresQueryResults = await DatabaseEngine.getWeatherDatesCollection()
         .find(weatherDatesQuery, weatherDatesQueryOptions)
         .toArray();
 
-    response.send(featuresQueryResults)
-    console.log("Finished for weather dates.")
+    console.log("Finished for weather dates.");
+    response.json(featuresQueryResults);
 }
 
 
@@ -149,7 +146,7 @@ export async function handleSaveWeather(req: Request, res: Response) {
     }
 
     // Upsert timestamps on weather dates collection
-    const datesCollection = await DatabaseEngine.getWeatherDatesCollection();
+   /*  const datesCollection = await DatabaseEngine.getWeatherDatesCollection();
     datesCollection.bulkWrite(
         data.map(d => { 
           return { 
@@ -162,7 +159,7 @@ export async function handleSaveWeather(req: Request, res: Response) {
           }
         }),
         { ordered : false }
-    );
+    ); */
 
     // Write data in collection
     const weatherCollection = await DatabaseEngine.getWeatherCollection();
