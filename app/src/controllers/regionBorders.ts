@@ -31,40 +31,43 @@ export async function handleGetRegionBorders(request: Request, response: Respons
     if (!regionBordersCollectionExists) {
         let message = "Couldn't get region borders because the collection doesn't exist.";
         console.log(message);
-        sendResponseWithGoBackLink(response, message);
+        //sendResponseWithGoBackLink(response, message);
+        return response.status(404).json(message)
     }
 
     //* If the region borders collection exists, send the various saved geoJSONs to the client
-    else if (regionBordersCollectionExists) {
+    else {
+
+        let geometryFlag = true;
+        if (request.query.hasOwnProperty("geometry") && request.query.geometry == '0') geometryFlag = false;
 
         // We are going to use the returning query parameters to build the geoJSON
         // As such, the feature _id, FeatureCenter, and crsObjectId aren't needed
         // We only need the feature
-        let regionBordersQueryProjection: FeaturesProjection = {
-            _id: 0,
-            feature: 1
+        let regionBordersQueryProjection = { 
+            _id: 1, 
+            //feature: 1,
+            "feature.geometry": geometryFlag
         };
-        let regionBordersDocumentsArray = await queryAllFeatureDocuments(
-            regionBordersQueryProjection
-        );
+        let regionBordersDocumentsArray = await queryAllFeatureDocuments(regionBordersQueryProjection);
 
         // Add the queried features to the geoJSON
-        let queriedFeatures: Feature<Polygon, FeatureProperties>[] = [];
+        let queriedFeatures = [];//: Feature<Polygon, FeatureProperties>[] = [];
         for (const regionBorderDocument of regionBordersDocumentsArray) {
-            queriedFeatures.push(regionBorderDocument.feature)
+            const { _id, feature } = regionBorderDocument;
+            queriedFeatures.push({ _id, feature })
         }
 
-        let geoJSON: FeatureCollection<Polygon, FeatureProperties> = {
+        //let geoJSON: FeatureCollection<Polygon, FeatureProperties> = {
+        let geoJSON = {
             type: "FeatureCollection",
             features: queriedFeatures
         }
 
-        console.log("Started sending geoJSON to the client.");
-        response.send(geoJSON);
-        console.log("Finished sending geoJSON to the client.\n");
-
+        return response.json(geoJSON);
     }
 }
+
 
 // TODO: Important. User saves empty geoJSON. Crashes program.
 /**
