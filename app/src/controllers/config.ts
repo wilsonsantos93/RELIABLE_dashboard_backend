@@ -13,7 +13,7 @@ export async function handleDeleteAll(req: Request, res: Response) {
   let successMsgs = [];
   let errorMsgs = [];
 
-  // Drop region borders collection
+  // Delete region borders data
   try {
     await DatabaseEngine.getFeaturesCollection().deleteMany({});
     successMsgs.push("Server successfully cleared region borders from the database.");
@@ -25,7 +25,7 @@ export async function handleDeleteAll(req: Request, res: Response) {
     }
   }
 
-  // Drop weather dates collection
+  // Delete weather dates data
   try {
     await DatabaseEngine.getWeatherDatesCollection().deleteMany({});
     successMsgs.push("Server successfully cleared weather saved dates from the database.");
@@ -37,7 +37,7 @@ export async function handleDeleteAll(req: Request, res: Response) {
     }
   }
 
-  // Drop weather information collection
+  // Delete weather data
   try {
     await DatabaseEngine.getWeatherCollection().deleteMany({});
     successMsgs.push("Server successfully cleared weather information from the database.");
@@ -55,7 +55,7 @@ export async function handleDeleteAll(req: Request, res: Response) {
 }
 
 /**
- * Deletes the region borders collection from the databaseResponse
+ * Deletes the region borders data from the database
  * @param req Client HTTP request object
  * @param res Client HTTP response object
  */
@@ -77,7 +77,7 @@ export async function handleDeleteRegionBorders(req: Request, res: Response) {
 }
 
 /**
- * Client requests the weatherDates collection to be deleted
+ * Client requests the weatherDates data to be deleted
  * @param req Client HTTP request object
  * @param response Client HTTP response object
  */
@@ -99,7 +99,7 @@ export async function handleDeleteWeatherDates(req: Request, res: Response) {
 }
 
 /**
- * Client requests the weather collection to be deleted
+ * Client requests the weather data to be deleted
  * @param req Client HTTP request object
  * @param res Client HTTP response object
  */
