@@ -14,15 +14,8 @@ import async from "async";
  * @param request Client HTTP request object
  * @param response Client HTTP response object
  */
-export async function handleGetRegionBordersAndWeatherByDate(
-    request: Request,
-    response: Response
-) {
-    console.log(
-        "\nClient requested region borders and weather (Date:" +
-        request.params.weatherDateID +
-        ")"
-    );
+export async function handleGetRegionBordersAndWeatherByDate(request: Request, response: Response) {
+    console.log("\nClient requested region borders and weather (Date:" +request.params.weatherDateID +")");
 
     let message = "";
 
@@ -42,31 +35,30 @@ export async function handleGetRegionBordersAndWeatherByDate(
 
     //* If the region borders collection doesn't exist, send error response to the client
     if (!regionBordersCollectionExists) {
-        message +=
-            "Couldn't get region borders because the collection doesn't exist.\n";
+        message += "Couldn't get region borders because the collection doesn't exist.\n";
     }
 
     //* If the weather collection doesn't exist, send error response to the client
     if (!regionBordersCollectionExists) {
-        message +=
-            "Couldn't get weather borders because the collection doesn't exist.";
+        message += "Couldn't get weather borders because the collection doesn't exist.";
     }
 
     if (!regionBordersCollectionExists || !weatherCollectionExists) {
         console.log(message);
-        sendResponseWithGoBackLink(response, message);
+        //sendResponseWithGoBackLink(response, message);
+        return response.status(404).json(message);
     }
 
     //! End of error handling
 
-    let weatherDateID = request.params.weatherDateID; //https://stackoverflow.com/questions/20089582/how-to-get-a-url-parameter-in-express
+    let weatherDateID = request.params.weatherDateID;
 
     // We are going to use the returning query parameters to add the weather information and associated feature to the current geoJSON
     // As such, the _id, weatherDateObjectId aren't needed
     // We only need the weather field and the regionBorderFeatureObjectId
     let weatherQuery: Filter<Document> = {
         weatherDateObjectId: new ObjectId(weatherDateID),
-        "weather.error.code": {$exists: false}
+        "weather.error.code": { $exists: false }
     };
     let weatherQueryProjection: WeatherProjection = {
         _id: 0,
@@ -75,21 +67,27 @@ export async function handleGetRegionBordersAndWeatherByDate(
 
     let weatherDocuments = await queryWeatherDocuments(new ObjectId(weatherDateID), weatherQueryProjection)
 
-    let featuresWithWeather = []
-    for (let weatherDocument of weatherDocuments) {
+    /* let featuresWithWeather = [];
+    for (const weatherDocument of weatherDocuments) {
         let featureWithWeather = weatherDocument.feature;
-        featureWithWeather[0].feature.properties.weather = weatherDocument.weather;
-        featuresWithWeather.push(featureWithWeather[0].feature)
-    }
+        if (!featureWithWeather.length) continue;
+        //featureWithWeather[0].feature.properties.weather = weatherDocument.weather;
+        featureWithWeather[0].feature.weather = weatherDocument.weather;
+        featuresWithWeather.push(featureWithWeather[0].feature);
+        console.log(featuresWithWeather);
+    } */
 
+    for (const weatherDocument of weatherDocuments as any) {
+        if (!weatherDocument.weather.length) continue;
+        weatherDocument.weather = weatherDocument.weather[0].weather;
+    }
+    
     let geoJsonArrayWithWeather = {
         type: "FeatureCollection",
-        features: featuresWithWeather
+        features: weatherDocuments //featuresWithWeather
     };
 
-
-    console.log("Started sending geoJSONs to the client.");
-    response.send(geoJsonArrayWithWeather);
+    //response.send(geoJsonArrayWithWeather);
     console.log("Finished sending geoJSONs to the client.\n");
-
+    return response.json(geoJsonArrayWithWeather);
 }

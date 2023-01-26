@@ -120,34 +120,61 @@ export async function queryAllFeatureDocuments(queryProjection: FeaturesProjecti
  */
 export async function queryWeatherDocuments(weatherDateID: ObjectId, featuresQueryProjection: WeatherProjection) {
 
-    let weatherDocuments = await DatabaseEngine.getWeatherCollection()
-        .aggregate([
+    const regionBordersCollectionName = DatabaseEngine.getFeaturesCollectionName();
 
+    /* const regionsWithWeatherDocuments = await DatabaseEngine.getWeatherCollection()
+        .aggregate([
             {
-                $match: {weatherDateObjectId: weatherDateID}
+                $match: { weatherDateObjectId: weatherDateID }
             },
             {
-                $match: {"weather.error.code": {$exists: false}}
+                $match: { "weather.error.code": { $exists: false } }
             },
             {
-                $project: {_id:0}
+                $project: featuresQueryProjection
             },
             {
                 $lookup: {
-                    from: 'regionBordersCollection',
+                    from: regionBordersCollectionName,
                     localField: 'regionBorderFeatureObjectId',
                     foreignField: '_id',
                     as: 'feature'
-                },
-                // $project: {
-                //     _id: 0,
-                //     center: 0,
-                // }
+                }
+            },
+            {
+                $limit: 2
+            }
+        ])
+        .toArray() as WeatherCollectionDocumentWithFeature[]; */
+
+        const weatherCollectionName = DatabaseEngine.getWeatherCollectionName();
+        const regionsWithWeatherDocuments = await DatabaseEngine.getFeaturesCollection().aggregate([
+            {
+                $match: { "center": { $exists: true } }
+            },
+            {
+                $lookup: {
+                    from: weatherCollectionName,
+                    localField: '_id',
+                    foreignField: 'regionBorderFeatureObjectId',
+                    as: 'weather',
+                    pipeline: [
+                        {
+                            $match: { "weatherDateObjectId": weatherDateID },
+                        },
+                        {   
+                            $project: { _id: 0, "weatherDateObjectId": 0, "regionBorderFeatureObjectId": 0 } 
+                        }
+                    ],
+                }
+            },
+            {
+                $limit: 5
             }
         ])
         .toArray() as WeatherCollectionDocumentWithFeature[];
 
-    return weatherDocuments;
+    return regionsWithWeatherDocuments;
 }
 
 // Returns a JSON with the various dates the weather was saved in the database
