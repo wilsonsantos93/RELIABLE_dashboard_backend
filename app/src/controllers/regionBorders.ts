@@ -5,7 +5,7 @@ import {collectionExistsInDatabase, queryFeatureDocuments, queryAllFeatureDocume
 import polygonCenter from "geojson-polygon-center";
 import {Request, Response} from "express-serve-static-core";
 import {FeaturesProjection} from "../models/DatabaseCollections/Projections/FeaturesProjection";
-import {Document, Filter} from "mongodb";
+import {Document, Filter, ObjectId} from "mongodb";
 import {FeatureCollectionWithCRS} from "../models/FeatureCollectionWithCRS";
 import {Feature, FeatureCollection, MultiPolygon, Polygon} from "geojson";
 import {FeatureProperties} from "../models/FeatureProperties";
@@ -31,7 +31,6 @@ export async function handleGetRegionBorders(request: Request, response: Respons
     if (!regionBordersCollectionExists) {
         let message = "Couldn't get region borders because the collection doesn't exist.";
         console.log(message);
-        //sendResponseWithGoBackLink(response, message);
         return response.status(404).json(message)
     }
 
@@ -39,17 +38,29 @@ export async function handleGetRegionBorders(request: Request, response: Respons
     else {
 
         let geometryFlag = true;
-        if (request.query.hasOwnProperty("geometry") && request.query.geometry == '0') geometryFlag = false;
+        if (request.query.hasOwnProperty("geometry") && (request.query.geometry == '0' || request.query.geometry == 'false')) {
+            geometryFlag = false;
+        }
 
         // We are going to use the returning query parameters to build the geoJSON
         // As such, the feature _id, FeatureCenter, and crsObjectId aren't needed
         // We only need the feature
-        let regionBordersQueryProjection = { 
+        const projection = { 
             _id: 1, 
             //feature: 1,
             "feature.geometry": geometryFlag
         };
-        let regionBordersDocumentsArray = await queryAllFeatureDocuments(regionBordersQueryProjection);
+
+        let regionBordersDocumentsArray = [];
+        if (request.query.id) {
+            const find = {
+                _id: new ObjectId(request.query.id as string)
+            }
+            regionBordersDocumentsArray = await queryFeatureDocuments(find, projection);
+        }
+        else {
+            regionBordersDocumentsArray = await queryAllFeatureDocuments(projection);
+        }
 
         // Add the queried features to the geoJSON
         let queriedFeatures = [];//: Feature<Polygon, FeatureProperties>[] = [];
@@ -59,7 +70,7 @@ export async function handleGetRegionBorders(request: Request, response: Respons
         }
 
         //let geoJSON: FeatureCollection<Polygon, FeatureProperties> = {
-        let geoJSON = {
+        const geoJSON = {
             type: "FeatureCollection",
             features: queriedFeatures
         }

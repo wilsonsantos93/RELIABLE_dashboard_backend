@@ -36,6 +36,7 @@ export async function collectionExistsInDatabase(collectionName: string, databas
     return collectionExists;
 }
 
+
 /**
  * Save each {@link \"GeoJSON\"} {@link Feature} to the <u>regionBorders</u> collection individually.
  * @param geoJSON {@link \"GeoJSON\"} to insert to the collection.
@@ -71,6 +72,7 @@ export async function saveFeatures(geoJSON: FeatureCollectionWithCRS<MultiPolygo
     );
 }
 
+
 /**
  * Query the <u>regionBorders</u> collection for some features.
  * @param featuresQuery The query to make to the region borders collection.
@@ -93,6 +95,7 @@ export async function queryFeatureDocuments(featuresQuery: Filter<Document>, fea
     return featuresQueryResults;
 }
 
+
 /**
  * Query the region borders collection for all features, and return them in an array.
  * @param queryProjection The fields of the collection {@link FeatureDocument} to return in the query.
@@ -109,8 +112,10 @@ export async function queryAllFeatureDocuments(queryProjection: FeaturesProjecti
     let featuresQueryResults = await DatabaseEngine.getFeaturesCollection()
         .find(featuresQuery, featuresQueryOptions)
         .toArray() as FeatureDocument[];
+    
     return featuresQueryResults;
 }
+
 
 /**
  * Query the <u>weather</u> collection for some weathers
@@ -118,11 +123,15 @@ export async function queryAllFeatureDocuments(queryProjection: FeaturesProjecti
  * @param featuresQueryProjection The fields of the collection {@link FeatureDocument} to return in the query.
  * @return  Array containing each {@link FeatureDocument} queried.
  */
-export async function queryWeatherDocuments(weatherDateID: ObjectId, featuresQueryProjection: WeatherProjection) {
+export async function queryWeatherDocuments(
+    weatherDateID: ObjectId, 
+    coordinates: any,
+    useCenters: boolean
+) {
 
-    const regionBordersCollectionName = DatabaseEngine.getFeaturesCollectionName();
+    /*const regionBordersCollectionName = DatabaseEngine.getFeaturesCollectionName();
 
-    /* const regionsWithWeatherDocuments = await DatabaseEngine.getWeatherCollection()
+     const regionsWithWeatherDocuments = await DatabaseEngine.getWeatherCollection()
         .aggregate([
             {
                 $match: { weatherDateObjectId: weatherDateID }
@@ -148,7 +157,63 @@ export async function queryWeatherDocuments(weatherDateID: ObjectId, featuresQue
         .toArray() as WeatherCollectionDocumentWithFeature[]; */
 
         const weatherCollectionName = DatabaseEngine.getWeatherCollectionName();
-        const regionsWithWeatherDocuments = await DatabaseEngine.getFeaturesCollection().aggregate([
+
+        const pipeline = [];
+
+        pipeline.push({ $match: { "center": { $exists: true } } });
+
+        if (coordinates) {
+            if (useCenters) {
+                pipeline.push({ 
+                    $match: {
+                        'center.coordinates.0': { $gte: parseFloat(coordinates.sw_lng), $lte: parseFloat(coordinates.ne_lng) },
+                        'center.coordinates.1': { $gte: parseFloat(coordinates.sw_lat), $lte: parseFloat(coordinates.ne_lat) }
+                    } 
+                })
+            } else {
+                pipeline.push({ 
+                    $match: {
+                        'geometry': {
+                            $geoIntersects: {
+                                $geometry: {
+                                    type: "Polygon",
+                                    coordinates: [
+                                        [
+                                            [parseFloat(coordinates.ne_lng), parseFloat(coordinates.sw_lat)], 
+                                            [parseFloat(coordinates.ne_lng), parseFloat(coordinates.ne_lat)], 
+                                            [parseFloat(coordinates.sw_lng), parseFloat(coordinates.ne_lat)], 
+                                            [parseFloat(coordinates.sw_lng), parseFloat(coordinates.sw_lat)],
+                                            [parseFloat(coordinates.ne_lng), parseFloat(coordinates.sw_lat)]
+                                        ]
+                                    ]
+                                }
+                            }
+                        }
+                    } 
+                })
+            }
+        }
+
+        pipeline.push({ 
+            $lookup: {
+                from: weatherCollectionName,
+                localField: '_id',
+                foreignField: 'regionBorderFeatureObjectId',
+                as: 'weather',
+                pipeline: [
+                    {
+                        $match: { "weatherDateObjectId": weatherDateID },
+                    },
+                    {   
+                        $project: { _id: 0, "weatherDateObjectId": 0, "regionBorderFeatureObjectId": 0 } 
+                    }
+                ],
+            }
+        });
+
+        pipeline.push({ $limit: 5 });
+
+        const regionsWithWeatherDocuments = await DatabaseEngine.getFeaturesCollection().aggregate(/* [
             {
                 $match: { "center": { $exists: true } }
             },
@@ -171,16 +236,17 @@ export async function queryWeatherDocuments(weatherDateID: ObjectId, featuresQue
             {
                 $limit: 5
             }
-        ])
+        ] */ pipeline)
         .toArray() as WeatherCollectionDocumentWithFeature[];
 
     return regionsWithWeatherDocuments;
 }
 
+
 // Returns a JSON with the various dates the weather was saved in the database
 export async function queryAllWeatherDates() {
     let weatherDatesQuery = {}; // Query all weather dates to return to the client
-    let weatherDatesProjection = {_id: 1, date: 1}; // Only the date itself needs to be returned by the query
+    let weatherDatesProjection = { _id: 1, date: 1 }; // Only the date itself needs to be returned by the query
     let weatherDatesQueryOptions = {
         projection: weatherDatesProjection,
     };

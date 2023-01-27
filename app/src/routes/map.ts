@@ -1,4 +1,4 @@
-import {handleGetRegionBordersAndWeatherByDate} from "../controllers/map.js";
+import { handleGetRegionBordersAndWeatherByDate } from "../controllers/map.js";
 
 //! Express
 import { Router } from "express";
@@ -6,7 +6,7 @@ import { Router } from "express";
 const router = Router();
 
 //! Get region borders and respective weather data route
-router.get("/getRegionBordersAndWeather/:weatherDateID", async function (request, response) {
+router.get("/getRegionBordersAndWeather", async function (request, response) {
     await handleGetRegionBordersAndWeatherByDate(request, response);
 });
 
