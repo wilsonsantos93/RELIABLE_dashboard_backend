@@ -1,5 +1,5 @@
 import fetch from "cross-fetch";
-import { DatabaseEngine } from "../configs/mongo";
+import { DatabaseEngine } from "../configs/mongo.js";
 import { FeatureWeather } from "../models/FeatureProperties";
 
 const KEEP_DATA_PREVIOUS_DAYS = parseInt(process.env.KEEP_DATA_PREVIOUS_DAYS) || 2
@@ -28,12 +28,15 @@ export async function handleDeleteWeatherAndDates() {
     try {
         const datesCollection = await DatabaseEngine.getWeatherDatesCollection();
         const date = new Date(new Date().valueOf() - KEEP_DATA_PREVIOUS_DAYS*24*60*60*1000);
-        const ids = await datesCollection.find({ "date": { $lt: date } }).map((doc) => doc._id);
+        const ids = await (await datesCollection.find({ "date": { $lt: date } }).toArray()).map((doc) => doc._id);
+
+        if (!ids.length) return
         
         const weatherCollection = await DatabaseEngine.getWeatherCollection();
         await weatherCollection.deleteMany({ "weatherDateObjectId": { $in: ids } });
         await datesCollection.deleteMany({ "_id": { $in: ids } });
-        console.log("CRON: Deleted weather and dates.");
+
+        console.log("CRON: Deleted previous weather and dates.");
     } catch (e) {
         console.error(e);
     } finally {

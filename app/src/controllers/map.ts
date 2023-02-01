@@ -80,10 +80,10 @@ export async function handleGetRegionBordersAndWeatherByDate(request: Request, r
     let coordinates: BoundingBox = null;
     if (request.query.sw_lng && request.query.sw_lat && request.query.ne_lng && request.query.ne_lat) {
         coordinates = {
-            sw_lng: request.query.sw_lng,
-            sw_lat: request.query.sw_lat,
-            ne_lng: request.query.ne_lng,
-            ne_lat: request.query.ne_lat
+            sw_lng: parseFloat(request.query.sw_lng as string),
+            sw_lat: parseFloat(request.query.sw_lat as string),
+            ne_lng: parseFloat(request.query.ne_lng as string),
+            ne_lat: parseFloat(request.query.ne_lat as string)
         }
     }
 

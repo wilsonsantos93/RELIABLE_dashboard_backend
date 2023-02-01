@@ -172,8 +172,8 @@ export async function queryWeatherDocuments(
         if (useCenters) {
             pipeline.push({ 
                 $match: {
-                    'center.coordinates.0': { $gte: parseFloat(coordinates.sw_lng), $lte: parseFloat(coordinates.ne_lng) },
-                    'center.coordinates.1': { $gte: parseFloat(coordinates.sw_lat), $lte: parseFloat(coordinates.ne_lat) }
+                    'center.coordinates.0': { $gte: coordinates.sw_lng, $lte: coordinates.ne_lng },
+                    'center.coordinates.1': { $gte: coordinates.sw_lat, $lte: coordinates.ne_lat }
                 } 
             })
         } else {
@@ -185,11 +185,11 @@ export async function queryWeatherDocuments(
                                 type: "Polygon",
                                 coordinates: [
                                     [
-                                        [parseFloat(coordinates.ne_lng), parseFloat(coordinates.sw_lat)], 
-                                        [parseFloat(coordinates.ne_lng), parseFloat(coordinates.ne_lat)], 
-                                        [parseFloat(coordinates.sw_lng), parseFloat(coordinates.ne_lat)], 
-                                        [parseFloat(coordinates.sw_lng), parseFloat(coordinates.sw_lat)],
-                                        [parseFloat(coordinates.ne_lng), parseFloat(coordinates.sw_lat)]
+                                        [coordinates.ne_lng, coordinates.sw_lat], 
+                                        [coordinates.sw_lng, coordinates.ne_lat], 
+                                        [coordinates.ne_lng, coordinates.ne_lat], 
+                                        [coordinates.sw_lng, coordinates.sw_lat],
+                                        [coordinates.ne_lng, coordinates.sw_lat]
                                     ]
                                 ]
                             }
