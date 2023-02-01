@@ -8,6 +8,7 @@ import {FeaturesProjection} from "../models/DatabaseCollections/Projections/Feat
 import {FeatureCollection, Polygon} from "geojson";
 import {FeatureProperties} from "../models/FeatureProperties";
 import async from "async";
+import { BoundingBox } from "../models/BoundingBox.js";
 
 /**
  * Sends an array of geoJSONs with the border regions and its weather information on a certain date
@@ -76,7 +77,7 @@ export async function handleGetRegionBordersAndWeatherByDate(request: Request, r
 
     
     // Set coordinates object or null
-    let coordinates = null;
+    let coordinates: BoundingBox = null;
     if (request.query.sw_lng && request.query.sw_lat && request.query.ne_lng && request.query.ne_lat) {
         coordinates = {
             sw_lng: request.query.sw_lng,
@@ -87,7 +88,7 @@ export async function handleGetRegionBordersAndWeatherByDate(request: Request, r
     }
 
     // Set flag useCenters
-    const useCenters = request.query.useCenters == "true" ? true : false;
+    const useCenters = request.query.hasOwnProperty("useCenters") && request.query.useCenters == "true" ? true : false;
 
     // Get regions with weather data
     const weatherDocuments = await queryWeatherDocuments(weatherDateObjectID, coordinates, useCenters)

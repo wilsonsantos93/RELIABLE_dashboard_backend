@@ -116,6 +116,4 @@ export function convertFeatureCoordinatesToLatLong(feature: Feature<Polygon, Fea
     }
 
     return convertedFeature;
-
-
 }

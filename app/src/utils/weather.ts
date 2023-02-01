@@ -33,9 +33,10 @@ export async function handleDeleteWeatherAndDates() {
         const weatherCollection = await DatabaseEngine.getWeatherCollection();
         await weatherCollection.deleteMany({ "weatherDateObjectId": { $in: ids } });
         await datesCollection.deleteMany({ "_id": { $in: ids } });
+        console.log("CRON: Deleted weather and dates.");
     } catch (e) {
         console.error(e);
-    }
-    
-    return 
+    } finally {
+        return
+    } 
 }

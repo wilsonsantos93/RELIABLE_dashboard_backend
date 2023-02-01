@@ -11,6 +11,7 @@ import {FeaturesProjection} from "../models/DatabaseCollections/Projections/Feat
 import {Feature, MultiPolygon, Polygon} from "geojson";
 import {FeatureProperties} from "../models/FeatureProperties";
 import {FeatureCollectionWithCRS} from "../models/FeatureCollectionWithCRS";
+import { BoundingBox } from "../models/BoundingBox.js";
 
 /**
  * Checks if a collection exists in a database.
@@ -130,8 +131,8 @@ export async function queryAllFeatureDocuments(queryProjection: FeaturesProjecti
  */
 export async function queryWeatherDocuments(
     weatherDateID: ObjectId, 
-    coordinates: any,
-    useCenters: boolean
+    coordinates: BoundingBox = null,
+    useCenters: boolean = false
 ) {
 
     /*const regionBordersCollectionName = DatabaseEngine.getFeaturesCollectionName();
