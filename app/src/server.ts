@@ -6,6 +6,8 @@ import router from "./routes/index.js";
 import passport from "passport";
 import passportConfig from "./auth/index.js";
 import bodyParser from "body-parser";
+import schedule from "node-schedule";
+import { handleDeleteWeatherAndDates } from "./utils/weather.js";
 
 dotenv.config({path: "./.env"}); // Loads .env file contents into process.env
 
@@ -33,6 +35,11 @@ app.use(cors());
 
 //use Router
 app.use(router);
+
+// node schedule
+const job = schedule.scheduleJob('0 * * * *', async function () {
+   await handleDeleteWeatherAndDates();
+});
 
 //! Start server
 app.listen(process.env.PORT, function () {
