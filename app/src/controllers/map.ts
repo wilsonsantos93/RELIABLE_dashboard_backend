@@ -35,13 +35,13 @@ export async function handleGetRegionBordersAndWeatherByDate(request: Request, r
     let message = "";
 
     //* Check if the region border collection exists
-    let regionBordersCollectionExists = await collectionExistsInDatabase(
+    const regionBordersCollectionExists = await collectionExistsInDatabase(
         DatabaseEngine.getFeaturesCollectionName(),
         DatabaseEngine.getDashboardDatabase()
     );
 
     //* Check if the weather collection exists
-    let weatherCollectionExists = await collectionExistsInDatabase(
+    const weatherCollectionExists = await collectionExistsInDatabase(
         DatabaseEngine.getWeatherCollectionName(),
         DatabaseEngine.getDashboardDatabase()
     );
