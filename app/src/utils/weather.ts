@@ -1,5 +1,8 @@
 import fetch from "cross-fetch";
-import {FeatureWeather} from "../models/FeatureProperties";
+import { DatabaseEngine } from "../configs/mongo";
+import { FeatureWeather } from "../models/FeatureProperties";
+
+const KEEP_DATA_PREVIOUS_DAYS = parseInt(process.env.KEEP_DATA_PREVIOUS_DAYS) || 2
 
 /**
  * Fetch the weather of a location from an external API, and return it.
@@ -19,4 +22,20 @@ export async function requestWeather(locationCoordinates: number[]): Promise<Fea
 
     return weatherDataJSON;
 
+}
+
+export async function handleDeleteWeatherAndDates() {
+    try {
+        const datesCollection = await DatabaseEngine.getWeatherDatesCollection();
+        const date = new Date(new Date().valueOf() - KEEP_DATA_PREVIOUS_DAYS*24*60*60*1000);
+        const ids = await datesCollection.find({ "date": { $lt: date } }).map((doc) => doc._id);
+        
+        const weatherCollection = await DatabaseEngine.getWeatherCollection();
+        await weatherCollection.deleteMany({ "weatherDateObjectId": { $in: ids } });
+        await datesCollection.deleteMany({ "_id": { $in: ids } });
+    } catch (e) {
+        console.error(e);
+    }
+    
+    return 
 }

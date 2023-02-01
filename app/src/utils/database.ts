@@ -25,7 +25,7 @@ import {FeatureCollectionWithCRS} from "../models/FeatureCollectionWithCRS";
 export async function collectionExistsInDatabase(collectionName: string, database: Db) {
     let collectionExists = false;
 
-    let collectionsInDatabase = await database.listCollections().toArray();
+    const collectionsInDatabase = await database.listCollections().toArray();
 
     collectionsInDatabase.forEach(function (collectionInDatabase) {
         if (collectionInDatabase.name === collectionName) {
@@ -108,12 +108,17 @@ export async function queryAllFeatureDocuments(queryProjection: FeaturesProjecti
     };
 
     // The following query returns [{type: "Feature",...}, {type:"Feature",...}]
-    console.log("Querying features collection for all features.");
-    let featuresQueryResults = await DatabaseEngine.getFeaturesCollection()
-        .find(featuresQuery, featuresQueryOptions)
-        .toArray() as FeatureDocument[];
-    
-    return featuresQueryResults;
+    try {
+        console.log("Querying features collection for all features.");
+        let featuresQueryResults = await DatabaseEngine.getFeaturesCollection()
+            .find(featuresQuery, featuresQueryOptions)
+            .toArray() as FeatureDocument[];
+        
+        return featuresQueryResults;
+    } catch (e) {
+        console.error(e);
+        return []
+    }
 }
 
 
@@ -156,88 +161,64 @@ export async function queryWeatherDocuments(
         ])
         .toArray() as WeatherCollectionDocumentWithFeature[]; */
 
-        const weatherCollectionName = DatabaseEngine.getWeatherCollectionName();
+    const weatherCollectionName = DatabaseEngine.getWeatherCollectionName();
 
-        const pipeline = [];
+    const pipeline = [];
 
-        pipeline.push({ $match: { "center": { $exists: true } } });
+    pipeline.push({ $match: { "center": { $exists: true } } });
 
-        if (coordinates) {
-            if (useCenters) {
-                pipeline.push({ 
-                    $match: {
-                        'center.coordinates.0': { $gte: parseFloat(coordinates.sw_lng), $lte: parseFloat(coordinates.ne_lng) },
-                        'center.coordinates.1': { $gte: parseFloat(coordinates.sw_lat), $lte: parseFloat(coordinates.ne_lat) }
-                    } 
-                })
-            } else {
-                pipeline.push({ 
-                    $match: {
-                        'geometry': {
-                            $geoIntersects: {
-                                $geometry: {
-                                    type: "Polygon",
-                                    coordinates: [
-                                        [
-                                            [parseFloat(coordinates.ne_lng), parseFloat(coordinates.sw_lat)], 
-                                            [parseFloat(coordinates.ne_lng), parseFloat(coordinates.ne_lat)], 
-                                            [parseFloat(coordinates.sw_lng), parseFloat(coordinates.ne_lat)], 
-                                            [parseFloat(coordinates.sw_lng), parseFloat(coordinates.sw_lat)],
-                                            [parseFloat(coordinates.ne_lng), parseFloat(coordinates.sw_lat)]
-                                        ]
+    if (coordinates) {
+        if (useCenters) {
+            pipeline.push({ 
+                $match: {
+                    'center.coordinates.0': { $gte: parseFloat(coordinates.sw_lng), $lte: parseFloat(coordinates.ne_lng) },
+                    'center.coordinates.1': { $gte: parseFloat(coordinates.sw_lat), $lte: parseFloat(coordinates.ne_lat) }
+                } 
+            })
+        } else {
+            pipeline.push({ 
+                $match: {
+                    'geometry': {
+                        $geoIntersects: {
+                            $geometry: {
+                                type: "Polygon",
+                                coordinates: [
+                                    [
+                                        [parseFloat(coordinates.ne_lng), parseFloat(coordinates.sw_lat)], 
+                                        [parseFloat(coordinates.ne_lng), parseFloat(coordinates.ne_lat)], 
+                                        [parseFloat(coordinates.sw_lng), parseFloat(coordinates.ne_lat)], 
+                                        [parseFloat(coordinates.sw_lng), parseFloat(coordinates.sw_lat)],
+                                        [parseFloat(coordinates.ne_lng), parseFloat(coordinates.sw_lat)]
                                     ]
-                                }
+                                ]
                             }
                         }
-                    } 
-                })
-            }
-        }
-
-        pipeline.push({ 
-            $lookup: {
-                from: weatherCollectionName,
-                localField: '_id',
-                foreignField: 'regionBorderFeatureObjectId',
-                as: 'weather',
-                pipeline: [
-                    {
-                        $match: { "weatherDateObjectId": weatherDateID },
-                    },
-                    {   
-                        $project: { _id: 0, "weatherDateObjectId": 0, "regionBorderFeatureObjectId": 0 } 
                     }
-                ],
-            }
-        });
+                } 
+            })
+        }
+    }
 
-        pipeline.push({ $limit: 5 });
-
-        const regionsWithWeatherDocuments = await DatabaseEngine.getFeaturesCollection().aggregate(/* [
-            {
-                $match: { "center": { $exists: true } }
-            },
-            {
-                $lookup: {
-                    from: weatherCollectionName,
-                    localField: '_id',
-                    foreignField: 'regionBorderFeatureObjectId',
-                    as: 'weather',
-                    pipeline: [
-                        {
-                            $match: { "weatherDateObjectId": weatherDateID },
-                        },
-                        {   
-                            $project: { _id: 0, "weatherDateObjectId": 0, "regionBorderFeatureObjectId": 0 } 
-                        }
-                    ],
+    pipeline.push({ 
+        $lookup: {
+            from: weatherCollectionName,
+            localField: '_id',
+            foreignField: 'regionBorderFeatureObjectId',
+            as: 'weather',
+            pipeline: [
+                {
+                    $match: { "weatherDateObjectId": weatherDateID },
+                },
+                {   
+                    $project: { _id: 0, "weatherDateObjectId": 0, "regionBorderFeatureObjectId": 0 } 
                 }
-            },
-            {
-                $limit: 5
-            }
-        ] */ pipeline)
-        .toArray() as WeatherCollectionDocumentWithFeature[];
+            ],
+        }
+    });
+
+    pipeline.push({ $limit: 5 }); // temp
+
+    const regionsWithWeatherDocuments = await DatabaseEngine.getFeaturesCollection().aggregate(pipeline).toArray() as WeatherCollectionDocumentWithFeature[];
 
     return regionsWithWeatherDocuments;
 }
@@ -252,9 +233,14 @@ export async function queryAllWeatherDates() {
     };
 
     // The following query returns [{type: "Feature",...}, {type:"Feature",...}]
-    let featuresQueryResults = await DatabaseEngine.getWeatherDatesCollection()
-        .find(weatherDatesQuery, weatherDatesQueryOptions)
-        .toArray();
-
-    return featuresQueryResults;
+    try {
+        const featuresQueryResults = await DatabaseEngine.getWeatherDatesCollection()
+            .find(weatherDatesQuery, weatherDatesQueryOptions)
+            .toArray();
+            
+        return featuresQueryResults;
+    } catch (e) {
+        console.error(e);
+        return [];
+    }
 }
