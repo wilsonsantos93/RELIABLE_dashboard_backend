@@ -84,10 +84,6 @@ async function transformData(data: any[]) {
         else fieldsWithoutDate.push(field);
     })
 
-    console.log(dates)
-    console.log(fieldsWithDate)
-    console.log(fieldsWithoutDate)
-
     // Insert dates in DB
     const bulkOps = dates.map(d => {
         const reverseDate = d.split("-").reverse().join("-"); 
