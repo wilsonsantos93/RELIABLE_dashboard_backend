@@ -1,9 +1,9 @@
 import {ObjectId} from "mongodb";
-import {FeatureWeather} from "../FeatureProperties";
+//import {FeatureWeather} from "../FeatureProperties";
 
 export interface WeatherCollectionDocument {
     _id: ObjectId;
-    weather: FeatureWeather;
+    weather: any;
     weatherDateObjectId: ObjectId;
     regionBorderFeatureObjectId: ObjectId;
 }

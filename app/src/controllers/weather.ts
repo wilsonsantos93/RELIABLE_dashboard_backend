@@ -3,7 +3,7 @@ import {DatabaseEngine} from "../configs/mongo.js";
 import sendResponseWithGoBackLink from "../utils/response.js";
 import {Request, Response} from "express-serve-static-core";
 import {Document, Filter, FindOptions, ObjectId} from "mongodb";
-import {requestWeather} from "../utils/weather.js";
+import { createBulkOps, requestWeather, transformData } from "../utils/weather.js";
 import {FeaturesProjection} from "../models/DatabaseCollections/Projections/FeaturesProjection";
 import async from "async";
 
@@ -145,28 +145,12 @@ export async function handleSaveWeather(req: Request, res: Response) {
         data.push(req.body);
     }
 
-    // Upsert timestamps on weather dates collection
-   /*  const datesCollection = await DatabaseEngine.getWeatherDatesCollection();
-    datesCollection.bulkWrite(
-        data.map(d => { 
-          return { 
-            updateOne:
-            {
-              filter: { "date": d.date },
-              update: { $set: { "date": d.date }},
-              upsert : true
-            }
-          }
-        }),
-        { ordered : false }
-    ); */
-
-    // Write data in collection
-    const weatherCollection = await DatabaseEngine.getWeatherCollection();
+    // Write data in weather collection
     try {
-        const result = await weatherCollection.insertMany(data);
+        const weatherCollection = await DatabaseEngine.getWeatherCollection();
+        const result = await weatherCollection.bulkWrite(createBulkOps(await transformData(data)));
         return res.json(result);
     } catch (e) {
-        return res.status(500).json('DB error');
+        return res.status(500).json(e);
     }
 }

@@ -3,6 +3,7 @@ import { DatabaseEngine } from "../configs/mongo.js";
 import { FeatureWeather } from "../models/FeatureProperties";
 import csv from "csvtojson";
 import { FeaturesProjection } from "../models/DatabaseCollections/Projections/FeaturesProjection.js";
+import fs from "fs";
 
 const KEEP_DATA_PREVIOUS_DAYS = parseInt(process.env.KEEP_DATA_PREVIOUS_DAYS) || 2;
 const CSV_FILE_PATH = process.env.CSV_FILE_PATH;
@@ -27,6 +28,10 @@ export async function requestWeather(locationCoordinates: number[]): Promise<Fea
 
 }
 
+/**
+ * Function that deletes previous data from weather and dates.
+ * @returns void
+ */
 export async function handleDeleteWeatherAndDates() {
     try {
         const datesCollection = await DatabaseEngine.getWeatherDatesCollection();
@@ -47,13 +52,59 @@ export async function handleDeleteWeatherAndDates() {
     } 
 }
 
+// Function to generate array of update operations
+/**
+ * 
+ * @param data An array of raw weather data.
+ * @returns An array of updateOne operations.
+ */
+export function createBulkOps(data: any[]) {
+    return data.map(d => {
+        return { updateOne: 
+            {
+                filter: { "weatherDateObjectId": d.weatherDateObjectId, "regionBorderFeatureObjectId": d.regionBorderFeatureObjectId }, 
+                update: { $set: d }, 
+                upsert: true 
+            }
+        }
+    });
+}
 
+/**
+ * Function that reads CSV file containing weather data and inserts data into Weather collection.
+ * @returns void
+ */
 export async function readWeatherFile() {
     try {
+        const weatherCollection = DatabaseEngine.getWeatherCollection();
+        const readStream = fs.createReadStream(CSV_FILE_PATH);
+        
+        let i = 0;
+        let data: any[] = [];
+        await csv({ignoreColumns: /^\s*$/}).fromStream(readStream).subscribe((json) => {
+            i++;
+            return new Promise( async (resolve, reject) => {
+                data.push(json);
+                // At every N rows insert into DB
+                if (i % 300 == 0) {
+                    await weatherCollection.bulkWrite(createBulkOps(await transformData(data)));
+                    data = [];
+                }
+                return resolve();
+            })
+        });
+
+        // If there is some data still to insert
+        if (data.length) {
+            await weatherCollection.bulkWrite(createBulkOps(await transformData(data)));
+            data = [];
+        }
+
+        /*
         let data = await csv({ignoreColumns: /^\s*$/}).fromFile(CSV_FILE_PATH);
         data = await transformData(data);
         const weatherCollection = DatabaseEngine.getWeatherCollection();
-        await weatherCollection.insertMany(data);
+        await weatherCollection.insertMany(data); */
     } catch (e) {
         console.error(e);
     } finally {
@@ -61,11 +112,12 @@ export async function readWeatherFile() {
     }
 }
 
-
-async function transformData(data: any[]) {
-    const datesCollection = DatabaseEngine.getWeatherDatesCollection();
-    const regionsCollection = DatabaseEngine.getFeaturesCollection();
-
+/**
+ * Function that transforms raw data
+ * @param data Array containing the raw weather data to be transformed.
+ * @returns The transformed data to insert into database.
+ */
+export async function transformData(data: any[]) {
     if (!data.length) return [];
 
     const transformedData: any[] = [];
@@ -74,6 +126,7 @@ async function transformData(data: any[]) {
     const fieldsWithoutDate: string[] = [];
     const fieldsWithDate: string[] = [];
     
+    // Get fields with date and fields without date
     (Object.keys(data[0])).forEach(field => {
         const matchArr = field.match(regex);
         if (matchArr) {
@@ -95,12 +148,13 @@ async function transformData(data: any[]) {
                 upsert: true 
             }
         }
-    })
-
+    });
+    const datesCollection = DatabaseEngine.getWeatherDatesCollection();
     await datesCollection.bulkWrite(bulkOps);
     const datesFromDB = await datesCollection.find({}).toArray();
 
     // Loop through CSV data and create samples
+    const regionsCollection = DatabaseEngine.getFeaturesCollection();
     for (const row of data) {
         const projection: FeaturesProjection = { _id: 1 };
         const regions = await regionsCollection.find(
