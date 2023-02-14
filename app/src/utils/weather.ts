@@ -4,9 +4,10 @@ import { FeatureWeather } from "../models/FeatureProperties";
 import csv from "csvtojson";
 import { FeaturesProjection } from "../models/DatabaseCollections/Projections/FeaturesProjection.js";
 import fs from "fs";
+import glob from 'glob';
 
 const KEEP_DATA_PREVIOUS_DAYS = parseInt(process.env.KEEP_DATA_PREVIOUS_DAYS) || 2;
-const CSV_FILE_PATH = process.env.CSV_FILE_PATH;
+const CSV_FOLDER_PATH = process.env.CSV_FOLDER_PATH_LOCAL || process.env.CSV_FOLDER_PATH_DOCKER;
 
 /**
  * Fetch the weather of a location from an external API, and return it.
@@ -25,7 +26,6 @@ export async function requestWeather(locationCoordinates: number[]): Promise<Fea
     const weatherDataJSON = await response.json();
 
     return weatherDataJSON;
-
 }
 
 /**
@@ -44,7 +44,7 @@ export async function handleDeleteWeatherAndDates() {
         await weatherCollection.deleteMany({ "weatherDateObjectId": { $in: ids } });
         await datesCollection.deleteMany({ "_id": { $in: ids } });
 
-        console.log("CRON: Deleted previous weather and dates.");
+        console.log("JOB: Deleted previous weather and dates.");
     } catch (e) {
         console.error(e);
     } finally {
@@ -76,8 +76,18 @@ export function createBulkOps(data: any[]) {
  */
 export async function readWeatherFile() {
     try {
+        if (!CSV_FOLDER_PATH || CSV_FOLDER_PATH == "" || !fs.existsSync(CSV_FOLDER_PATH)) { 
+            throw "ERROR in CSV Folder: Path not specified or does not exist.";
+        }
+
+        const newestFile = glob.sync(`${CSV_FOLDER_PATH}/*.csv`)
+            .map((name: any) => ({name, ctime: fs.statSync(name).ctime}))
+            .sort((a: any, b: any) => b.ctime - a.ctime)[0]?.name;
+
+        console.log("JOB: Reading CSV file:", newestFile);
+
         const weatherCollection = DatabaseEngine.getWeatherCollection();
-        const readStream = fs.createReadStream(CSV_FILE_PATH);
+        const readStream = fs.createReadStream(newestFile);
         
         let i = 0;
         let data: any[] = [];
