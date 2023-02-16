@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <%- include('partials/head.ejs') %>
+    <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/v/dt/dt-1.13.2/r-2.4.0/datatables.min.css"/>
+    <style>
+        .dataTables_filter {
+            display: none;
+        } 
+    </style>
+  </head>
+
+  <body>
+    <header>    
+      <%- include('partials/navbar.ejs') %>
+    </header>
+
+    <main style="margin-top: 50px;">
+      <div class="container">
+      <%- include('partials/alerts.ejs') %>
+
+        <div class="row">
+            <div class="col-xs-12">
+                <h2>Regiões</h2>
+                <div style="float: right;">
+                    <select id="select"></select>
+                    <input id="input-select" placeholder="Pesquisar..." />
+                </div>
+                <div class="table-responsiver">
+                    <table id="table" class="display table table-striped table-bordered" style="width:100%">
+                        <thead></thead>
+                        <tbody></tbody>
+                        <tfoot></tfoot>
+                    </table>
+                </div>
+            </div>
+        </div>
+      </div>
+    </main>
+
+    <footer>
+      <%- include('partials/footer.ejs') %>
+    </footer>
+  </body>
+
+  <%- include('partials/scripts.ejs') %>
+  <script type="text/javascript" src="https://cdn.datatables.net/v/dt/dt-1.13.2/r-2.4.0/datatables.min.js"></script>
+  <script>
+    function flattenObject(obj, prefix = '') {
+        return Object.keys(obj).reduce((acc, k) => {
+            const pre = prefix.length ? prefix + '.' : '';
+            if (typeof obj[k] === 'object') Object.assign(acc, flattenObject(obj[k], pre + k));
+            else acc[pre + k] = obj[k];
+            return acc;
+        }, {});
+    }
+
+    function delFromID(id) {
+        alert(id);
+        $('#table').DataTable().ajax.reload();
+    }
+        
+    function getDT() {
+        let columns = []
+        $.ajax({
+            url: "/api/region?dt=true&geometry=false",
+            success: function (data) {
+                const columnNames = [...new Set(data.data.map(item => Object.keys(flattenObject(item)) ).flat())];
+                for (const col of columnNames) {
+                    columns.push({
+                        title: col,
+                        data: col, 
+                        name: col,
+                    });
+                    $("#select").append(`<option value="${col}">${col}</option>`);
+                } 
+
+                $('#table').DataTable({
+                    columnDefs: [ 
+                        {
+                            defaultContent: "-",
+                            targets: "_all",
+                        }, 
+                        /* {
+                            targets: -1,
+                            render: function (data, type, row, meta) {
+                                return `<a type="button" class="btn btn-danger btn-block" href="#" onclick=delFromID("${row.id}")>
+                                            <i class="fa fa-trash-o"/>
+                                        </a>`;
+                            }
+                        } */
+                    ],
+                    responsive: true,
+                    processing: true,
+                    serverSide: true,
+                    ordering:false,
+                    //search:false,
+                    ajax: {
+                        type: "GET",
+                        url: "/api/region?dt=true&geometry=false",
+                        dataSrc: 'data'
+                    },
+                    columns: columns
+                });
+            }
+        });
+    }
+
+    $(document).ready(function() {
+        const table = getDT();
+        $("#input-select").on('keyup', function (e) {
+            if (e.key === 'Enter' || e.keyCode === 13) {
+                $("#table").DataTable().columns().search("");
+                const colName = $("#select").val();
+                const val = this.value;
+                const column = $("#table").DataTable().column(`${colName}:name`);
+                column.search(val).draw();
+            }
+        });
+    });
+  </script>
+
+</html>
