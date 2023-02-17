@@ -19,7 +19,7 @@ import async from "async";
  * @param response Client HTTP response object
  */
 export async function handleGetRegionBorders(request: Request, response: Response) {
-    console.log("\nClient requested region borders.");
+    console.log(new Date().toJSON(), "\nClient requested region borders.");
 
     //* Check if the region border collection exists
     const regionBordersCollectionExists = await collectionExistsInDatabase(
@@ -29,8 +29,7 @@ export async function handleGetRegionBorders(request: Request, response: Respons
 
     //* If the region borders collection doesn't exist, send error response to the client
     if (!regionBordersCollectionExists) {
-        let message = "Couldn't get region borders because the collection doesn't exist.";
-        return response.status(404).json(message)
+        return response.status(404).json("Couldn't get region borders because the collection doesn't exist.");
     }
 
     //* If the region borders collection exists, send the various saved geoJSONs to the client
@@ -59,7 +58,7 @@ export async function handleGetRegionBorders(request: Request, response: Respons
         for (const col of request.query.columns as any[]) {
             if (!col.search.value || col.search.value == '') continue;
             if (col.name == "_id" && ObjectId.isValid(col.search.value)) find[col.name] = new ObjectId(col.search.value);
-            else find[col.name] = col.search.value;
+            else find[col.name] = new RegExp(col.search.value, 'i');
         }
 
         let skip = parseInt(request.query.start as string) || 0;
@@ -95,7 +94,6 @@ export async function handleGetRegionBorders(request: Request, response: Respons
     } 
 
     return response.json(geoJSON);
-    
 }
 
 
@@ -107,20 +105,24 @@ export async function handleGetRegionBorders(request: Request, response: Respons
  */
 export async function handleSaveFeatures(request: Request, response: Response) {
     console.log("Received geoJSON from the client.");
+    try {
+        //* Parse received file bytes to geoJSON
+        let fileBuffer = request.file.buffer; // Multer enables the server to access the file sent by the client using "request.file.buffer". The file accessed is in bytes.
+        let trimmedFileBuffer = fileBuffer.toString().trimStart().trimEnd(); // Sometimes the geoJSON sent has unnecessary spaces that need to be trimmed
+        let geoJSON: FeatureCollectionWithCRS<MultiPolygon | Polygon, FeatureProperties> = JSON.parse(trimmedFileBuffer); // Parse the trimmed file buffer to a correct geoJSON
 
-    //* Parse received file bytes to geoJSON
-    let fileBuffer = request.file.buffer; // Multer enables the server to access the file sent by the client using "request.file.buffer". The file accessed is in bytes.
-    let trimmedFileBuffer = fileBuffer.toString().trimStart().trimEnd(); // Sometimes the geoJSON sent has unnecessary spaces that need to be trimmed
-    let geoJSON: FeatureCollectionWithCRS<MultiPolygon | Polygon, FeatureProperties> = JSON.parse(trimmedFileBuffer); // Parse the trimmed file buffer to a correct geoJSON
+        //* Save each geoJSON feature to the collection individually
+        console.log("Started inserting geoJSON features in the database.");
+        await saveFeatures(geoJSON);
+        console.log("Inserted geoJSON features in the database.");
 
-    //* Save each geoJSON feature to the collection individually
-    console.log("Started inserting geoJSON features in the database.");
-    await saveFeatures(geoJSON);
-    console.log("Inserted geoJSON features in the database.");
-
-    // Send successful response to the client
-    request.flash("success_message", "Server successfully saved geoJSON.");
-    return response.redirect("/admin");
+        // Send successful response to the client
+        request.flash("success_message", "Server successfully saved geoJSON.");
+        return response.redirect("back");
+    } catch (e) {
+        request.flash("error_message", "Não foi possível carregar o ficheiro.");
+        return response.redirect("back");
+    }
 }
 
 
@@ -220,4 +222,16 @@ export async function handleGetRegionBordersFields(request: Request, response: R
     }
 
     return response.json(columnNames);
+}
+
+
+export async function handleDeleteRegionBorder(request: Request, response: Response) {
+    try {
+        const id = request.params.id;
+        await DatabaseEngine.getFeaturesCollection().deleteOne({ _id: new ObjectId(id) });
+        return response.json({});
+    } catch(e) {
+        console.error(e);
+        return response.status(500).json(e);
+    }
 }

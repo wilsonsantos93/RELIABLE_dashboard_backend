@@ -4,9 +4,10 @@ import express from "express";
 //! Get region borders data route
 //! Client sends a geoJSON to be saved to the database
 //! Calculate centers of each feature in the database route
-import { handleCalculateCenters, handleGetRegionBorders, handleSaveFeatures, handleGetRegionBordersFields } from "../controllers/regionBorders.js";
+import { handleCalculateCenters, handleGetRegionBorders, handleSaveFeatures, handleGetRegionBordersFields, handleDeleteRegionBorder } from "../controllers/regionBorders.js";
 import multer from "multer";
 import { authenticateAdmin, authenticateAPI } from "../utils/routes.js";
+import { Role } from "../models/User.js";
 
 const storage = multer.memoryStorage(); // Use RAM to temporarily store the received geoJSON, before parsing it and saving it to the database
 const upload = multer({ storage: storage });
@@ -17,6 +18,11 @@ const router = express.Router();
 router.get("/", authenticateAPI(), async function (request, response) {
         await handleGetRegionBorders(request, response);
     }
+);
+
+router.post("/:id/delete", authenticateAPI(Role.ADMIN), async function (request, response) {
+    await handleDeleteRegionBorder(request, response);
+}
 );
 
 router.get("/fields", authenticateAPI(), async function (request, response) {

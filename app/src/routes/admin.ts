@@ -108,7 +108,7 @@ router.post("/deleteWeather", authenticateAdmin, async function (req: Request, r
   }
 );
 
-//! Route that requests the weather information in the database to be deleted
+//! Route that requests all information in the database to be deleted
 router.post("/deleteAll", authenticateAdmin, async function (req: Request, res: Response) {
   await handleDeleteAll(req, res);
 });

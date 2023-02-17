@@ -23,7 +23,7 @@ const reliableSession = session({
         mongoUrl: `mongodb://${process.env.DB_USERNAME}:${process.env.DB_PASSWORD}@${process.env.DB_URL}/${process.env.DB_NAME}`,
         collectionName: 'sessions'
     }),
-    cookie: { secure: false, maxAge: 60 * 60 * 1000 } // 90min
+    cookie: { secure: false, maxAge: 90 * 60 * 1000 } // 90min
 })
 
 // Use flash messages
@@ -51,7 +51,7 @@ function setLocals(req: Request, res: Response, next: NextFunction) {
 router.use('/admin', reliableSession, passport.initialize(), passport.session(), flash(), flashLocals, setLocals, adminRouter);
 router.use('/api', apiRouter);
 router.use('/api/weather', reliableSession, passport.initialize(), passport.session(), weatherRouter);
-router.use('/api/region', reliableSession, passport.initialize(), passport.session(), regionBordersRouter);
+router.use('/api/region', reliableSession, passport.initialize(), passport.session(), flash(), flashLocals, regionBordersRouter);
 router.use("/api/map", reliableSession, passport.initialize(), passport.session(), mapRouter);
 router.use("/libs", librariesRouter);
 
