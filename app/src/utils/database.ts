@@ -80,7 +80,11 @@ export async function saveFeatures(geoJSON: FeatureCollectionWithCRS<MultiPolygo
  * @param featuresQueryProjection The fields of the collection {@link FeatureDocument} to return in the query.
  * @return  Array containing each {@link FeatureDocument} queried.
  */
-export async function queryFeatureDocuments(featuresQuery: Filter<Document>, featuresQueryProjection: FeaturesProjection) {
+export async function queryFeatureDocuments(
+    featuresQuery: Filter<Document>, 
+    featuresQueryProjection: any,
+    skip: number = 0,
+    limit: number = 0) {
 
     //featuresQuery.type = "Feature"; // In addition to the query parameters passed as argument, query for various features in the region borders collection
 
@@ -91,6 +95,9 @@ export async function queryFeatureDocuments(featuresQuery: Filter<Document>, fea
     // The following query returns [{type: "Feature",...}, {type:"Feature",...}]
     let featuresQueryResults = await DatabaseEngine.getFeaturesCollection()
         .find(featuresQuery, featuresQueryOptions)
+        .limit(limit)
+        .skip(skip)
+        .collation({ locale: "pt", strength: 1 })
         .toArray() as FeatureDocument[];
 
     return featuresQueryResults;
@@ -102,7 +109,7 @@ export async function queryFeatureDocuments(featuresQuery: Filter<Document>, fea
  * @param queryProjection The fields of the collection {@link FeatureDocument} to return in the query.
  * @return Array containing every {@link FeatureDocument} in the <u>regionBorders</u> collection.
  * */
-export async function queryAllFeatureDocuments(queryProjection: FeaturesProjection) {
+export async function queryAllFeatureDocuments(queryProjection: any, skip: number = 0, limit: number = 0) {
     let featuresQuery: Filter<Document> = {}; // Query for all documents in the region borders collection
     let featuresQueryOptions: FindOptions = {
         projection: queryProjection,
@@ -111,10 +118,13 @@ export async function queryAllFeatureDocuments(queryProjection: FeaturesProjecti
     // The following query returns [{type: "Feature",...}, {type:"Feature",...}]
     try {
         console.log("Querying features collection for all features.");
+        console.log(skip, limit)
         let featuresQueryResults = await DatabaseEngine.getFeaturesCollection()
             .find(featuresQuery, featuresQueryOptions)
+            .limit(limit)
+            .skip(skip)
             .toArray() as FeatureDocument[];
-        
+
         return featuresQueryResults;
     } catch (e) {
         console.error(e);

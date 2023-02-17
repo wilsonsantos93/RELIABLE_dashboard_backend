@@ -23,7 +23,7 @@ const reliableSession = session({
         mongoUrl: `mongodb://${process.env.DB_USERNAME}:${process.env.DB_PASSWORD}@${process.env.DB_URL}/${process.env.DB_NAME}`,
         collectionName: 'sessions'
     }),
-    cookie: { secure: false, maxAge: 60 * 60 * 1000 } // 60min
+    cookie: { secure: false, maxAge: 60 * 60 * 1000 } // 90min
 })
 
 // Use flash messages

@@ -4,7 +4,7 @@ import express from "express";
 //! Get region borders data route
 //! Client sends a geoJSON to be saved to the database
 //! Calculate centers of each feature in the database route
-import { handleCalculateCenters, handleGetRegionBorders, handleSaveFeatures } from "../controllers/regionBorders.js";
+import { handleCalculateCenters, handleGetRegionBorders, handleSaveFeatures, handleGetRegionBordersFields } from "../controllers/regionBorders.js";
 import multer from "multer";
 import { authenticateAdmin, authenticateAPI } from "../utils/routes.js";
 
@@ -17,6 +17,11 @@ const router = express.Router();
 router.get("/", authenticateAPI(), async function (request, response) {
         await handleGetRegionBorders(request, response);
     }
+);
+
+router.get("/fields", authenticateAPI(), async function (request, response) {
+    await handleGetRegionBordersFields(request, response);
+}
 );
 
 router.post("/save", authenticateAdmin, upload.single("geojson"), async function (request, response) {

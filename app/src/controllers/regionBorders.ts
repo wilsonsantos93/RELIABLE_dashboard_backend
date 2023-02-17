@@ -5,7 +5,7 @@ import {collectionExistsInDatabase, queryFeatureDocuments, queryAllFeatureDocume
 import polygonCenter from "geojson-polygon-center";
 import {Request, Response} from "express-serve-static-core";
 import {FeaturesProjection} from "../models/DatabaseCollections/Projections/FeaturesProjection";
-import {Document, Filter, ObjectId} from "mongodb";
+import {Document, Filter, ObjectId, WithId} from "mongodb";
 import {FeatureCollectionWithCRS} from "../models/FeatureCollectionWithCRS";
 import {Feature, FeatureCollection, MultiPolygon, Polygon} from "geojson";
 import {FeatureProperties} from "../models/FeatureProperties";
@@ -22,7 +22,7 @@ export async function handleGetRegionBorders(request: Request, response: Respons
     console.log("\nClient requested region borders.");
 
     //* Check if the region border collection exists
-    let regionBordersCollectionExists = await collectionExistsInDatabase(
+    const regionBordersCollectionExists = await collectionExistsInDatabase(
         DatabaseEngine.getFeaturesCollectionName(),
         DatabaseEngine.getDashboardDatabase()
     );
@@ -30,53 +30,72 @@ export async function handleGetRegionBorders(request: Request, response: Respons
     //* If the region borders collection doesn't exist, send error response to the client
     if (!regionBordersCollectionExists) {
         let message = "Couldn't get region borders because the collection doesn't exist.";
-        console.log(message);
         return response.status(404).json(message)
     }
 
     //* If the region borders collection exists, send the various saved geoJSONs to the client
-    else {
-
-        let geometryFlag = true;
-        if (request.query.hasOwnProperty("geometry") && (request.query.geometry == '0' || request.query.geometry == 'false')) {
-            geometryFlag = false;
-        }
-
-        // We are going to use the returning query parameters to build the geoJSON
-        // As such, the feature _id, FeatureCenter, and crsObjectId aren't needed
-        // We only need the feature
-        const projection = { 
-            _id: 1, 
-            //feature: 1,
-            "feature.geometry": geometryFlag
-        };
-
-        let regionBordersDocumentsArray = [];
-        if (request.query.id) {
-            const find = {
-                _id: new ObjectId(request.query.id as string)
-            }
-            regionBordersDocumentsArray = await queryFeatureDocuments(find, projection);
-        }
-        else {
-            regionBordersDocumentsArray = await queryAllFeatureDocuments(projection);
-        }
-
-        // Add the queried features to the geoJSON
-        let queriedFeatures = [];//: Feature<Polygon, FeatureProperties>[] = [];
-        for (const regionBorderDocument of regionBordersDocumentsArray) {
-            const { _id, feature } = regionBorderDocument;
-            queriedFeatures.push({ _id, feature })
-        }
-
-        //let geoJSON: FeatureCollection<Polygon, FeatureProperties> = {
-        const geoJSON = {
-            type: "FeatureCollection",
-            features: queriedFeatures
-        }
-
-        return response.json(geoJSON);
+    let projection: any = {};
+    if (request.query.hasOwnProperty("geometry") && (request.query.geometry == '0' || request.query.geometry == 'false')) {
+        projection["feature.geometry"] = 0
     }
+    if (request.query.hasOwnProperty("center") && (request.query.center == '0' || request.query.center == 'false')) {
+        projection["feature.center"] = 0
+    }
+
+    let recordsTotal = 0;
+    let recordsFiltered = 0;
+    let regionBordersDocumentsArray = [];
+    if (request.query.id) {
+        const find = {
+            _id: new ObjectId(request.query.id as string)
+        }
+        regionBordersDocumentsArray = await queryFeatureDocuments(find, projection);
+    }
+    else if (request.query.dt && request.query.columns) {
+        projection["center.type"] = 0;
+        projection["feature.type"] = 0;
+
+        const find:any = {};
+        for (const col of request.query.columns as any[]) {
+            if (!col.search.value || col.search.value == '') continue;
+            if (col.name == "_id" && ObjectId.isValid(col.search.value)) find[col.name] = new ObjectId(col.search.value);
+            else find[col.name] = col.search.value;
+        }
+
+        let skip = parseInt(request.query.start as string) || 0;
+        let limit = parseInt(request.query.length as string) || 0;
+
+        recordsTotal = await DatabaseEngine.getFeaturesCollection().countDocuments();
+        recordsFiltered = (await queryFeatureDocuments(find, projection)).length;
+
+        regionBordersDocumentsArray = await queryFeatureDocuments(find, projection, skip, limit);
+    }
+    else {
+        regionBordersDocumentsArray = await queryAllFeatureDocuments(projection);
+    }
+
+    // Add the queried features to the geoJSON
+    /* let queriedFeatures = [];
+    for (const regionBorderDocument of regionBordersDocumentsArray) {
+        queriedFeatures.push(regionBorderDocument)
+    } */
+
+    let geoJSON:any = {
+        type: "FeatureCollection",
+        features: regionBordersDocumentsArray //queriedFeatures
+    }
+
+    if (request.query.dt) {
+        geoJSON = { 
+            data: regionBordersDocumentsArray, //queriedFeatures
+            draw: request.query.draw, 
+            recordsTotal: recordsTotal,
+            recordsFiltered: recordsFiltered
+        }
+    } 
+
+    return response.json(geoJSON);
+    
 }
 
 
@@ -174,4 +193,31 @@ export async function handleCalculateCenters(request: Request, response: Respons
 
     console.log("Server finished calculating the centers for each region border in the collection.\n");
     return response.redirect("/admin");
+}
+
+
+export async function handleGetRegionBordersFields(request: Request, response: Response) {
+
+    function flattenObject(obj: WithId<Document>, prefix = '') {
+        return Object.keys(obj).reduce((acc:any, k) => {
+            const pre = prefix.length ? prefix + '.' : '';
+            if (typeof obj[k] === 'object' && k != "_id") Object.assign(acc, flattenObject(obj[k], pre + k));
+            else acc[pre + k] = obj[k];
+            return acc;
+        }, {});
+    }
+
+    const projection = { _id: 1, "feature.type": 0, "feature.geometry": 0, "center.type": 0 };
+    const data = await DatabaseEngine.getFeaturesCollection().find({}, { projection }).toArray();
+    //const columnNames = [...new Set(data.map(item => Object.keys(flattenObject(item)) ).flat())];
+
+    let columnNames: any = [];
+    for (const region of data) {
+        const keys = Object.keys(flattenObject(region))
+        for (const k of keys) {
+            if (!columnNames.includes(k)) columnNames.push(k);
+        }
+    }
+
+    return response.json(columnNames);
 }

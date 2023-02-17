@@ -80,9 +80,14 @@ router.get('/logout', authenticateAdmin, function(req: Request, res: Response, n
   });
 });
 
-//! Page that allows a client to send geoJSONs to the server, or delete database collections
+//! Page that allows a client to send geoJSONs to the server, or empty database collections
 router.get("/home", authenticateAdmin, function (req: Request, res: Response) {
   res.render("home.ejs");
+});
+
+//! Page that 
+router.get("/regions", authenticateAdmin, function (req: Request, res: Response) {
+  res.render("regions.ejs", { data: [] });
 });
 
 //! Client requests the region borders collection to be deleted
