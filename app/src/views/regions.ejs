@@ -18,11 +18,18 @@
 
     <main style="margin-top: 50px;">
       <div class="container">
+        
       <%- include('partials/alerts.ejs') %>
 
         <div class="row">
             <div class="col-xs-12">
                 <h2>Regiões</h2>
+                <form action="/admin/deleteRegionBorders" method="post">
+                    <div>
+                      <button class="btn btn-danger"><i class="fa fa-trash-o"></i> Eliminar tudo</button>
+                    </div>
+                </form>
+  
                 <div style="float: right;">
                     <select id="select"></select>
                     <input id="input-select" placeholder="Pesquisar..." />
@@ -38,7 +45,9 @@
         </div>
       </div>
     </main>
-
+    
+    <%- include('partials/modal.ejs') %>
+    
     <footer>
       <%- include('partials/footer.ejs') %>
     </footer>
@@ -47,27 +56,74 @@
   <%- include('partials/scripts.ejs') %>
   <script type="text/javascript" src="https://cdn.datatables.net/v/dt/dt-1.13.2/r-2.4.0/datatables.min.js"></script>
   <script>
-    function flattenObject(obj, prefix = '') {
+
+    // Function to flat object fields
+/*     function flattenObject(obj, prefix = '') {
         return Object.keys(obj).reduce((acc, k) => {
             const pre = prefix.length ? prefix + '.' : '';
             if (typeof obj[k] === 'object') Object.assign(acc, flattenObject(obj[k], pre + k));
             else acc[pre + k] = obj[k];
             return acc;
         }, {});
+    } */
+
+
+    // Delete all popup
+    async function delAll(id) {
+        const modal = document.getElementById('modal');
+        const modalTitle = modal.querySelector('.modal-title');
+        const modalBody = modal.querySelector('.modal-body');
+        modalTitle.textContent = `Eliminar item`;
+        modalBody.innerHTML = `Tem a certeza que pretende eliminar o item <strong>${id}</strong>?`;
+        $("#modal").modal('show');
+        $('#table').DataTable().ajax.reload();
     }
 
-    function delFromID(id) {
-        alert(id);
-        $('#table').DataTable().ajax.reload();
+    // Delete popup modal
+    async function delFromID(id) {
+        const modal = document.getElementById('modal');
+        const modalTitle = modal.querySelector('.modal-title');
+        const modalBody = modal.querySelector('.modal-body');
+        modalTitle.textContent = `Eliminar item`;
+        modalBody.innerHTML = `Tem a certeza que pretende eliminar o item <strong>${id}</strong>?`;
+        $("#modal-confirm-btn").show()
+        $("#modal").modal('show');
+        $("#modal-confirm-btn").on("click", function(){ deleteItem(id); });
+    }
+
+    // Http request to delete item
+    async function deleteItem(id) {
+        $.post(`/api/region/${id}/delete`, function(data, status){
+            console.log("Data: " + data + "\nStatus: " + status);
+            $('#table').DataTable().ajax.reload();
+        }).fail(()=> {
+            console.log("error jquery xhr")
+        });
+
+        $("#modal").modal('hide');
+    }
+
+    // View popup modal
+    function viewFromID(rowIndex) {
+        const modal = document.getElementById('modal');
+        const modalTitle = modal.querySelector('.modal-title');
+        const modalBody = modal.querySelector('.modal-body');
+        $("#modal-confirm-btn").hide()
+        const data = $("#table").DataTable().row(rowIndex).data();
+
+        modalTitle.textContent = `Item: ${data._id}`;
+        modalBody.innerHTML = `<pre>${JSON.stringify(data, undefined, 2)}</pre>`;
+        $("#modal").modal('show');
     }
         
     function getDT() {
         let columns = []
         $.ajax({
-            url: "/api/region?dt=true&geometry=false",
+            url: "/api/region/fields",
             success: function (data) {
-                const columnNames = [...new Set(data.data.map(item => Object.keys(flattenObject(item)) ).flat())];
-                for (const col of columnNames) {
+                /* const columnNames = [...new Set(data.data.map(item => Object.keys(flattenObject(item)) ).flat())];
+                for (const col of columnNames) { */
+                for (const col of data){
                     columns.push({
                         title: col,
                         data: col, 
@@ -76,26 +132,41 @@
                     $("#select").append(`<option value="${col}">${col}</option>`);
                 } 
 
+                // Actions column
+                columns.push({
+                    title: null,
+                    data: null, 
+                    name: null,
+                    className: "all"
+                });
+
                 $('#table').DataTable({
                     columnDefs: [ 
                         {
                             defaultContent: "-",
                             targets: "_all",
                         }, 
-                        /* {
+                        {
                             targets: -1,
                             render: function (data, type, row, meta) {
-                                return `<a type="button" class="btn btn-danger btn-block" href="#" onclick=delFromID("${row.id}")>
-                                            <i class="fa fa-trash-o"/>
-                                        </a>`;
+                                return `<div>
+                                    <a type="button" class="btn btn-secondary btn-block" href="#" 
+                                    onclick=viewFromID(${meta.row})>
+                                        <i class="fa fa-search"></i>
+                                    </a>
+
+                                    <a type="button" class="btn btn-danger" href="#" onclick=delFromID("${row._id}")>
+                                        <i class="fa fa-trash-o"></i>
+                                    </a>
+                                    </div>
+                                `;
                             }
-                        } */
+                        }
                     ],
                     responsive: true,
                     processing: true,
                     serverSide: true,
                     ordering:false,
-                    //search:false,
                     ajax: {
                         type: "GET",
                         url: "/api/region?dt=true&geometry=false",
@@ -118,6 +189,7 @@
                 column.search(val).draw();
             }
         });
+
     });
   </script>
 
