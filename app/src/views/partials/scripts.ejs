@@ -9,3 +9,23 @@
   crossorigin="anonymous"
   referrerpolicy="no-referrer"
 ></script>
+
+<script>
+  // Show success alert
+  function showSuccessAlert(msg) {
+    $(".alert-success").text(msg);
+    $(".alert-success").show();
+    setTimeout(() => {
+        $(".alert-success").hide();
+    }, 2000)
+  }
+
+  // Show error alert
+  function showErrorAlert(msg) {
+    $(".alert-danger").text(msg);
+    $(".alert-danger").show();
+    setTimeout(() => {
+        $(".alert-danger").hide();
+    }, 2000)
+  }
+</script>

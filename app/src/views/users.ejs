@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <%- include('partials/head.ejs') %>
+    <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/v/dt/dt-1.13.2/r-2.4.0/datatables.min.css"/>
+  </head>
+
+  <body>
+    <header>    
+      <%- include('partials/navbar.ejs') %>
+    </header>
+
+    <main style="margin-top: 50px;">
+      <div class="container">
+        
+      <%- include('partials/alerts.ejs') %>
+
+        <div class="row">
+            <div class="col-xs-12">
+                <h2>Utilizadores</h2>
+                <div class="container">
+                    <div class="row">
+                        <div class="col-xs-12 col-lg-6">
+                            <button class="btn btn-primary">Adicionar utilizador</button>
+                        </div>
+
+                        <div class="col-xs-12 col-lg-6">
+                            <form id="formDeleteAll" action="/admin/deleteRegionBorders" class="pull-right" method="post">
+                                <div>
+                                    <button type="submit" class="btn btn-danger d-none">
+                                        <i class="fa fa-trash-o"></i> Eliminar tudo
+                                    </button>
+                                    <button type="button" onclick=delAll() class="btn btn-danger">
+                                        <i class="fa fa-trash-o"></i> Eliminar tudo
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+  
+                <%- include('partials/searchbox.ejs') %>
+
+                <%- include('partials/datatable.ejs') %>
+
+            </div>
+        </div>
+      </div>
+    </main>
+    
+    <%- include('partials/modal.ejs') %>
+    
+    <footer>
+      <%- include('partials/footer.ejs') %>
+    </footer>
+  </body>
+
+  <%- include('partials/scripts.ejs') %>
+  <script type="text/javascript" src="https://cdn.datatables.net/v/dt/dt-1.13.2/r-2.4.0/datatables.min.js"></script>
+  <script type="text/javascript" src="/js/datatable.js"></script>
+  <script>
+    // Document ready event
+    $(document).ready(function() {
+        const table = getDT("/api/user/fields", "/api/user?dt=true");
+        initSearchBox();
+    });
+  </script>
+
+</html>

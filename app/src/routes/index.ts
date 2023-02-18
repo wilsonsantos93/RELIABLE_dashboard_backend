@@ -5,6 +5,7 @@ import librariesRouter from "./libraries.js";
 import mapRouter from "./map.js";
 import apiRouter from "./api.js";
 import weatherRouter from "./weather.js";
+import userRouter from "./user.js";
 import session from "express-session";
 import passport from "passport";
 import { User } from "../models/User";
@@ -52,6 +53,7 @@ router.use('/admin', reliableSession, passport.initialize(), passport.session(),
 router.use('/api', apiRouter);
 router.use('/api/weather', reliableSession, passport.initialize(), passport.session(), weatherRouter);
 router.use('/api/region', reliableSession, passport.initialize(), passport.session(), flash(), flashLocals, regionBordersRouter);
+router.use('/api/user', reliableSession, passport.initialize(), passport.session(), flash(), flashLocals, userRouter);
 router.use("/api/map", reliableSession, passport.initialize(), passport.session(), mapRouter);
 router.use("/libs", librariesRouter);
 

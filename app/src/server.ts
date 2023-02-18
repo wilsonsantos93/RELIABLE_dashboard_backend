@@ -8,6 +8,11 @@ import passportConfig from "./auth/index.js";
 import bodyParser from "body-parser";
 import schedule from "node-schedule";
 import { handleDeleteWeatherAndDates, readWeatherFile } from "./utils/weather.js";
+import path from "path";
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 dotenv.config({path: "./.env"}); // Loads .env file contents into process.env
 
@@ -29,6 +34,7 @@ passport.session();
 //! EJS Template engine
 app.set("view engine", "ejs");
 app.set("views", ("./src/views/"));
+app.use(express.static(path.join(__dirname, 'views/assets')));
 
 // use CORS
 app.use(cors());

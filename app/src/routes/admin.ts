@@ -85,10 +85,21 @@ router.get("/home", authenticateAdmin, function (req: Request, res: Response) {
   res.render("home.ejs");
 });
 
-//! Page that 
+//! Page that show regions
 router.get("/regions", authenticateAdmin, function (req: Request, res: Response) {
   res.render("regions.ejs", { data: [] });
 });
+
+//! Page that shows users 
+router.get("/users", authenticateAdmin, function (req: Request, res: Response) {
+  res.render("users.ejs", { data: [] });
+});
+
+//! Page that shows weather 
+router.get("/weather", authenticateAdmin, function (req: Request, res: Response) {
+  res.render("weather.ejs", { data: [] });
+});
+
 
 //! Client requests the region borders collection to be deleted
 router.post("/deleteRegionBorders", authenticateAdmin, async function (req: Request, res: Response) {
