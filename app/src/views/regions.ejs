@@ -48,7 +48,7 @@
                                     <button type="submit" class="btn btn-danger d-none">
                                         <i class="fa fa-trash-o"></i> Eliminar tudo
                                     </button>
-                                    <button type="button" onclick=delAll() class="btn btn-danger">
+                                    <button type="button" onclick=myDT.deleteAllConfirm() class="btn btn-danger">
                                         <i class="fa fa-trash-o"></i> Eliminar tudo
                                     </button>
                                 </div>
@@ -56,18 +56,7 @@
                         </div>
                     </div>
                 </div>
-  
-               <!--  <div class="pull-right">
-                    <select id="select"></select>
-                    <input id="input-select" placeholder="Pesquisar..." />
-                </div> -->
-                <%- include('partials/searchbox.ejs') %>
 
-                <!-- <table id="table" class="display table table-striped table-bordered" style="width:100%">
-                    <thead></thead>
-                    <tbody></tbody>
-                    <tfoot></tfoot>
-                </table> -->
                 <%- include('partials/datatable.ejs') %>
 
             </div>
@@ -86,155 +75,39 @@
   <script type="text/javascript" src="https://cdn.datatables.net/v/dt/dt-1.13.2/r-2.4.0/datatables.min.js"></script>
   <script type="text/javascript" src="/js/datatable.js"></script>
   <script>
-    // Delete all popup modal
-/*     function delAll() {
-        const modal = document.getElementById('modal');
-        const modalTitle = modal.querySelector('.modal-title');
-        const modalBody = modal.querySelector('.modal-body');
-        modalTitle.textContent = `Eliminar tudo`;
-        modalBody.innerHTML = `Tem a certeza que pretende eliminar todos os itens?`;
-        $("#modal-confirm-btn").addClass("btn-danger").removeClass("btn-primary");
-        $("#modal-confirm-btn").text("Eliminar")
-        $("#modal").modal('show');
-        $("#modal-confirm-btn").on("click", function(){ $("#formDeleteAll").submit() });
-    } */
-
-    // Delete item popup modal
-/*     async function delFromID(id) {
-        const modal = document.getElementById('modal');
-        const modalTitle = modal.querySelector('.modal-title');
-        const modalBody = modal.querySelector('.modal-body');
-        modalTitle.textContent = `Eliminar item`;
-        modalBody.innerHTML = `Tem a certeza que pretende eliminar o item <strong>${id}</strong>?`;
-        $("#modal-confirm-btn").show()
-        $("#modal-confirm-btn").text("Eliminar")
-        $("#modal-confirm-btn").addClass("btn-danger").removeClass("btn-primary");
-        $("#modal").modal('show');
-        $("#modal-confirm-btn").on("click", function(){ deleteItem(id); });
-    } */
-
-    // Show success alert
-/*     function showSuccessAlert(msg) {
-        $(".alert-success").text(msg);
-        $(".alert-success").show();
-        setTimeout(() => {
-            $(".alert-success").hide();
-        }, 2000)
-    } */
-
-    // Show error alert
-/*     function showErrorAlert(msg) {
-        $(".alert-danger").text(msg);
-        $(".alert-danger").show();
-        setTimeout(() => {
-            $(".alert-danger").hide();
-        }, 2000)
-    } */
-
-    // Http request to delete item
-/*     async function deleteItem(id) {
-        $.post(`/api/region/${id}/delete`, function(data, status){
-            $('#table').DataTable().ajax.reload();
-            showSuccessAlert("Item eliminado com sucesso!");
-        }).fail(e => {
-            showErrorAlert(e);
-            console.log(e);
-        });
-
-        $("#modal").modal('hide');
-    } */
-
-    // View item popup modal
-/*     function viewFromID(rowIndex) {
-        const modal = document.getElementById('modal');
-        const modalTitle = modal.querySelector('.modal-title');
-        const modalBody = modal.querySelector('.modal-body');
-        $("#modal-confirm-btn").hide()
-        const data = $("#table").DataTable().row(rowIndex).data();
-
-        modalTitle.textContent = `Item: ${data._id}`;
-        modalBody.innerHTML = `<pre>${JSON.stringify(data, undefined, 2)}</pre>`;
-        $("#modal").modal('show');
-    } */
-
-    // Create datatable
-    /* function getDT() {
-        let columns = []
-        $.ajax({
-            url: "/api/region/fields",
-            success: function (data) {
-                //const selectedFilterTbl = sessionStorage.getItem("selectedFilterTbl");
-                for (const colName of data){
-                    columns.push({
-                        title: colName,
-                        data: colName, 
-                        name: colName,
-                    });
-
-                    $("#select").append(`<option value="${colName}">${colName}</option>`);
-                } 
-                //$(`#select option[value="${selectedFilterTbl}"]`).attr('selected', 'selected'); 
-
-                // Actions column
-                columns.push({
-                    title: null,
-                    data: null, 
-                    name: null,
-                    className: "all"
-                });
-
-                $('#table').DataTable({
-                    columnDefs: [ 
-                        {
-                            defaultContent: "-",
-                            targets: "_all",
-                        }, 
-                        {
-                            targets: -1,
-                            render: function (data, type, row, meta) {
-                                return `<div>
-                                        <button class="btn btn-secondary btn-block" onclick=viewFromID(${meta.row})>
-                                            <i class="fa fa-search"></i>
-                                        </button>
-
-                                        <button class="btn btn-danger" onclick=delFromID("${row._id}")>
-                                            <i class="fa fa-trash-o"></i>
-                                        </button>
-                                    </div>
-                                `;
-                            }
-                        }
-                    ],
-                    responsive: true,
-                    processing: true,
-                    serverSide: true,
-                    ordering: false,
-                    ajax: {
-                        type: "GET",
-                        url: "/api/region?dt=true&geometry=false",
-                        dataSrc: 'data'
-                    },
-                    columns: columns
-                });
-            }
-        });
-    } */
+    // MyDatatable object
+    let myDT; 
 
     // Document ready event
     $(document).ready(function() {
-        const table = getDT("/api/region/fields", "/api/region?dt=true&geometry=false");
-        initSearchBox();
-        /* $("#input-select").val("");
-        $("#input-select").on('keyup', function (e) {
-            if (e.key === 'Enter' || e.keyCode === 13) {
-                $("#table").DataTable().columns().search("");
-                const colName = $("#select").val();
-                const val = this.value;
-                const column = $("#table").DataTable().column(`${colName}:name`);
-                column.search(val).draw();
+        const dtConfig = DTConfig();
+        dtConfig.columnDefs.push({
+            targets: -1,
+            render: function (data, type, row, meta) {
+                return `<div>
+                        <button class="btn btn-secondary" onclick=myDT.viewFromID(${meta.row})>
+                            <i class="fa fa-search"></i>
+                        </button>
+
+                        <button class="btn btn-danger" onclick=delFromID("${row._id}")>
+                            <i class="fa fa-trash-o"></i>
+                        </button>
+                    </div>
+                `;
             }
-        }); */
+        });
+
+        dtConfig.ajax.url = "/api/region?dt=true&geometry=false";
+        dtConfig.getFieldsUrl = "/api/region/fields";
+
+        myDT = new MyDatatable(dtConfig);
     });
+
+    // Delete item function
+    async function delFromID(id) {
+        const url = `/api/region/${id}/delete`;
+        await myDT.delFromID(id, url);
+    }
   </script>
 
 </html>

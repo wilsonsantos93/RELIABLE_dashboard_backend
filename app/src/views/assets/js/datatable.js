@@ -1,133 +1,158 @@
-const dtConfig = {
-    columnDefs: [ 
-        {
-            defaultContent: "-",
-            targets: "_all",
-        }, 
-        {
-            targets: -1,
-            render: function (data, type, row, meta) {
-                return `<div>
-                        <button class="btn btn-secondary btn-block" onclick=viewFromID(${meta.row})>
-                            <i class="fa fa-search"></i>
-                        </button>
+const DTConfig = () => {
+    return { 
+        columnDefs: [ 
+            {
+                defaultContent: "-",
+                targets: "_all",
+            }, 
+            /* {
+                targets: -1,
+                render: function (data, type, row, meta) {
+                    return `<div>
+                            <button class="btn btn-secondary btn-block" onclick=viewFromID(${meta.row})>
+                                <i class="fa fa-search"></i>
+                            </button>
 
-                        <button class="btn btn-danger" onclick=delFromID("${row._id}")>
-                            <i class="fa fa-trash-o"></i>
-                        </button>
-                    </div>
-                `;
-            }
-        }
-    ],
-    responsive: true,
-    processing: true,
-    serverSide: true,
-    ordering: false,
-    ajax: {
-        type: "GET",
-        url: null,
-        dataSrc: 'data'
-    },
-    columns: null
+                            <button class="btn btn-danger" onclick=delFromID("${row._id}")>
+                                <i class="fa fa-trash-o"></i>
+                            </button>
+                        </div>
+                    `;
+                }
+            } */
+        ],
+        responsive: true,
+        processing: true,
+        serverSide: true,
+        ordering: false,
+        ajax: {
+            type: "GET",
+            url: null,
+            dataSrc: 'data'
+        },
+        columns: null,
+        getFieldsUrl: null
+    }
 };
 
-// Create datatable
-function getDT(getFieldsUrl, getDataUrl) {
-    let columns = [];
-    $.ajax({
-        url: getFieldsUrl,
-        success: function (data) {
-            for (const colName of data){
+class MyDatatable {
+    selectors = {
+        table: "#table",
+        successAlert: ".alert-success",
+        errorAlert: ".alert-danger",
+        select: "#select",
+        inputSelect: "#input-select",
+        modal: "#modal",
+        modalTitle: ".modal-title",
+        modalBody: ".modal-body",
+        modalConfirmBtn: "#modal-confirm-btn"
+    }
+
+    constructor(dtConfig, selectors) {
+        this.dtConfig = dtConfig;
+        this.selectors = { ...this.selectors, ...selectors }
+        this.initDT();
+    }
+
+    // Init datatable
+    initDT() {
+        let columns = [];
+        $.ajax({
+            url: this.dtConfig.getFieldsUrl,
+            success: (data) => {
+                for (const colName of data){
+                    columns.push({
+                        title: colName,
+                        data: colName, 
+                        name: colName,
+                    });
+
+                    $(this.selectors.select).append(`<option value="${colName}">${colName}</option>`);
+                } 
+
+                // Actions column
                 columns.push({
-                    title: colName,
-                    data: colName, 
-                    name: colName,
+                    title: null,
+                    data: null, 
+                    name: null,
+                    className: "all"
                 });
 
-                $("#select").append(`<option value="${colName}">${colName}</option>`);
-            } 
+                this.dtConfig.columns = columns;
+                $(this.selectors.table).DataTable(this.dtConfig);
+            }
+        });
+        this.initSearchBox();
+    }
 
-            // Actions column
-            columns.push({
-                title: null,
-                data: null, 
-                name: null,
-                className: "all"
-            });
+    getDT() {
+        return $(this.selectors.table).DataTable();
+    }
 
-            dtConfig.columns = columns;
-            dtConfig.ajax.url = getDataUrl;
-            $('#table').DataTable(dtConfig);
-        }
-    });
-}
+    // Initialize search box
+    initSearchBox() {
+        $(this.selectors.inputSelect).val("");
+        $(this.selectors.inputSelect).on('keyup', e => {
+            if (e.key === 'Enter' || e.keyCode === 13) {
+                $(this.selectors.table).DataTable().columns().search("");
+                const colName = $(this.selectors.select).val();
+                const val = e.target.value;
+                const column = $(this.selectors.table).DataTable().column(`${colName}:name`);
+                column.search(val).draw();
+            }
+        });
+    }
 
-// Initialize search box
-function initSearchBox() {
-    $("#input-select").val("");
-    $("#input-select").on('keyup', function (e) {
-        if (e.key === 'Enter' || e.keyCode === 13) {
-            $("#table").DataTable().columns().search("");
-            const colName = $("#select").val();
-            const val = this.value;
-            const column = $("#table").DataTable().column(`${colName}:name`);
-            column.search(val).draw();
-        }
-    });
-}
+    // Set modal data (title + body)
+    setModalData(title, body) {
+        $(this.selectors.modalTitle).text(title);
+        $(this.selectors.modalBody).html(body);
+    }
 
-// Set modal data (title + body)
-function setModalData(title, body) {
-    const modal = document.getElementById('modal');
-    const modalTitle = modal.querySelector('.modal-title');
-    const modalBody = modal.querySelector('.modal-body');
-    modalTitle.textContent = title;
-    modalBody.innerHTML = body;
-}
+    // Open deletion modal
+    openDeleteModal() {
+        $(this.selectors.modalConfirmBtn).addClass("btn-danger").removeClass("btn-primary");
+        $(this.selectors.modalConfirmBtn).text("Eliminar");
+        $(this.selectors.modal).modal('show');
+    }
 
-// Open deletion modal
-function openDeleteModal() {
-    $("#modal-confirm-btn").addClass("btn-danger").removeClass("btn-primary");
-    $("#modal-confirm-btn").text("Eliminar");
-    $("#modal").modal('show');
-}
+    // View item popup modal
+    viewFromID(index) {
+        $(this.selectors.modalConfirmBtn).hide()
+        const data = $(this.selectors.table).DataTable().row(index).data();
+        const title = `Item: ${data._id}`;
+        const body = `<pre>${JSON.stringify(data, undefined, 2)}</pre>`;
+        this.setModalData(title, body);
+        $(this.selectors.modal).modal('show');
+    }
 
-// View item popup modal
-function viewFromID(rowIndex) {
-    $("#modal-confirm-btn").hide()
-    const data = $("#table").DataTable().row(rowIndex).data();
-    const title = `Item: ${data._id}`;
-    const body = `<pre>${JSON.stringify(data, undefined, 2)}</pre>`;
-    setModalData(title, body);
-    $("#modal").modal('show');
-}
+    // Delete all popup modal
+    deleteAllConfirm() {
+        const title = `Eliminar tudo`;
+        const body = `Tem a certeza que pretende eliminar todos os itens?`;
+        this.setModalData(title, body);
+        this.openDeleteModal();
+        $(this.selectors.modalConfirmBtn).on("click", function(){ $("#formDeleteAll").submit() });
+    }
 
-// Delete all popup modal
-function delAll() {
-    const title = `Eliminar tudo`;
-    const body = `Tem a certeza que pretende eliminar todos os itens?`;
-    setModalData(title, body);
-    $("#modal-confirm-btn").on("click", function(){ $("#formDeleteAll").submit() });
-}
+    // Delete item popup modal
+    async delFromID(id, url) {
+        const title = `Eliminar item`;
+        const body = `Tem a certeza que pretende eliminar o item <strong>${id}</strong>?`;
+        this.setModalData(title, body);
+        $(this.selectors.modalConfirmBtn).show();
+        $(this.selectors.modalConfirmBtn).on("click", function(){ this.deleteItem(url); });
+        this.openDeleteModal();
+    }
 
-// Delete item popup modal
-async function delFromID(id) {
-    const title = `Eliminar item`;
-    const body = `Tem a certeza que pretende eliminar o item <strong>${id}</strong>?`;
-    setModalData(title, body);
-    $("#modal-confirm-btn").show();
-    openDeleteModal();
-    $("#modal-confirm-btn").on("click", function(){ deleteItem(id); });
-}
-
-// Http request to delete item
-async function deleteItem(id) {
-    $.post(`/api/region/${id}/delete`, function(data, status){
-        $('#table').DataTable().ajax.reload();
-        showSuccessAlert("Item eliminado com sucesso!");
-    }).fail(e => {
-        showErrorAlert(e);
-    });
-    $("#modal").modal('hide');
+    // Http request to delete item
+    async deleteItem(url) {
+        $.post(url, function(data, status) {
+            $(this.selectors.table).DataTable().ajax.reload();
+            showSuccessAlert("Item eliminado com sucesso!");
+        }).fail(e => {
+            showErrorAlert(e);
+        });
+        $(this.selectors.modal).modal('hide');
+    }
 }

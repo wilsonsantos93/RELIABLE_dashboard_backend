@@ -26,12 +26,12 @@
                         </div>
 
                         <div class="col-xs-12 col-lg-6">
-                            <form id="formDeleteAll" action="/admin/deleteRegionBorders" class="pull-right" method="post">
+                            <form id="formDeleteAll" action="/api/user/deleteAll" class="pull-right" method="post">
                                 <div>
                                     <button type="submit" class="btn btn-danger d-none">
                                         <i class="fa fa-trash-o"></i> Eliminar tudo
                                     </button>
-                                    <button type="button" onclick=delAll() class="btn btn-danger">
+                                    <button type="button" onclick=myDT.deleteAllConfirm() class="btn btn-danger">
                                         <i class="fa fa-trash-o"></i> Eliminar tudo
                                     </button>
                                 </div>
@@ -39,8 +39,6 @@
                         </div>
                     </div>
                 </div>
-  
-                <%- include('partials/searchbox.ejs') %>
 
                 <%- include('partials/datatable.ejs') %>
 
@@ -60,11 +58,43 @@
   <script type="text/javascript" src="https://cdn.datatables.net/v/dt/dt-1.13.2/r-2.4.0/datatables.min.js"></script>
   <script type="text/javascript" src="/js/datatable.js"></script>
   <script>
+    // MyDatatable object
+    let myDT; 
+
     // Document ready event
     $(document).ready(function() {
-        const table = getDT("/api/user/fields", "/api/user?dt=true");
-        initSearchBox();
+        const dtConfig = DTConfig();
+        dtConfig.columnDefs.push({
+            targets: -1,
+            render: function (data, type, row, meta) {
+                return `<div>
+                        <button class="btn btn-secondary" onclick=myDT.viewFromID(${meta.row})>
+                            <i class="fa fa-search"></i>
+                        </button>
+
+                        <a class="btn btn-primary" target="_blank" href="${row._id}/edit">
+                            <i class="fa fa-edit"></i>
+                        </a>
+
+                        <button class="btn btn-danger" onclick=delFromID("${row._id}")>
+                            <i class="fa fa-trash-o"></i>
+                        </button>
+                    </div>
+                `;
+            }
+        });
+
+        dtConfig.ajax.url = "/api/user?dt=true";
+        dtConfig.getFieldsUrl = "/api/user/fields";
+
+        myDT = new MyDatatable(dtConfig);
     });
+
+    // Delete item function
+    async function delFromID(id) {
+      const url = `/api/user/${id}/delete`;
+      await myDT.delFromID(id, url);
+    }
   </script>
 
 </html>
