@@ -34,11 +34,20 @@ export class DatabaseEngine {
         return this.databaseEngineConnection.db(this.databaseName);
     }
 
+    //! Get collection by name
+    static getCollection(collectionName: string) {
+        return this.getDashboardDatabase().collection(collectionName);
+    }
+
     //! Weather dates collection
     static getWeatherDatesCollection() {
         return this.getDashboardDatabase().collection(
             this.weatherDatesCollectionName
         );
+    }
+
+    static getWeatherDatesCollectionName() {
+        return this.weatherDatesCollectionName
     }
 
     //! Weather collection

@@ -1,6 +1,6 @@
 import { NextFunction, Request, Response, Router } from "express";
 import adminRouter from "./admin.js";
-import regionBordersRouter from "./features.js";
+import regionBordersRouter from "./regions.js";
 import librariesRouter from "./libraries.js";
 import mapRouter from "./map.js";
 import apiRouter from "./api.js";
@@ -32,6 +32,7 @@ function flashLocals(req: Request, res: Response, next: NextFunction) {
     res.locals.success_message = req.flash('success_message');
     res.locals.error_message = req.flash('error_message');
     res.locals.error = req.flash('error');
+    res.locals.data = req.flash("data");
     return next();
 }
 
@@ -53,7 +54,7 @@ router.use('/admin', reliableSession, passport.initialize(), passport.session(),
 router.use('/api', apiRouter);
 router.use('/api/weather', reliableSession, passport.initialize(), passport.session(), weatherRouter);
 router.use('/api/region', reliableSession, passport.initialize(), passport.session(), flash(), flashLocals, regionBordersRouter);
-router.use('/api/user', reliableSession, passport.initialize(), passport.session(), flash(), flashLocals, userRouter);
+//router.use('/api/user', reliableSession, passport.initialize(), passport.session(), flash(), flashLocals, userRouter);
 router.use("/api/map", reliableSession, passport.initialize(), passport.session(), mapRouter);
 router.use("/libs", librariesRouter);
 

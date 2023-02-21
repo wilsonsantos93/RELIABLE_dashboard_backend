@@ -1,4 +1,4 @@
-import { handleGetRegionBordersAndWeatherByDate } from "../controllers/map.js";
+import { handleGetRegionBordersAndWeatherByDate } from "../controllers/api/map.js";
 
 //! Express
 import { Router } from "express";

@@ -2,59 +2,57 @@
 
 <html>
   <head>
-    <%- include('partials/head.ejs') %>
+    <%- include('../partials/head.ejs') %>
     <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/v/dt/dt-1.13.2/r-2.4.0/datatables.min.css"/>
   </head>
 
   <body>
     <header>    
-      <%- include('partials/navbar.ejs') %>
+      <%- include('../partials/navbar.ejs') %>
     </header>
 
     <main style="margin-top: 50px;">
       <div class="container">
         
-      <%- include('partials/alerts.ejs') %>
+      <%- include('../partials/alerts.ejs') %>
 
         <div class="row">
             <div class="col-xs-12">
                 <h2>Utilizadores</h2>
-                <div class="container">
-                    <div class="row">
-                        <div class="col-xs-12 col-lg-6">
-                            <button class="btn btn-primary">Adicionar utilizador</button>
-                        </div>
+                <div class="row">
+                    <div class="col-xs-12 col-lg-6">
+                        <a href="/admin/users/create" class="btn btn-primary">Adicionar utilizador</a>
+                    </div>
 
-                        <div class="col-xs-12 col-lg-6">
-                            <form id="formDeleteAll" action="/api/user/deleteAll" class="pull-right" method="post">
-                                <div>
-                                    <button type="submit" class="btn btn-danger d-none">
-                                        <i class="fa fa-trash-o"></i> Eliminar tudo
-                                    </button>
-                                    <button type="button" onclick=myDT.deleteAllConfirm() class="btn btn-danger">
-                                        <i class="fa fa-trash-o"></i> Eliminar tudo
-                                    </button>
-                                </div>
-                            </form>
-                        </div>
+                    <div class="col-xs-12 col-lg-6">
+                        <form id="formDeleteAll" action="/api/user/deleteAll" class="pull-right" method="post">
+                            <div>
+                                <button type="submit" class="btn btn-danger d-none">
+                                    <i class="fa fa-trash-o"></i> Eliminar tudo
+                                </button>
+                                <button type="button" onclick=myDT.deleteAllConfirm() class="btn btn-danger">
+                                    <i class="fa fa-trash-o"></i> Eliminar tudo
+                                </button>
+                            </div>
+                        </form>
                     </div>
                 </div>
 
-                <%- include('partials/datatable.ejs') %>
+                <%- include('../partials/datatable.ejs') %>
 
             </div>
         </div>
       </div>
     </main>
     
-    <%- include('partials/modal.ejs') %>
+    <%- include('../partials/modal.ejs') %>
     
     <footer>
-      <%- include('partials/footer.ejs') %>
+      <%- include('../partials/footer.ejs') %>
     </footer>
   </body>
 
-  <%- include('partials/scripts.ejs') %>
+  <%- include('../partials/scripts.ejs') %>
   <script type="text/javascript" src="https://cdn.datatables.net/v/dt/dt-1.13.2/r-2.4.0/datatables.min.js"></script>
   <script type="text/javascript" src="/js/datatable.js"></script>
   <script>
@@ -72,7 +70,7 @@
                             <i class="fa fa-search"></i>
                         </button>
 
-                        <a class="btn btn-primary" target="_blank" href="${row._id}/edit">
+                        <a class="btn btn-primary" target="_blank" href="users/${row._id}/edit">
                             <i class="fa fa-edit"></i>
                         </a>
 
@@ -84,15 +82,15 @@
             }
         });
 
-        dtConfig.ajax.url = "/api/user?dt=true";
-        dtConfig.getFieldsUrl = "/api/user/fields";
+        dtConfig.ajax.url = "/admin/api/user?dt=true";
+        dtConfig.getFieldsUrl = "/admin/api/user/fields";
 
         myDT = new MyDatatable(dtConfig);
     });
 
     // Delete item function
     async function delFromID(id) {
-      const url = `/api/user/${id}/delete`;
+      const url = `/admin/api/user/${id}/delete`;
       await myDT.delFromID(id, url);
     }
   </script>

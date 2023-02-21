@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <%- include('../partials/head.ejs') %>
+  </head>
+
+  <body>
+    <header>    
+      <%- include('../partials/navbar.ejs') %>
+    </header>
+
+    <main style="margin-top: 50px;">
+        <div class="container">
+            <div class="row justify-content-sm-center h-100">
+                <%- include('../partials/alerts.ejs') %>
+                <h2>Adicionar utilizador</h2>
+                <div class="col-xxl-4 col-xl-5 col-lg-5 col-md-7 col-sm-9">
+                    <form id="form" action="/admin/users/create" method="POST">
+                        <label for="username">Username:</label>
+                        <input type="text" name="username" class="form-control" value="<%= data.length ? data[0].username : '' %>" required />
+
+                        <label for="email">Email:</label>
+                        <input type="email" name="email" class="form-control" value="<%= data.length ? data[0].email : '' %>" required />
+
+                        <label for="email">Password:</label>
+                        <input type="password" name="password" class="form-control" value="" minlength="6" required />
+
+                        <label for="role">Role:</label>
+                        <select name="role" class="form-select" aria-label="Role select" required>
+                            <% for (let key in roles) { %>
+                                <% if (data.length && data[0].role == roles[key]) { %>
+                                <option selected value="<%= roles[key] %>"><%= roles[key] %></option>
+                                <% } else { %>
+                                <option value="<%= roles[key] %>"><%= roles[key] %></option>
+                            <% } } %>
+                        </select>
+
+                        <div class="d-grid mt-2">
+                          <button type="submit" class="btn btn-primary">Adicionar</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+        </div>
+    </main>
+
+    <footer>
+        <%- include('../partials/footer.ejs') %>
+    </footer>
+
+</body>
+
+<%- include('../partials/scripts.ejs') %>
+<script>
+    /* $("#form").on("submit", function (e) {
+        e.preventDefault();
+        const data = $("#form").serialize();
+        $.ajax({
+            url: '/admin/users/create',
+            type: 'POST',
+            cache: false,
+            //data: { ...$("#form").serialize() },
+            data: data,
+            success: function (data) {
+                showSuccessAlert("Utilizador adicionado com sucesso.");
+            }, 
+            error: function (jqXHR, textStatus, err) {
+                showErrorAlert(jqXHR.responseText);
+            }
+        });
+    }); */
+</script>
+</html>

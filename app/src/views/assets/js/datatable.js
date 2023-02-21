@@ -136,22 +136,22 @@ class MyDatatable {
     }
 
     // Delete item popup modal
-    async delFromID(id, url) {
+    delFromID(id, url) {
         const title = `Eliminar item`;
         const body = `Tem a certeza que pretende eliminar o item <strong>${id}</strong>?`;
         this.setModalData(title, body);
         $(this.selectors.modalConfirmBtn).show();
-        $(this.selectors.modalConfirmBtn).on("click", function(){ this.deleteItem(url); });
+        $(this.selectors.modalConfirmBtn).on("click", () => { this.deleteItem(url); });
         this.openDeleteModal();
     }
 
     // Http request to delete item
-    async deleteItem(url) {
-        $.post(url, function(data, status) {
+    deleteItem(url) {
+        $.post(url, (data, status) => {
             $(this.selectors.table).DataTable().ajax.reload();
             showSuccessAlert("Item eliminado com sucesso!");
         }).fail(e => {
-            showErrorAlert(e);
+            showErrorAlert(e.responseText);
         });
         $(this.selectors.modal).modal('hide');
     }

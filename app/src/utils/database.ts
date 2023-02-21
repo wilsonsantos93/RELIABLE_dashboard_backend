@@ -227,7 +227,7 @@ export async function queryWeatherDocuments(
         }
     });
 
-    pipeline.push({ $limit: 5 }); // temp
+    //pipeline.push({ $limit: 5 }); // temp
 
     const regionsWithWeatherDocuments = await DatabaseEngine.getFeaturesCollection().aggregate(pipeline).toArray() as WeatherCollectionDocumentWithFeature[];
 
@@ -254,4 +254,56 @@ export async function queryAllWeatherDates() {
         console.error(e);
         return [];
     }
+}
+
+
+export async function getCollectionFields(collectionName: string, find: any, projection: any) {
+    function flattenObject(obj: any, prefix = '') {
+        return Object.keys(obj).reduce((acc:any, k) => {
+            const pre = prefix.length ? prefix + '.' : '';
+            if (typeof obj[k] === 'object' && k != "_id") Object.assign(acc, flattenObject(obj[k], pre + k));
+            else acc[pre + k] = obj[k];
+            return acc;
+        }, {});
+    }
+
+    try {
+        const data = await DatabaseEngine.getCollection(collectionName).find({}, { projection }).toArray();
+        let columnNames: any = [];
+        for (const d of data) {
+            const keys = Object.keys(flattenObject(d))
+            for (const k of keys) {
+                if (!columnNames.includes(k)) columnNames.push(k);
+            }
+        }
+        return columnNames;
+    } catch (e) {
+        console.error(e);
+        throw e;
+    }
+}
+
+
+export async function getDatatablesData(collectionName: string, projection: any, dtInfo: any) {
+    let skip = parseInt(dtInfo.start) || 0;
+    let limit = parseInt(dtInfo.length) || 0;
+
+    const find: any = {};
+    for (const col of dtInfo.columns) {
+        if (!col.search.value || col.search.value == '') continue;
+        if (col.name == "_id" && ObjectId.isValid(col.search.value)) find[col.name] = new ObjectId(col.search.value);
+        else find[col.name] = new RegExp(col.search.value, 'i');
+    }
+
+    const recordsTotal = await DatabaseEngine.getCollection(collectionName).countDocuments();
+    const recordsFiltered = (await DatabaseEngine.getCollection(collectionName).find(find).toArray()).length;
+    const users = await DatabaseEngine.getCollection(collectionName).find(find, { projection }).skip(skip).limit(limit).toArray();
+
+    return { 
+        data: users,
+        draw: dtInfo.draw, 
+        recordsTotal: recordsTotal,
+        recordsFiltered: recordsFiltered
+    }
+    
 }
