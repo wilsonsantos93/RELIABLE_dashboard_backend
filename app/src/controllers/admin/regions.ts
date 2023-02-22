@@ -25,7 +25,7 @@ export function getRegionsPage(req: Request, res: Response) {
  */
 export async function getWeatherPage(req: Request, res: Response) {
   const region = await DatabaseEngine.getFeaturesCollection().findOne({ _id: new ObjectId(req.params.id)})
-  res.render("regions/weather.ejs", { data: region });
+  return res.render("regions/weather.ejs", { data: region });
 }
 
 /**
@@ -50,6 +50,7 @@ export async function handleGetRegions(req: Request, res: Response) {
     return res.json(data);
   }
   catch (e) {
+    console.error(e);
     return res.status(500).json(e);
   }
 }
@@ -63,11 +64,12 @@ export async function handleDeleteRegions(req: Request, res: Response) {
   try {
     await DatabaseEngine.getFeaturesCollection().deleteMany({});
     req.flash("success_message", "Server successfully cleared region borders from the database.");
-  } catch (error) {
-    if (error && error.codeName === "NamespaceNotFound") {
+  } catch (e) {
+    console.error(e)
+    if (e && e.codeName === "NamespaceNotFound") {
       req.flash("error_message", "Region borders collection doesn't exist in the database (was probably already deleted).");
-    } else if (error) {
-      req.flash("error_message", JSON.stringify(error));
+    } else if (e) {
+      req.flash("error_message", JSON.stringify(e));
     }
   }
   return res.redirect("/admin/home");
@@ -81,23 +83,19 @@ export async function handleDeleteRegions(req: Request, res: Response) {
 export async function handleGetRegionWithWeather(req: Request, res: Response) {
   try {
     const weatherCollection = DatabaseEngine.getWeatherCollection();
-    const weatherCollectionName = DatabaseEngine.getWeatherCollectionName();
     const datesCollectionName = DatabaseEngine.getWeatherDatesCollectionName();
+    
     let pipeline:any = [];
-
     let dateToSearch;
-    let pipelineMatch;
+    let columns = [];
 
     if (req.query.columns) {
-      let columns = []
       const reqColumns:any = req.query.columns;
       for (const key in reqColumns) {
         columns.push(reqColumns[key]);
       }
       dateToSearch = columns.find(c => c.name == "date").search.value;
-      //pipelineMatch = dateToSearch != '' ? { date: new Date(dateToSearch) } : {};
     }
-
 
     // match region id
     pipeline.push({ $match: { regionBorderFeatureObjectId: new ObjectId(req.params.id) }});
@@ -113,33 +111,33 @@ export async function handleGetRegionWithWeather(req: Request, res: Response) {
     });
 
     const find: any = {};
-    if (req.query.columns && req.query.columns.length) {
-      for (const col of req.query.columns as any[]) {
+    if (columns && columns.length) {
+      for (const col of columns) {
         if (!col.search.value || col.search.value == '' || col.name == "date") continue;
         if (col.name == "_id" && ObjectId.isValid(col.search.value)) find[col.name] = new ObjectId(col.search.value);
         else find[col.name] = new RegExp(col.search.value, 'i');
       }
     }
-    
+
     const recordsTotal = (await weatherCollection.aggregate(pipeline).toArray()).length;
-    console.log("PIPELINE 1", JSON.stringify(pipeline))
     
-    pipeline[0] = { $match: {...pipeline[0].$match, ...find } };
+    pipeline[0].$match = { ...pipeline[0]["$match"], ...find };
     pipeline[1]["$lookup"]["pipeline"] = [
       { "$project": { "_id": 0, "date": { $dateToString: { date: "$date", format: "%Y-%m-%d %H:%M:%S" } } }}
     ];
-    pipeline.push({ $match: { "date.0.date": new RegExp(dateToSearch, 'i') } })
+
+    if (dateToSearch != '') pipeline.push({ $match: { "date.0.date": new RegExp(dateToSearch, 'i') } });
     const recordsFiltered = (await weatherCollection.aggregate(pipeline).toArray()).length;
-    console.log("PIPELINE 2", JSON.stringify(pipeline))
 
     pipeline.push({ $skip: parseInt(req.query.start as string) || 0 });
     pipeline.push({ $limit: parseInt(req.query.length as string) || 0 });
-    console.log("PIPELINE 3", JSON.stringify(pipeline));
     const data = await weatherCollection.aggregate(pipeline).toArray();
     
     for (const d of data) {
       d.date = d.date[0]?.date;
     }
+
+    data.sort((a,b) => new Date(a.date).valueOf() - new Date(b.date).valueOf());
 
     return res.json({
       data,
@@ -148,8 +146,6 @@ export async function handleGetRegionWithWeather(req: Request, res: Response) {
       draw: req.query.draw
     });
 
-    //const data = await getDatatablesData(weatherCollectionName, {}, req.query, pipeline);
-    //return res.json(data);
   } catch (e) {
     console.error(e);
     return res.status(500).json(e);
@@ -181,7 +177,7 @@ export async function handleGetRegionFields(request: Request, response: Response
 export async function handleGetWeatherFields(request: Request, response: Response) {
   try {
     const projection = {};
-    const find = { regionBorderObjectId: new ObjectId(request.params.id) };
+    const find = { regionBorderFeatureObjectId: new ObjectId(request.params.id) };
     const collectionName = DatabaseEngine.getWeatherCollectionName();
     const fields = await getCollectionFields(collectionName, find, projection);
     fields.push("date");
@@ -207,6 +203,24 @@ export async function handleDeleteRegion(request: Request, response: Response) {
     return response.status(500).json(e);
   }
 }
+
+/**
+ * Deletes all weather from specific region
+ * @param req Client HTTP request object
+ * @param res Client HTTP response object
+ */
+export async function handleDeleteWeatherRegion(request: Request, response: Response) {
+  try {
+    const id = request.params.id;
+    await DatabaseEngine.getWeatherCollection().deleteMany({ regionBorderFeatureObjectId: new ObjectId(id) });
+    request.flash("success_message", "Dados eliminados com sucesso.");
+  } catch(e) {
+    console.error(e);
+    request.flash("error_message", "Não foi possível eliminar os dados.");
+  }
+  return response.redirect("back")
+}
+
 
 // TODO: Calculate centers and update them with a single query
 /**
