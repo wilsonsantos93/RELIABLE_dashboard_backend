@@ -1,8 +1,8 @@
 import fetch from "cross-fetch";
 import { DatabaseEngine } from "../configs/mongo.js";
-import { FeatureWeather } from "../models/FeatureProperties";
+import { FeatureWeather } from "../types/FeatureProperties";
 import csv from "csvtojson";
-import { FeaturesProjection } from "../models/DatabaseCollections/Projections/FeaturesProjection.js";
+import { FeaturesProjection } from "../types/DatabaseCollections/Projections/FeaturesProjection.js";
 import fs from "fs";
 import glob from 'glob';
 

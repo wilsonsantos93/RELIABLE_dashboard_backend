@@ -4,11 +4,11 @@ import {collectionExistsInDatabase, queryFeatureDocuments, queryAllFeatureDocume
 // @ts-ignore
 import polygonCenter from "geojson-polygon-center";
 import {Request, Response} from "express-serve-static-core";
-import {FeaturesProjection} from "../../models/DatabaseCollections/Projections/FeaturesProjection";
+import {FeaturesProjection} from "../../types/DatabaseCollections/Projections/FeaturesProjection";
 import {Document, Filter, ObjectId, WithId} from "mongodb";
-import {FeatureCollectionWithCRS} from "../../models/FeatureCollectionWithCRS";
+import {FeatureCollectionWithCRS} from "../../types/FeatureCollectionWithCRS";
 import {Feature, FeatureCollection, MultiPolygon, Polygon} from "geojson";
-import {FeatureProperties} from "../../models/FeatureProperties";
+import {FeatureProperties} from "../../types/FeatureProperties";
 import async from "async";
 
 /**

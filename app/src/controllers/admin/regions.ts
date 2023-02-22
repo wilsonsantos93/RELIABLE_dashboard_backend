@@ -5,8 +5,8 @@ import async from "async";
 // @ts-ignore
 import polygonCenter from "geojson-polygon-center";
 import { collectionExistsInDatabase, queryFeatureDocuments, queryAllFeatureDocuments, saveFeatures, getCollectionFields, getDatatablesData } from "../../utils/database.js";
-import { FeatureProperties } from "../../models/FeatureProperties";
-import { FeatureCollectionWithCRS } from "../../models/FeatureCollectionWithCRS";
+import { FeatureProperties } from "../../types/FeatureProperties";
+import { FeatureCollectionWithCRS } from "../../types/FeatureCollectionWithCRS";
 import { MultiPolygon, Polygon } from "geojson";
 
 /**

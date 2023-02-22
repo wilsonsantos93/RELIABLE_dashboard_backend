@@ -2,7 +2,7 @@
  * Module dependencies
  */
 import { DatabaseEngine } from "../configs/mongo.js";
-import { User, Role } from "../models/User.js";
+import { User, Role } from "../types/User.js";
 import { Strategy as LocalStrategy } from "passport-local";
 import { BasicStrategy } from "passport-http";
 import { Strategy as JwtStrategy, ExtractJwt } from "passport-jwt"; 

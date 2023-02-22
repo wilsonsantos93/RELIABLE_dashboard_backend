@@ -1,6 +1,6 @@
 import { Request, Response } from "express-serve-static-core";
 import { ObjectId } from "mongodb";
-import { Role, User } from "../../models/User.js";
+import { Role, User } from "../../types/User.js";
 import { DatabaseEngine } from "../../configs/mongo.js";
 import { getCollectionFields, getDatatablesData } from "../../utils/database.js";
 

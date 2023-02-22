@@ -8,7 +8,7 @@ import apiRouter from "./api/auth.js";
 import weatherRouter from "./api/weather.js";
 import session from "express-session";
 import passport from "passport";
-import { User } from "../models/User";
+import { User } from "../types/User";
 import flash from "connect-flash";
 import MongoStore from 'connect-mongo';
 

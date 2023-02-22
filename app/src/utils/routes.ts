@@ -1,5 +1,5 @@
 import { NextFunction, Request, Response } from "express";
-import { Role, User } from "../models/User.js";
+import { Role, User } from "../types/User.js";
 import passport from "passport";
 
 /**

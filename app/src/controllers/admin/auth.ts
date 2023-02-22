@@ -1,7 +1,7 @@
 import { NextFunction } from "express";
 import { Request, Response } from "express-serve-static-core";
 import passport from "passport";
-import { Role } from "../../models/User.js";
+import { Role } from "../../types/User.js";
 
 /**
  * Get the login page

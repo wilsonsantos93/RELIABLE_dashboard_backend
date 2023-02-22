@@ -1,5 +1,5 @@
 import { handleGetWeatherDates, handleFetchWeather, handleSaveWeather } from "../../controllers/api/weather.js";
-import { Role } from "../../models/User.js";
+import { Role } from "../../types/User.js";
 import { Router } from "express";
 import { authenticateAPI } from "../../utils/routes.js";
 

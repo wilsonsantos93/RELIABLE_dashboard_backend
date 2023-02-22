@@ -1,17 +1,17 @@
 import {DatabaseEngine} from "../configs/mongo.js";
 import {convertFeatureCoordinatesToLatLong, requestProjectionInformation, separateMultiPolygons} from "./features.js";
 import {Db, Document, Filter, FindOptions, ObjectId} from "mongodb";
-import {FeatureDocument} from "../models/DatabaseCollections/FeatureDocument";
+import {FeatureDocument} from "../types/DatabaseCollections/FeatureDocument";
 import {
     WeatherCollectionDocument,
     WeatherCollectionDocumentWithFeature
-} from "../models/DatabaseCollections/WeatherCollectionDocument";
-import {WeatherProjection} from "../models/DatabaseCollections/Projections/WeatherProjection";
-import {FeaturesProjection} from "../models/DatabaseCollections/Projections/FeaturesProjection";
+} from "../types/DatabaseCollections/WeatherCollectionDocument";
+import {WeatherProjection} from "../types/DatabaseCollections/Projections/WeatherProjection";
+import {FeaturesProjection} from "../types/DatabaseCollections/Projections/FeaturesProjection";
 import {Feature, MultiPolygon, Polygon} from "geojson";
-import {FeatureProperties} from "../models/FeatureProperties";
-import {FeatureCollectionWithCRS} from "../models/FeatureCollectionWithCRS";
-import { BoundingBox } from "../models/BoundingBox.js";
+import {FeatureProperties} from "../types/FeatureProperties";
+import {FeatureCollectionWithCRS} from "../types/FeatureCollectionWithCRS";
+import { BoundingBox } from "../types/BoundingBox.js";
 
 /**
  * Checks if a collection exists in a database.

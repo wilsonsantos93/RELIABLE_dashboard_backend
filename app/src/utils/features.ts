@@ -1,11 +1,11 @@
 // Takes a geoJSON, and returns another geoJSON with the MultiPolygon features separated into multiple features
 // with a single Polygon each and the same properties of the MultiPolygon
-import {FeatureDocument} from "../models/DatabaseCollections/FeatureDocument";
+import {FeatureDocument} from "../types/DatabaseCollections/FeatureDocument";
 import proj4 from "proj4";
 import fetch from "cross-fetch";
 import {Feature, FeatureCollection, MultiPolygon, Polygon, Position} from "geojson";
-import {FeatureProperties} from "../models/FeatureProperties";
-import {CRS} from "../models/FeatureCollectionWithCRS";
+import {FeatureProperties} from "../types/FeatureProperties";
+import {CRS} from "../types/FeatureCollectionWithCRS";
 
 /**
  * Requests and returns the projection information of a {@link CoordinatesReferenceSystem} from an external API.
