@@ -19,10 +19,15 @@
         <div class="row">
             <div class="col-xs-12">
                 <h2>Weather</h2>
+                <div class="bg-light rounded-3 p-3 mb-3">
+                  <% for (const key in data.feature.properties) { %>
+                    <span><strong><%= key %></strong>: <%= data.feature.properties[key]%></span>
+                  <% } %>
+                </div>
                 <div class="container">
                     <div class="row">
                         <div class="col-xs-12">
-                            <form id="formDeleteAll" action="/admin/weather/deleteAll" class="pull-right" method="post">
+                            <form id="formDeleteAll" action="/admin/region/<%=data._id%>/weather/deleteAll" class="pull-right" method="post">
                                 <div>
                                     <button type="submit" class="btn btn-danger d-none">
                                         <i class="fa fa-trash-o"></i> Eliminar tudo

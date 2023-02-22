@@ -268,7 +268,7 @@ export async function getCollectionFields(collectionName: string, find: any, pro
     }
 
     try {
-        const data = await DatabaseEngine.getCollection(collectionName).find({}, { projection }).toArray();
+        const data = await DatabaseEngine.getCollection(collectionName).find(find, { projection }).toArray();
         let columnNames: any = [];
         for (const d of data) {
             const keys = Object.keys(flattenObject(d))

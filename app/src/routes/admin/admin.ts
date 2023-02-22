@@ -4,7 +4,7 @@ import { Router } from "express";
 // Controllers
 import { getHomePage, getIndexPage, handleDeleteAll } from "../../controllers/admin/home.js";
 import { handleDeleteWeatherDates } from "../../controllers/admin/dates.js"
-import { getRegionsPage, getWeatherPage, handleCalculateCenters, handleDeleteRegion, handleDeleteRegions, handleGetRegionFields, handleGetRegions, handleGetRegionWithWeather, handleGetWeatherFields, handleSaveRegions } from "../../controllers/admin/regions.js";
+import { getRegionsPage, getWeatherPage, handleCalculateCenters, handleDeleteRegion, handleDeleteRegions, handleDeleteWeatherRegion, handleGetRegionFields, handleGetRegions, handleGetRegionWithWeather, handleGetWeatherFields, handleSaveRegions } from "../../controllers/admin/regions.js";
 import { handleDeleteAllWeather, handleDeleteWeather } from "../../controllers/admin/weather.js";
 import { getCreateUserPage, getEditUserPage, getUsersPage, handleCreateUser, handleDeleteUser, handleGetUserFields, handleGetUsers, handleUpdateUser } from "../../controllers/admin/users.js";
 import { getLoginPage, handleLogin, handleLogout } from "../../controllers/admin/auth.js";
@@ -33,7 +33,7 @@ router.post('/login', handleLogin);
 // Route to logout admin
 router.get('/logout', authenticateAdmin, handleLogout);
 
-//! Page that shows users 
+/* //! Page that shows users 
 router.get("/users", authenticateAdmin, getUsersPage);
 // Page to create a new user
 router.get("/user/create", authenticateAdmin, getCreateUserPage);
@@ -48,9 +48,9 @@ router.get("/getUsers", authenticateAdmin, handleGetUsers);
 //! Route to delete a user
 router.post("/user/:id/delete", authenticateAdmin, handleDeleteUser);
 //! Route to get user collection fields
-router.get("/user/fields", authenticateAdmin, handleGetUserFields);
+router.get("/user/fields", authenticateAdmin, handleGetUserFields); */
 
-// Page that shows Regions
+/* // Page that shows Regions
 router.get("/regions", authenticateAdmin, getRegionsPage);
 //! Page that shows weather data for a region
 router.get("/region/:id/weather", authenticateAdmin, getWeatherPage);
@@ -64,6 +64,8 @@ router.get("/region/getRegions", authenticateAdmin, handleGetRegions);
 router.get("/region/fields", authenticateAdmin, handleGetRegionFields);
 // Route to delete a specific region
 router.post("/region/:id/delete", authenticateAdmin, handleDeleteRegion);
+// Route to delete all weather for a specific region
+router.post("/region/:id/weather/deleteAll", authenticateAdmin, handleDeleteWeatherRegion);
 // Route to delete all regions
 router.post("/region/deleteAll", authenticateAdmin, handleDeleteRegions);
 // Route to upload GeoJSON file
@@ -71,7 +73,7 @@ const storage = multer.memoryStorage();
 const upload = multer({ storage: storage });
 router.post("/region/save", authenticateAdmin, upload.single("geojson"), handleSaveRegions);
 // Router to calculate region centers
-router.post("/region/calculateCenters", authenticateAdmin, handleCalculateCenters);
+router.post("/region/calculateCenters", authenticateAdmin, handleCalculateCenters); */
 
 
 //! Route to delete all weather

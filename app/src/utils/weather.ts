@@ -7,7 +7,7 @@ import fs from "fs";
 import glob from 'glob';
 
 const KEEP_DATA_PREVIOUS_DAYS = parseInt(process.env.KEEP_DATA_PREVIOUS_DAYS) || 2;
-const CSV_FOLDER_PATH = process.env.CSV_FOLDER_PATH_LOCAL || process.env.CSV_FOLDER_PATH_DOCKER;
+const CSV_FOLDER_PATH = process.env.CSV_FOLDER_PATH_DOCKER || process.env.CSV_FOLDER_PATH_LOCAL;
 
 /**
  * Fetch the weather of a location from an external API, and return it.
@@ -110,6 +110,7 @@ export async function readWeatherFile() {
             data = [];
         }
 
+        console.log("INSERTED WEATHER DATA.")
         /*
         let data = await csv({ignoreColumns: /^\s*$/}).fromFile(CSV_FILE_PATH);
         data = await transformData(data);

@@ -67,6 +67,7 @@ class MyDatatable {
                         name: colName,
                         className: colName == "date" ? 'all' : 'ctrl'
                     });
+                    if (colName == "_id") continue;
                     $(this.selectors.select).append(`<option value="${colName}">${colName}</option>`);
                 } 
 
@@ -149,8 +150,10 @@ class MyDatatable {
     deleteItem(url) {
         $.post(url, (data, status) => {
             $(this.selectors.table).DataTable().ajax.reload();
+            console.log("SUCESSO!")
             showSuccessAlert("Item eliminado com sucesso!");
         }).fail(e => {
+            console.log("ERRO", e);
             showErrorAlert(e.responseJSON);
         });
         $(this.selectors.modal).modal('hide');

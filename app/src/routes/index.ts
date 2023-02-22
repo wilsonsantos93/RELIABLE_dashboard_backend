@@ -1,5 +1,6 @@
 import { NextFunction, Request, Response, Router } from "express";
-import adminRouter from "./admin/admin.js";
+//import adminRouter from "./admin/admin.js";
+import adminRouter from "./admin/index.js";
 import regionBordersRouter from "./api/regions.js";
 import librariesRouter from "./api/libraries.js";
 import mapRouter from "./api/map.js";
@@ -49,16 +50,12 @@ function setLocals(req: Request, res: Response, next: NextFunction) {
 }
 
 // Use routes
-router.use('/admin', reliableSession, passport.initialize(), passport.session(), flash(), flashLocals, setLocals, adminRouter);
+router.use('/', reliableSession, passport.initialize(), passport.session(), flash(), flashLocals, setLocals, adminRouter);
+//router.use('/admin', reliableSession, passport.initialize(), passport.session(), flash(), flashLocals, setLocals, adminRouter);
 router.use('/api', apiRouter);
 router.use('/api/weather', reliableSession, passport.initialize(), passport.session(), weatherRouter);
 router.use('/api/region', reliableSession, passport.initialize(), passport.session(), flash(), flashLocals, regionBordersRouter);
-//router.use('/api/user', reliableSession, passport.initialize(), passport.session(), flash(), flashLocals, userRouter);
 router.use("/api/map", reliableSession, passport.initialize(), passport.session(), mapRouter);
 router.use("/libs", librariesRouter);
-
-/* router.use('/regions', reliableSession, passport.initialize(), passport.session(), regionBordersRouter);
-router.use("/libraries", reliableSession, passport.initialize(), passport.session(), librariesRouter);
-router.use("/map", reliableSession, passport.initialize(), passport.session(), mapRouter);  */
 
 export default router;
