@@ -1,14 +1,13 @@
-import {collectionExistsInDatabase, queryFeatureDocuments, queryWeatherDocuments,} from "../utils/database.js";
-import {DatabaseEngine} from "../configs/mongo.js";
-import sendResponseWithGoBackLink from "../utils/response.js";
+import {collectionExistsInDatabase, queryFeatureDocuments, queryWeatherDocuments,} from "../../utils/database.js";
+import {DatabaseEngine} from "../../configs/mongo.js";
 import {Document, Filter, ObjectId} from "mongodb";
 import {Request, Response} from "express-serve-static-core";
-import {WeatherProjection} from "../models/DatabaseCollections/Projections/WeatherProjection";
-import {FeaturesProjection} from "../models/DatabaseCollections/Projections/FeaturesProjection";
+import {WeatherProjection} from "../../models/DatabaseCollections/Projections/WeatherProjection";
+import {FeaturesProjection} from "../../models/DatabaseCollections/Projections/FeaturesProjection";
 import {FeatureCollection, Polygon} from "geojson";
-import {FeatureProperties} from "../models/FeatureProperties";
+import {FeatureProperties} from "../../models/FeatureProperties";
 import async from "async";
-import { BoundingBox } from "../models/BoundingBox.js";
+import { BoundingBox } from "../../models/BoundingBox.js";
 
 /**
  * Sends an array of geoJSONs with the border regions and its weather information on a certain date

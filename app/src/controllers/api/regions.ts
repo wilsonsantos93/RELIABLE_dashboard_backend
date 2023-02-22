@@ -50,7 +50,7 @@ export async function handleGetRegionBorders(request: Request, response: Respons
         }
         regionBordersDocumentsArray = await queryFeatureDocuments(find, projection);
     }
-    else if (request.query.dt && request.query.columns) {
+   /*  else if (request.query.dt && request.query.columns) {
         projection["center.type"] = 0;
         projection["feature.type"] = 0;
 
@@ -68,7 +68,7 @@ export async function handleGetRegionBorders(request: Request, response: Respons
         recordsFiltered = (await queryFeatureDocuments(find, projection)).length;
 
         regionBordersDocumentsArray = await queryFeatureDocuments(find, projection, skip, limit);
-    }
+    } */
     else {
         regionBordersDocumentsArray = await queryAllFeatureDocuments(projection);
     }
@@ -79,14 +79,14 @@ export async function handleGetRegionBorders(request: Request, response: Respons
         features: regionBordersDocumentsArray //queriedFeatures
     }
 
-    if (request.query.dt) {
+   /*  if (request.query.dt) {
         geoJSON = { 
             data: regionBordersDocumentsArray, //queriedFeatures
             draw: request.query.draw, 
             recordsTotal: recordsTotal,
             recordsFiltered: recordsFiltered
         }
-    } 
+    }  */
 
     return response.json(geoJSON);
 }

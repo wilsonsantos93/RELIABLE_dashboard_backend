@@ -120,8 +120,7 @@ export async function handleGetRegionWithWeather(req: Request, res: Response) {
         else find[col.name] = new RegExp(col.search.value, 'i');
       }
     }
-
-
+    
     const recordsTotal = (await weatherCollection.aggregate(pipeline).toArray()).length;
     console.log("PIPELINE 1", JSON.stringify(pipeline))
     
@@ -150,7 +149,7 @@ export async function handleGetRegionWithWeather(req: Request, res: Response) {
     });
 
     //const data = await getDatatablesData(weatherCollectionName, {}, req.query, pipeline);
-    return res.json(data);
+    //return res.json(data);
   } catch (e) {
     console.error(e);
     return res.status(500).json(e);
