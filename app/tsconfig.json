@@ -19,6 +19,6 @@
     "esm": true
   },
   "include": [
-    "src/**/*"
+    "src/**/*",
   ]
 }

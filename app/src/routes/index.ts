@@ -1,11 +1,10 @@
 import { NextFunction, Request, Response, Router } from "express";
-import adminRouter from "./admin.js";
-import regionBordersRouter from "./regions.js";
-import librariesRouter from "./libraries.js";
-import mapRouter from "./map.js";
-import apiRouter from "./api.js";
-import weatherRouter from "./weather.js";
-import userRouter from "./user.js";
+import adminRouter from "./admin/admin.js";
+import regionBordersRouter from "./api/regions.js";
+import librariesRouter from "./api/libraries.js";
+import mapRouter from "./api/map.js";
+import apiRouter from "./api/auth.js";
+import weatherRouter from "./api/weather.js";
 import session from "express-session";
 import passport from "passport";
 import { User } from "../models/User";

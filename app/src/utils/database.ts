@@ -284,26 +284,35 @@ export async function getCollectionFields(collectionName: string, find: any, pro
 }
 
 
-export async function getDatatablesData(collectionName: string, projection: any, dtInfo: any) {
-    let skip = parseInt(dtInfo.start) || 0;
-    let limit = parseInt(dtInfo.length) || 0;
+export async function getDatatablesData(collectionName: string, projection: any, dtInfo: any, pipeline: any[] = null) {
+    try {
+        let skip = parseInt(dtInfo.start) || 0;
+        let limit = parseInt(dtInfo.length) || 0;
 
-    const find: any = {};
-    for (const col of dtInfo.columns) {
-        if (!col.search.value || col.search.value == '') continue;
-        if (col.name == "_id" && ObjectId.isValid(col.search.value)) find[col.name] = new ObjectId(col.search.value);
-        else find[col.name] = new RegExp(col.search.value, 'i');
-    }
+        const find: any = {};
+        if (dtInfo.columns && dtInfo.columns.length) {
+            for (const col of dtInfo.columns) {
+                if (!col.search.value || col.search.value == '') continue;
+                if (col.name == "_id" && ObjectId.isValid(col.search.value)) find[col.name] = new ObjectId(col.search.value);
+                else find[col.name] = new RegExp(col.search.value, 'i');
+            }
+        }
 
-    const recordsTotal = await DatabaseEngine.getCollection(collectionName).countDocuments();
-    const recordsFiltered = (await DatabaseEngine.getCollection(collectionName).find(find).toArray()).length;
-    const users = await DatabaseEngine.getCollection(collectionName).find(find, { projection }).skip(skip).limit(limit).toArray();
+        let recordsTotal = 0;
+        let recordsFiltered = 0;
+        let data = [];
 
-    return { 
-        data: users,
-        draw: dtInfo.draw, 
-        recordsTotal: recordsTotal,
-        recordsFiltered: recordsFiltered
-    }
+        recordsTotal = await DatabaseEngine.getCollection(collectionName).countDocuments();
+        recordsFiltered = (await DatabaseEngine.getCollection(collectionName).find(find).toArray()).length;
+        data = await DatabaseEngine.getCollection(collectionName).find(find, { projection }).skip(skip).limit(limit).toArray();
     
+        return { 
+            data: data,
+            draw: dtInfo.draw, 
+            recordsTotal: recordsTotal,
+            recordsFiltered: recordsFiltered
+        };
+    } catch (e) {
+        throw e;
+    }
 }

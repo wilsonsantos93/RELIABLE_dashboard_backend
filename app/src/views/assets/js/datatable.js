@@ -65,8 +65,8 @@ class MyDatatable {
                         title: colName,
                         data: colName, 
                         name: colName,
+                        className: colName == "date" ? 'all' : 'ctrl'
                     });
-
                     $(this.selectors.select).append(`<option value="${colName}">${colName}</option>`);
                 } 
 
@@ -151,7 +151,7 @@ class MyDatatable {
             $(this.selectors.table).DataTable().ajax.reload();
             showSuccessAlert("Item eliminado com sucesso!");
         }).fail(e => {
-            showErrorAlert(e.responseText);
+            showErrorAlert(e.responseJSON);
         });
         $(this.selectors.modal).modal('hide');
     }
