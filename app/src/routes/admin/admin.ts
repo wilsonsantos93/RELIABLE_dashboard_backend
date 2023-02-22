@@ -2,36 +2,35 @@
 import { Router } from "express";
 
 // Controllers
-import { getHomePage, getIndexPage, handleDeleteAll } from "../../controllers/admin/home.js";
+/* import { getHomePage, getIndexPage, handleDeleteAll } from "../../controllers/admin/home.js";
 import { handleDeleteWeatherDates } from "../../controllers/admin/dates.js"
 import { getRegionsPage, getWeatherPage, handleCalculateCenters, handleDeleteRegion, handleDeleteRegions, handleDeleteWeatherRegion, handleGetRegionFields, handleGetRegions, handleGetRegionWithWeather, handleGetWeatherFields, handleSaveRegions } from "../../controllers/admin/regions.js";
 import { handleDeleteAllWeather, handleDeleteWeather } from "../../controllers/admin/weather.js";
 import { getCreateUserPage, getEditUserPage, getUsersPage, handleCreateUser, handleDeleteUser, handleGetUserFields, handleGetUsers, handleUpdateUser } from "../../controllers/admin/users.js";
-import { getLoginPage, handleLogin, handleLogout } from "../../controllers/admin/auth.js";
+import { getLoginPage, handleLogin, handleLogout } from "../../controllers/admin/auth.js"; */
 
 // Auth
 import { authenticateAdmin, forwardAuthenticatedAdmin } from "../../utils/routes.js";
 
-// Mongo-Express UI
+/* // Mongo-Express UI
 import mongo_express_config from "../../configs/mongo-express.config.js";
 import { createRequire } from "module";
-import multer from "multer";
 const require = createRequire(import.meta.url);
-const mongo_express = require('mongo-express-enhanced/lib/middleware.js');
+const mongo_express = require('mongo-express-enhanced/lib/middleware.js'); */
 
 const router = Router();
 
-// Get root page
+/* // Get root page
 router.get('/', getIndexPage);  
 // Get the home page
-router.get("/home", authenticateAdmin, getHomePage);
+router.get("/home", authenticateAdmin, getHomePage); */
 
-// Get login page
+/* // Get login page
 router.get('/login', forwardAuthenticatedAdmin, getLoginPage);
 // Route that handles admin login
 router.post('/login', handleLogin);
 // Route to logout admin
-router.get('/logout', authenticateAdmin, handleLogout);
+router.get('/logout', authenticateAdmin, handleLogout); */
 
 /* //! Page that shows users 
 router.get("/users", authenticateAdmin, getUsersPage);
@@ -76,18 +75,18 @@ router.post("/region/save", authenticateAdmin, upload.single("geojson"), handleS
 router.post("/region/calculateCenters", authenticateAdmin, handleCalculateCenters); */
 
 
-//! Route to delete all weather
+/* //! Route to delete all weather
 router.post("/weather/deleteAll", authenticateAdmin, handleDeleteAllWeather);
 //! Route to delete specific weather
-router.post("/weather/:id/delete", authenticateAdmin, handleDeleteWeather);
+router.post("/weather/:id/delete", authenticateAdmin, handleDeleteWeather); */
 
-//! Route to delete all dates
-router.post("/dates/deleteAll", authenticateAdmin, handleDeleteWeatherDates);
+/* //! Route to delete all dates
+router.post("/dates/deleteAll", authenticateAdmin, handleDeleteWeatherDates); */
 
-//! Route that requests all information in the database to be deleted
-router.post("/deleteAll", authenticateAdmin, handleDeleteAll);
+/* //! Route that requests all information in the database to be deleted
+router.post("/deleteAll", authenticateAdmin, handleDeleteAll); */
 
-// MongoExpress UI
-router.use("/mongo-express", authenticateAdmin, await mongo_express(mongo_express_config));
+/* // MongoExpress UI
+router.use("/mongo-express", authenticateAdmin, await mongo_express(mongo_express_config)); */
 
 export default router;

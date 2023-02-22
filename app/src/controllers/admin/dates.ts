@@ -2,7 +2,7 @@ import { DatabaseEngine } from "../../configs/mongo.js";
 import { Request, Response } from "express-serve-static-core";
 
 /**
- * Client requests the weatherDates data to be deleted
+ * Client requests all weather dates data to be deleted
  * @param req Client HTTP request object
  * @param response Client HTTP response object
  */
@@ -17,5 +17,5 @@ export async function handleDeleteWeatherDates(req: Request, res: Response) {
       req.flash("error_message", JSON.stringify(error));
     }
   }
-  return res.redirect("/admin/home");
+  return res.redirect("/home");
 }

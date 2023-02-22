@@ -21,11 +21,11 @@
                 <h2>Utilizadores</h2>
                 <div class="row">
                     <div class="col-xs-12 col-lg-6">
-                        <a href="/admin/user/create" class="btn btn-primary">Adicionar utilizador</a>
+                        <a href="/users/create" class="btn btn-primary">Adicionar utilizador</a>
                     </div>
 
                     <div class="col-xs-12 col-lg-6">
-                        <form id="formDeleteAll" action="/admin/user/deleteAll" class="pull-right" method="post">
+                        <form id="formDeleteAll" action="/user/deleteAll" class="pull-right" method="post">
                           <div>
                             <button type="submit" class="btn btn-danger d-none">
                                 <i class="fa fa-trash-o"></i> Eliminar tudo
@@ -70,7 +70,7 @@
                             <i class="fa fa-search"></i>
                         </button>
 
-                        <a class="btn btn-primary btn-sm" target="_blank" alt="Editar" title="Editar" href="user/${row._id}/edit">
+                        <a class="btn btn-primary btn-sm" target="_blank" alt="Editar" title="Editar" href="users/${row._id}/edit">
                             <i class="fa fa-edit"></i>
                         </a>
 
@@ -82,8 +82,8 @@
             }
         });
 
-        dtConfig.ajax.url = "/admin/getUsers?dt=true";
-        dtConfig.getFieldsUrl = "/admin/user/fields";
+        dtConfig.ajax.url = "/getUsers?dt=true";
+        dtConfig.getFieldsUrl = "/user/fields";
 
         myDT = new MyDatatable(dtConfig);
     });

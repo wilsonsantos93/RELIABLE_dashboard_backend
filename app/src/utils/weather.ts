@@ -110,7 +110,7 @@ export async function readWeatherFile() {
             data = [];
         }
 
-        console.log("INSERTED WEATHER DATA.")
+        console.log("JOB: Inserted weather data.")
         /*
         let data = await csv({ignoreColumns: /^\s*$/}).fromFile(CSV_FILE_PATH);
         data = await transformData(data);

@@ -16,7 +16,7 @@
                 <%- include('../partials/alerts.ejs') %>
                 <h2>Editar utilizador <%= user._id %></h2>
                 <div class="col-xxl-4 col-xl-5 col-lg-5 col-md-7 col-sm-9">
-                    <form action="/admin/users/<%=user._id%>/update" method="post">
+                    <form action="/user/<%=user._id%>/update" method="post">
                         <label for="username">Username:</label>
                         <input type="text" name="username" class="form-control" value="<%= user.username %>" disabled />
 

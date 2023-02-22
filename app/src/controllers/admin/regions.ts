@@ -13,6 +13,7 @@ import { MultiPolygon, Polygon } from "geojson";
  * Get Regions page
  * @param req Client HTTP request object
  * @param res Client HTTP response object
+ * @returns Renders regions page
  */
 export function getRegionsPage(req: Request, res: Response) {
   res.render("regions/index.ejs", { data: [] });
@@ -22,6 +23,7 @@ export function getRegionsPage(req: Request, res: Response) {
  * Get Weather page
  * @param req Client HTTP request object
  * @param res Client HTTP response object
+ * @returns Renders region weather page
  */
 export async function getWeatherPage(req: Request, res: Response) {
   const region = await DatabaseEngine.getFeaturesCollection().findOne({ _id: new ObjectId(req.params.id)})
@@ -32,6 +34,7 @@ export async function getWeatherPage(req: Request, res: Response) {
  * Get regions
  * @param req Client HTTP request object
  * @param res Client HTTP response object
+ * @returns An array of regions
  */
 export async function handleGetRegions(req: Request, res: Response) {
   try {
@@ -59,6 +62,7 @@ export async function handleGetRegions(req: Request, res: Response) {
  * Deletes the region borders data from the database
  * @param req Client HTTP request object
  * @param res Client HTTP response object
+ * @returns Redirects to home page
  */
 export async function handleDeleteRegions(req: Request, res: Response) {
   try {
@@ -72,13 +76,14 @@ export async function handleDeleteRegions(req: Request, res: Response) {
       req.flash("error_message", JSON.stringify(e));
     }
   }
-  return res.redirect("/admin/home");
+  return res.redirect("/home");
 }
 
 /**
  * Shows the specified region with respective weather data
  * @param req Client HTTP request object
  * @param res Client HTTP response object
+ * @returns An object containing the array of regions and number of records for datatables
  */
 export async function handleGetRegionWithWeather(req: Request, res: Response) {
   try {
@@ -156,6 +161,7 @@ export async function handleGetRegionWithWeather(req: Request, res: Response) {
  * Gets region fields
  * @param req Client HTTP request object
  * @param res Client HTTP response object
+ * @returns An array of strings containing all fields
  */
 export async function handleGetRegionFields(request: Request, response: Response) {
   try {
@@ -168,25 +174,6 @@ export async function handleGetRegionFields(request: Request, response: Response
     return response.status(500).json(e);
   }
 }
-
-/**
- * Gets weather fields for specific region
- * @param req Client HTTP request object
- * @param res Client HTTP response object
- */
-export async function handleGetWeatherFields(request: Request, response: Response) {
-  try {
-    const projection = {};
-    const find = { regionBorderFeatureObjectId: new ObjectId(request.params.id) };
-    const collectionName = DatabaseEngine.getWeatherCollectionName();
-    const fields = await getCollectionFields(collectionName, find, projection);
-    fields.push("date");
-    return response.json(fields);
-  } catch (e) {
-    return response.status(500).json(e);
-  }
-}
-
 
 /**
  * Deletes a specific region from the database
@@ -208,6 +195,7 @@ export async function handleDeleteRegion(request: Request, response: Response) {
  * Deletes all weather from specific region
  * @param req Client HTTP request object
  * @param res Client HTTP response object
+ * @returns Redirects to previous page
  */
 export async function handleDeleteWeatherRegion(request: Request, response: Response) {
   try {
@@ -227,6 +215,7 @@ export async function handleDeleteWeatherRegion(request: Request, response: Resp
  * Calculates the FeatureCenter coordinates of every feature in the region borders collection.
  * @param request Client HTTP request object
  * @param response Client HTTP response object
+ * @returns Redirects to home page
  */
 export async function handleCalculateCenters(request: Request, response: Response) {
   console.log("\nClient requested to calculate the centers for each region border in the collection.");
@@ -240,57 +229,56 @@ export async function handleCalculateCenters(request: Request, response: Respons
 
   //* If the region borders collection doesn't exist, send error response to the client
   if (!regionBordersCollectionExists) {
-      request.flash("error", "Can't calculate centers because the region borders collection doesn't exist.");
+      request.flash("error_message", "Can't calculate centers because the region borders collection doesn't exist.");
   }
 
   //* If the region borders collection exists, calculate and update the centers of each feature in the collection
   else {
+    //* Query the region borders collection for the various features
+    // The query results are going to be used by server to calculate the FeatureCenter of each and all features (geometry field), and save it to the corresponding feature (using the id).
+    // As such, the properties don't need to be returned, and the FeatureCenter coordinates of each region don't need to be returned (because they shouldn't exist yet).
+    let featuresQuery: Filter<Document> = { center: { $exists: false } };
+    let featuresQueryProjection = {
+      _id: 1,
+      properties: 0,
+      center: 0,
+      crsObjectId: 0,
+    };
+    let featureDocuments = await queryFeatureDocuments(
+      featuresQuery,
+      featuresQueryProjection
+    );
 
-      //* Query the region borders collection for the various features
-      // The query results are going to be used by server to calculate the FeatureCenter of each and all features (geometry field), and save it to the corresponding feature (using the id).
-      // As such, the properties don't need to be returned, and the FeatureCenter coordinates of each region don't need to be returned (because they shouldn't exist yet).
-      let featuresQuery: Filter<Document> = {center: {$exists: false}};
-      let featuresQueryProjection = {
-        _id: 1,
-        properties: 0,
-        center: 0,
-        crsObjectId: 0,
-      };
-      let featureDocuments = await queryFeatureDocuments(
-        featuresQuery,
-        featuresQueryProjection
+    let currentFeatureIndex = 1;
+    await async.each(featureDocuments, async (currentFeature) => {
+      if ((currentFeatureIndex % 10) === 0) {
+        console.log("Calculating center of feature number: " + currentFeatureIndex)
+      }
+
+      const center = polygonCenter(currentFeature.feature.geometry);
+
+      // Add the centre data to the regionBorderDocument in the database
+      await DatabaseEngine.getFeaturesCollection().updateOne(
+        { _id: currentFeature._id }, 
+        {
+          $set: {
+            center: center,
+          },
+        }
       );
 
-      let currentFeatureIndex = 1;
-      await async.each(featureDocuments, async (currentFeature) => {
-        if ((currentFeatureIndex % 10) === 0) {
-            console.log("Calculating center of feature number: " + currentFeatureIndex)
-        }
+      currentFeatureIndex++;
+    })
 
-        const center = polygonCenter(currentFeature.feature.geometry);
+    let message = "";
+    message += "Calculated the center coordinates for every feature in the region borders collection.";
+    console.log(message);
 
-        // Add the centre data to the regionBorderDocument in the database
-        await DatabaseEngine.getFeaturesCollection().updateOne(
-          { _id: currentFeature._id }, 
-          {
-            $set: {
-              center: center,
-            },
-          }
-        );
-
-        currentFeatureIndex++;
-      })
-
-      let message = "";
-      message += "Calculated the center coordinates for every feature in the region borders collection.";
-      console.log(message);
-
-      request.flash("success_message", message);
+    request.flash("success_message", message);
   }
 
   console.log("Server finished calculating the centers for each region border in the collection.\n");
-  return response.redirect("/admin");
+  return response.redirect("/home");
 }
 
 // TODO: Important. User saves empty geoJSON. Crashes program.
@@ -298,6 +286,7 @@ export async function handleCalculateCenters(request: Request, response: Respons
  * Save a geoJSON information to the database.
  * @param request Client HTTP request object
  * @param response Client HTTP response object
+ * @returns Redirects to previous page
  */
 export async function handleSaveRegions(request: Request, response: Response) {
   console.log("Received geoJSON from the client.");

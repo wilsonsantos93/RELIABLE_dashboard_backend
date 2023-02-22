@@ -27,7 +27,7 @@
                 <div class="container">
                     <div class="row">
                         <div class="col-xs-12">
-                            <form id="formDeleteAll" action="/admin/region/<%=data._id%>/weather/deleteAll" class="pull-right" method="post">
+                            <form id="formDeleteAll" action="/region/<%=data._id%>/weather/deleteAll" class="pull-right" method="post">
                                 <div>
                                     <button type="submit" class="btn btn-danger d-none">
                                         <i class="fa fa-trash-o"></i> Eliminar tudo
@@ -81,15 +81,15 @@
             }
         });
 
-        dtConfig.ajax.url = "/admin/region/<%=data._id%>/getWeather?dt=true";
-        dtConfig.getFieldsUrl = "/admin/region/<%=data._id%>/weather/fields";
+        dtConfig.ajax.url = "/region/<%=data._id%>/getWeather?dt=true";
+        dtConfig.getFieldsUrl = "/region/<%=data._id%>/weather/fields";
 
         myDT = new MyDatatable(dtConfig);
     });
 
     // Delete item function
     async function delFromID(id) {
-      const url = `/admin/weather/${id}/delete`;
+      const url = `/weather/${id}/delete`;
       await myDT.delFromID(id, url);
     }
   </script>
