@@ -1,10 +1,10 @@
-import { DatabaseEngine } from "../../configs/mongo";
+import { DatabaseEngine } from "../../configs/mongo.js";
 import { Request, Response } from "express-serve-static-core";
-import { Filter, ObjectId } from "mongodb";
+import { Filter, ObjectId, Document } from "mongodb";
 import async from "async";
 // @ts-ignore
 import polygonCenter from "geojson-polygon-center";
-import { collectionExistsInDatabase, queryFeatureDocuments, queryAllFeatureDocuments, saveFeatures, getCollectionFields } from "../../utils/database.js";
+import { collectionExistsInDatabase, queryFeatureDocuments, queryAllFeatureDocuments, saveFeatures, getCollectionFields, getDatatablesData } from "../../utils/database.js";
 import { FeatureProperties } from "../../models/FeatureProperties";
 import { FeatureCollectionWithCRS } from "../../models/FeatureCollectionWithCRS";
 import { MultiPolygon, Polygon } from "geojson";
@@ -14,8 +14,44 @@ import { MultiPolygon, Polygon } from "geojson";
  * @param req Client HTTP request object
  * @param res Client HTTP response object
  */
-export function getRegionsPage (req: Request, res: Response) {
-  res.render("regions.ejs", { data: [] });
+export function getRegionsPage(req: Request, res: Response) {
+  res.render("regions/index.ejs", { data: [] });
+}
+
+/**
+ * Get Weather page
+ * @param req Client HTTP request object
+ * @param res Client HTTP response object
+ */
+export async function getWeatherPage(req: Request, res: Response) {
+  const region = await DatabaseEngine.getFeaturesCollection().findOne({ _id: new ObjectId(req.params.id)})
+  res.render("regions/weather.ejs", { data: region });
+}
+
+/**
+ * Get regions
+ * @param req Client HTTP request object
+ * @param res Client HTTP response object
+ */
+export async function handleGetRegions(req: Request, res: Response) {
+  try {
+    let projection: any = {};
+    if (req.query.hasOwnProperty("geometry") && (req.query.geometry == '0' || req.query.geometry == 'false')) {
+      projection["feature.geometry"] = 0
+    }
+    if (req.query.hasOwnProperty("center") && (req.query.center == '0' || req.query.center == 'false')) {
+      projection["feature.center"] = 0
+    }
+
+    projection["center.type"] = 0;
+    projection["feature.type"] = 0;
+    const collectionName = DatabaseEngine.getFeaturesCollectionName();
+    const data = await getDatatablesData(collectionName, projection, req.query);
+    return res.json(data);
+  }
+  catch (e) {
+    return res.status(500).json(e);
+  }
 }
 
 /**
@@ -24,17 +60,17 @@ export function getRegionsPage (req: Request, res: Response) {
  * @param res Client HTTP response object
  */
 export async function handleDeleteRegions(req: Request, res: Response) {
-    try {
-      await DatabaseEngine.getFeaturesCollection().deleteMany({});
-      req.flash("success_message", "Server successfully cleared region borders from the database.");
-    } catch (error) {
-      if (error && error.codeName === "NamespaceNotFound") {
-        req.flash("error_message", "Region borders collection doesn't exist in the database (was probably already deleted).");
-      } else if (error) {
-        req.flash("error_message", JSON.stringify(error));
-      }
+  try {
+    await DatabaseEngine.getFeaturesCollection().deleteMany({});
+    req.flash("success_message", "Server successfully cleared region borders from the database.");
+  } catch (error) {
+    if (error && error.codeName === "NamespaceNotFound") {
+      req.flash("error_message", "Region borders collection doesn't exist in the database (was probably already deleted).");
+    } else if (error) {
+      req.flash("error_message", JSON.stringify(error));
     }
-    return res.redirect("/admin/home");
+  }
+  return res.redirect("/admin/home");
 }
 
 /**
@@ -43,31 +79,82 @@ export async function handleDeleteRegions(req: Request, res: Response) {
  * @param res Client HTTP response object
  */
 export async function handleGetRegionWithWeather(req: Request, res: Response) {
-  let data: any = [];
   try {
     const weatherCollection = DatabaseEngine.getWeatherCollection();
+    const weatherCollectionName = DatabaseEngine.getWeatherCollectionName();
     const datesCollectionName = DatabaseEngine.getWeatherDatesCollectionName();
-    let pipeline = [];
+    let pipeline:any = [];
+
+    let dateToSearch;
+    let pipelineMatch;
+
+    if (req.query.columns) {
+      let columns = []
+      const reqColumns:any = req.query.columns;
+      for (const key in reqColumns) {
+        columns.push(reqColumns[key]);
+      }
+      dateToSearch = columns.find(c => c.name == "date").search.value;
+      //pipelineMatch = dateToSearch != '' ? { date: new Date(dateToSearch) } : {};
+    }
+
 
     // match region id
-    pipeline.push({ match: { regionBorderFeatureObjectId: new ObjectId(req.params.id) }});
+    pipeline.push({ $match: { regionBorderFeatureObjectId: new ObjectId(req.params.id) }});
 
     // aggregate with date
     pipeline.push({ 
       $lookup: {
         from: datesCollectionName,
-        localField: '_id',
+        localField: 'weatherDateObjectId',
         foreignField: '_id',
         as: 'date',
       }
     });
 
-    data = await weatherCollection.aggregate(pipeline).toArray();
-  } catch (e) {
-    req.flash("error_message", JSON.stringify(e));
-  }
+    const find: any = {};
+    if (req.query.columns && req.query.columns.length) {
+      for (const col of req.query.columns as any[]) {
+        if (!col.search.value || col.search.value == '' || col.name == "date") continue;
+        if (col.name == "_id" && ObjectId.isValid(col.search.value)) find[col.name] = new ObjectId(col.search.value);
+        else find[col.name] = new RegExp(col.search.value, 'i');
+      }
+    }
 
-  return res.render("/admin/weather.ejs", { data: data });
+
+    const recordsTotal = (await weatherCollection.aggregate(pipeline).toArray()).length;
+    console.log("PIPELINE 1", JSON.stringify(pipeline))
+    
+    pipeline[0] = { $match: {...pipeline[0].$match, ...find } };
+    pipeline[1]["$lookup"]["pipeline"] = [
+      { "$project": { "_id": 0, "date": { $dateToString: { date: "$date", format: "%Y-%m-%d %H:%M:%S" } } }}
+    ];
+    pipeline.push({ $match: { "date.0.date": new RegExp(dateToSearch, 'i') } })
+    const recordsFiltered = (await weatherCollection.aggregate(pipeline).toArray()).length;
+    console.log("PIPELINE 2", JSON.stringify(pipeline))
+
+    pipeline.push({ $skip: parseInt(req.query.start as string) || 0 });
+    pipeline.push({ $limit: parseInt(req.query.length as string) || 0 });
+    console.log("PIPELINE 3", JSON.stringify(pipeline));
+    const data = await weatherCollection.aggregate(pipeline).toArray();
+    
+    for (const d of data) {
+      d.date = d.date[0]?.date;
+    }
+
+    return res.json({
+      data,
+      recordsTotal,
+      recordsFiltered,
+      draw: req.query.draw
+    });
+
+    //const data = await getDatatablesData(weatherCollectionName, {}, req.query, pipeline);
+    return res.json(data);
+  } catch (e) {
+    console.error(e);
+    return res.status(500).json(e);
+  }
 } 
 
 /**
@@ -77,15 +164,34 @@ export async function handleGetRegionWithWeather(req: Request, res: Response) {
  */
 export async function handleGetRegionFields(request: Request, response: Response) {
   try {
-      const projection = { _id: 1, "feature.type": 0, "feature.geometry": 0, "center.type": 0 };
-      const find = {};
-      const collectionName = DatabaseEngine.getFeaturesCollectionName();
-      const fields = await getCollectionFields(collectionName, find, projection);
-      return response.json(fields);
+    const projection = { _id: 1, "feature.type": 0, "feature.geometry": 0, "center.type": 0 };
+    const find = {};
+    const collectionName = DatabaseEngine.getFeaturesCollectionName();
+    const fields = await getCollectionFields(collectionName, find, projection);
+    return response.json(fields);
   } catch (e) {
-      return response.status(500).json(e);
+    return response.status(500).json(e);
   }
 }
+
+/**
+ * Gets weather fields for specific region
+ * @param req Client HTTP request object
+ * @param res Client HTTP response object
+ */
+export async function handleGetWeatherFields(request: Request, response: Response) {
+  try {
+    const projection = {};
+    const find = { regionBorderObjectId: new ObjectId(request.params.id) };
+    const collectionName = DatabaseEngine.getWeatherCollectionName();
+    const fields = await getCollectionFields(collectionName, find, projection);
+    fields.push("date");
+    return response.json(fields);
+  } catch (e) {
+    return response.status(500).json(e);
+  }
+}
+
 
 /**
  * Deletes a specific region from the database
@@ -94,12 +200,12 @@ export async function handleGetRegionFields(request: Request, response: Response
  */
 export async function handleDeleteRegion(request: Request, response: Response) {
   try {
-      const id = request.params.id;
-      await DatabaseEngine.getFeaturesCollection().deleteOne({ _id: new ObjectId(id) });
-      return response.json({});
+    const id = request.params.id;
+    await DatabaseEngine.getFeaturesCollection().deleteOne({ _id: new ObjectId(id) });
+    return response.json({});
   } catch(e) {
-      console.error(e);
-      return response.status(500).json(e);
+    console.error(e);
+    return response.status(500).json(e);
   }
 }
 
@@ -115,8 +221,8 @@ export async function handleCalculateCenters(request: Request, response: Respons
   //* Check if the region border collection exists
   let regionBordersCollectionName = DatabaseEngine.getFeaturesCollectionName();
   let regionBordersCollectionExists = await collectionExistsInDatabase(
-      regionBordersCollectionName,
-      DatabaseEngine.getDashboardDatabase()
+    regionBordersCollectionName,
+    DatabaseEngine.getDashboardDatabase()
   );
 
   //* If the region borders collection doesn't exist, send error response to the client
@@ -132,35 +238,35 @@ export async function handleCalculateCenters(request: Request, response: Respons
       // As such, the properties don't need to be returned, and the FeatureCenter coordinates of each region don't need to be returned (because they shouldn't exist yet).
       let featuresQuery: Filter<Document> = {center: {$exists: false}};
       let featuresQueryProjection = {
-          _id: 1,
-          properties: 0,
-          center: 0,
-          crsObjectId: 0,
+        _id: 1,
+        properties: 0,
+        center: 0,
+        crsObjectId: 0,
       };
       let featureDocuments = await queryFeatureDocuments(
-          featuresQuery,
-          featuresQueryProjection
+        featuresQuery,
+        featuresQueryProjection
       );
 
       let currentFeatureIndex = 1;
       await async.each(featureDocuments, async (currentFeature) => {
-          if ((currentFeatureIndex % 10) === 0) {
-              console.log("Calculating center of feature number: " + currentFeatureIndex)
+        if ((currentFeatureIndex % 10) === 0) {
+            console.log("Calculating center of feature number: " + currentFeatureIndex)
+        }
+
+        const center = polygonCenter(currentFeature.feature.geometry);
+
+        // Add the centre data to the regionBorderDocument in the database
+        await DatabaseEngine.getFeaturesCollection().updateOne(
+          { _id: currentFeature._id }, 
+          {
+            $set: {
+              center: center,
+            },
           }
+        );
 
-          const center = polygonCenter(currentFeature.feature.geometry);
-
-          // Add the centre data to the regionBorderDocument in the database
-          await DatabaseEngine.getFeaturesCollection().updateOne(
-            { _id: currentFeature._id }, 
-            {
-              $set: {
-                center: center,
-              },
-            }
-          );
-
-          currentFeatureIndex++;
+        currentFeatureIndex++;
       })
 
       let message = "";

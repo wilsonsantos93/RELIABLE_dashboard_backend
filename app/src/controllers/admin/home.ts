@@ -1,5 +1,5 @@
 import { Request, Response } from "express-serve-static-core";
-import { DatabaseEngine } from "../../configs/mongo";
+import { DatabaseEngine } from "../../configs/mongo.js";
 
 
 export function getIndexPage (req: Request, res: Response) {

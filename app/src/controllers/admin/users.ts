@@ -1,8 +1,8 @@
 import { Request, Response } from "express-serve-static-core";
 import { ObjectId } from "mongodb";
-import { Role, User } from "../../models/User";
-import { DatabaseEngine } from "../../configs/mongo";
-import { getCollectionFields, getDatatablesData } from "../../utils/database";
+import { Role, User } from "../../models/User.js";
+import { DatabaseEngine } from "../../configs/mongo.js";
+import { getCollectionFields, getDatatablesData } from "../../utils/database.js";
 
 export function getUsersPage (req: Request, res: Response) {
     res.render("users/index.ejs", { data: [] });
@@ -66,14 +66,14 @@ export async function handleDeleteUser(request: Request, response: Response) {
 
 
 export async function handleGetUsers(request: Request, response: Response) {
-    try {
-        const projection: any = { "password": 0 };
-        const data = await getDatatablesData("users", projection, request.query);
-        return response.json(data);
-    }
-    catch (e) {
-        return response.status(500).json(JSON.stringify(e));
-    }
+  try {
+    const projection: any = { "password": 0 };
+    const data = await getDatatablesData("users", projection, request.query);
+    return response.json(data);
+}
+  catch (e) {
+    return response.status(500).json(JSON.stringify(e));
+  }
 }
 
   
