@@ -5,9 +5,14 @@ import csv from "csvtojson";
 import { FeaturesProjection } from "../types/DatabaseCollections/Projections/FeaturesProjection.js";
 import fs from "fs";
 import glob from 'glob';
+import { allReplacements } from "./database.js";
 
 const KEEP_DATA_PREVIOUS_DAYS = parseInt(process.env.KEEP_DATA_PREVIOUS_DAYS) || 2;
-const CSV_FOLDER_PATH = process.env.CSV_FOLDER_PATH_DOCKER || process.env.CSV_FOLDER_PATH_LOCAL;
+//const CSV_FOLDER_PATH = process.env.CSV_FOLDER_PATH_DOCKER || process.env.CSV_FOLDER_PATH_LOCAL;
+const CSV_FOLDER_PATH_DOCKER = process.env.CSV_FOLDER_PATH_DOCKER || null;
+const CSV_FOLDER_PATH_LOCAL = process.env.CSV_FOLDER_PATH_LOCAL || null;
+const DATABASE_FIELD_TO_MATCH = "feature.properties.Concelho";
+const WEATHER_FIELD_TO_MATCH = "county";
 
 /**
  * Fetch the weather of a location from an external API, and return it.
@@ -76,9 +81,22 @@ export function createBulkOps(data: any[]) {
  */
 export async function readWeatherFile() {
     try {
-        if (!CSV_FOLDER_PATH || CSV_FOLDER_PATH == "" || !fs.existsSync(CSV_FOLDER_PATH)) { 
+        const totalRegions = await DatabaseEngine.getFeaturesCollection().estimatedDocumentCount();
+        if (!totalRegions) return;
+
+        /* if (!CSV_FOLDER_PATH || CSV_FOLDER_PATH == "" || !fs.existsSync(CSV_FOLDER_PATH)) { 
             throw "ERROR in CSV Folder: Path not specified or does not exist.";
-        }
+        } */
+
+        let CSV_FOLDER_PATH = null;
+        if (!CSV_FOLDER_PATH_DOCKER || CSV_FOLDER_PATH_DOCKER == "" || !fs.existsSync(CSV_FOLDER_PATH_DOCKER)) {
+            if (!CSV_FOLDER_PATH_LOCAL || CSV_FOLDER_PATH_LOCAL == "" || !fs.existsSync(CSV_FOLDER_PATH_LOCAL)) {
+                throw "ERROR in CSV Folder: Path not specified or does not exist.";
+            }
+            CSV_FOLDER_PATH = CSV_FOLDER_PATH_LOCAL;
+        } 
+        else CSV_FOLDER_PATH = CSV_FOLDER_PATH_DOCKER;
+
 
         const newestFile = glob.sync(`${CSV_FOLDER_PATH}/*.csv`)
             .map((name: any) => ({name, ctime: fs.statSync(name).ctime}))
@@ -167,9 +185,11 @@ export async function transformData(data: any[]) {
     // Loop through CSV data and create samples
     const regionsCollection = DatabaseEngine.getFeaturesCollection();
     for (const row of data) {
+        const regionPossibleNames = allReplacements(row[WEATHER_FIELD_TO_MATCH], "-", " ");
         const projection: FeaturesProjection = { _id: 1 };
         const regions = await regionsCollection.find(
-                { "feature.properties.Concelho": row.county },
+                //{ "feature.properties.Concelho": row.county },
+                { [DATABASE_FIELD_TO_MATCH]: { $in: regionPossibleNames } },
                 { projection }
             )
             .collation({ locale: "pt", strength: 1 })
@@ -182,14 +202,16 @@ export async function transformData(data: any[]) {
             const reverseDate = date.split("-").reverse().join("-"); 
             const dateObj = datesFromDB.find(d => new Date(d.date).valueOf() === new Date(reverseDate).valueOf());
 
-            const sample: any = { weather: {} };
-            for (const field of fields) {
-                sample.weather[field.replace(date,"").replace(/^\_+|\_+$/g, '')] = row[field];
-            }
-            sample.regionBorderFeatureObjectId = regions[0]?._id || null;
-            sample.weatherDateObjectId = dateObj?._id || null;
+            for (const region of regions) {
+                const sample: any = { weather: {} };
+                for (const field of fields) {
+                    sample.weather[field.replace(date,"").replace(/^\_+|\_+$/g, '')] = row[field];
+                }
+                sample.regionBorderFeatureObjectId = region._id || null //regions[0]?._id || null;
+                sample.weatherDateObjectId = dateObj?._id || null;
 
-            transformedData.push(sample);
+                transformedData.push(sample);
+            }
         }
     }
 

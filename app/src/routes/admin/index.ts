@@ -5,6 +5,7 @@ import regionRouter from "./region.js";
 import userRouter from "./user.js";
 import weatherRouter from "./weather.js";
 import authRouter from "./auth.js";
+import metadataRouter from "./metadata.js";
 
 // Mongo-Express UI
 import mongo_express_config from "../../configs/mongo-express.config.js";
@@ -14,6 +15,9 @@ const require = createRequire(import.meta.url);
 const mongo_express = require('mongo-express-enhanced/lib/middleware.js');
 
 const router = Router();
+
+// Get root page
+router.get('/meta', (req, res) => res.render("metadata.ejs"));  
 
 // Get root page
 router.get('/', getIndexPage);  
@@ -34,5 +38,6 @@ router.use("/", regionRouter);
 router.use("/", userRouter);
 router.use("/", authRouter);
 router.use("/", weatherRouter);
+router.use("/", metadataRouter);
 
 export default router;

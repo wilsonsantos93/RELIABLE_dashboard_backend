@@ -299,11 +299,13 @@ export async function getDatatablesData(collectionName: string, projection: any,
         }
 
         let recordsTotal = 0;
-        let recordsFiltered = 0;
+        let recordsFiltered: any = 0;
         let data = [];
 
-        recordsTotal = await DatabaseEngine.getCollection(collectionName).countDocuments();
-        recordsFiltered = (await DatabaseEngine.getCollection(collectionName).find(find).toArray()).length;
+        recordsTotal = await DatabaseEngine.getCollection(collectionName).estimatedDocumentCount();
+        //recordsFiltered = (await DatabaseEngine.getCollection(collectionName).find(find).toArray()).length;
+        //recordsFiltered = await DatabaseEngine.getCollection(collectionName).find(find).count()
+        recordsFiltered = await DatabaseEngine.getCollection(collectionName).countDocuments(find);
         data = await DatabaseEngine.getCollection(collectionName).find(find, { projection }).skip(skip).limit(limit).toArray();
     
         return { 
@@ -315,4 +317,31 @@ export async function getDatatablesData(collectionName: string, projection: any,
     } catch (e) {
         throw e;
     }
+}
+
+export function allReplacements(str: string, char: string, replace: string) {
+    function powerset (a: any) {
+        return _powerset([[]], a) 
+    };
+
+    function _powerset(out: any, rest: string): any {
+        return rest.length ?
+            _powerset(
+                out.concat(out.map((x: any) => x.concat(rest[0]))),
+                rest.slice(1)
+            )
+            : out;
+    }
+
+    function enumerate (str: string, char: string) {
+        return [...str].map((c, i) => [c, i])
+        .filter(p => p[0] === char)
+        .map(p => p[1]);
+    }
+
+    function translate (str: string, pos: any, replace: string) {
+        return [...str].map((c, i) => pos.includes(i) ? replace : c).join('');
+    } 
+
+    return powerset(enumerate(str, char)).map((pos: any) => translate(str, pos, replace));
 }
