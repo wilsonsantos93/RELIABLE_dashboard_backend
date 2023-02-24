@@ -150,8 +150,10 @@ class MyDatatable {
     deleteItem(url) {
         $.post(url, () => {
             $(this.selectors.table).DataTable().ajax.reload();
+            hideAlerts();
             showSuccessAlert("Item deleted successfully!");
         }).fail(e => {
+            hideAlerts();
             showErrorAlert(e.responseJSON);
         });
         $(this.selectors.modal).modal('hide');

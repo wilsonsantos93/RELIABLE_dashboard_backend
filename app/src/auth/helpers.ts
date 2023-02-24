@@ -20,7 +20,7 @@ export async function hashPassword(password: string) {
     const SALT_WORK_FACTOR = 10;
     try {
         const salt = await bcrypt.genSalt(SALT_WORK_FACTOR);
-        const hash = await bcrypt.hash(password, salt);
+        const hash = await bcrypt.hash(password, SALT_WORK_FACTOR);
         return hash;
     } catch (error) {
         throw error;

@@ -18,13 +18,13 @@
 
         <div class="row">
             <div class="col-xs-12">
-                <h2>Regiões</h2>
+                <h2>Regions</h2>
                 <div class="container">
                     <div class="row">
                         <div class="col-xs-12 col-lg-4 border border-1 border-secondary p-2">
                             <!-- Form to import and submit geoJSON -->
                             <form action="/region/save" method="post" enctype="multipart/form-data">
-                                <label for="geojsonImportButton">Importar ficheiro geoJSON:</label>
+                                <label for="geojsonImportButton">Upload geoJSON file:</label>
                                 <br />
                                 <!--* Button to select the geoJSON to send to the server -->
                                 <!-- Only accept files with the .geojson extension -->
@@ -47,10 +47,10 @@
                             <form id="formDeleteAll" action="/region/deleteAll" class="pull-right" method="post">
                                 <div>
                                     <button type="submit" class="btn btn-danger d-none">
-                                        <i class="fa fa-trash-o"></i> Eliminar tudo
+                                        <i class="fa fa-trash-o"></i>
                                     </button>
                                     <button type="button" onclick=myDT.deleteAllConfirm() class="btn btn-danger">
-                                        <i class="fa fa-trash-o"></i> Eliminar tudo
+                                        <i class="fa fa-trash-o"></i> Delete all
                                     </button>
                                 </div>
                             </form>

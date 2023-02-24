@@ -3,6 +3,7 @@ import { ObjectId } from "mongodb";
 import { Role, User } from "../../types/User.js";
 import { DatabaseEngine } from "../../configs/mongo.js";
 import { getCollectionFields, getDatatablesData } from "../../utils/database.js";
+import { hashPassword } from "../../auth/helpers.js";
 
 /**
  * Get Users page
@@ -32,11 +33,20 @@ export async function getCreateUserPage (req: Request, res: Response) {
  */
 export async function getEditUserPage (req: Request, res: Response) {
   try {
-    const projection = { password: 0 };
+    const projection: any = { locations: 0 };
+    const currentUser = req.user as User;
+
+    if (String(currentUser._id) !== req.params.id) {
+      projection.email = 0;
+      projection.password = 0;
+    } 
+
     const user = await DatabaseEngine.getUsersCollection().findOne({ _id: new ObjectId(req.params.id) }, { projection });
     if (!user) throw "User not found.";
+
     return res.render("users/edit.ejs", { data: user, roles: Role });
   } catch (e) {
+    console.error(e);
     return res.redirect("/users");
   }
 }
@@ -49,7 +59,7 @@ export async function getEditUserPage (req: Request, res: Response) {
  */
 export async function handleCreateUser(req: Request, res: Response) {
   try {
-    if (!req.body.username || !req.body.email || !req.body.password || !req.body.role) throw "Missing fields";
+    if (!req.body.email || !req.body.password || !req.body.role) throw "Missing fields";
     if (req.body.password && req.body.password.length < 6) throw "Password must have at least 6 characters";
 
     const userExists = await DatabaseEngine.getUsersCollection().findOne({ email: req.body.email });
@@ -58,10 +68,13 @@ export async function handleCreateUser(req: Request, res: Response) {
     }
 
     const user = req.body;
+   // user.username = user.email.split("@")[0];
+    const passwordHash = await hashPassword(user.password);
+    user.password = passwordHash;
+
     await DatabaseEngine.getUsersCollection().insertOne(user);
     req.flash("success_message", "User created successfully!");
     return res.redirect("/users");
-
   } catch (e) {
     req.flash("error_message", JSON.stringify(e));
     req.flash("data", req.body);
@@ -80,13 +93,15 @@ export async function handleUpdateUser(req: Request, res: Response) {
     if (!req.body.role) throw "Missing fields"
     const currentUser = req.user as User;
     let data;
-    if (req.params.id == currentUser._id) {
+    if (req.params.id == String(currentUser._id)) {
       if (!req.body.email) throw "Missing email address";
       if (req.body.role != currentUser.role) throw "Impossible to change your own role.";
       data = req.body;
+      if (currentUser.password !== req.body.password) data.password = await hashPassword(req.body.password);
     } else {
       data = { role: req.body.role };
     }
+
     await DatabaseEngine.getUsersCollection().updateOne({ _id : new ObjectId(req.params.id) }, { $set: { ...data } });
     req.flash("success_message", "User updated successfully!");
     return res.redirect("/users");
@@ -120,11 +135,25 @@ export async function handleDeleteUser(req: Request, res: Response) {
  */
 export async function handleGetUsers(req: Request, res: Response) {
   try {
-    const projection: any = { "password": 0 };
+    const projection: any = { "password": 0, "locations": 0 };
     const data = await getDatatablesData("users", projection, req.query);
+    /* for (const user of data.data) {
+      if (typeof user.email != "string") {
+        const currentUser = req.user as User;
+        if (String(user._id) === String(currentUser._id)) user.email = decrypt(user.email);
+        else user.email = user.email.encryptedData;
+      }
+    } */
+
+    const currentUser = req.user as User;
+    for (const user of data.data) {
+      if (String(user._id) !== String(currentUser._id)) user.email = user.email.split("@")[0]+"@...";
+    }
+
     return res.json(data);
   }
   catch (e) {
+    console.error(e);
     return res.status(500).json(JSON.stringify(e));
   }
 }
@@ -137,7 +166,7 @@ export async function handleGetUsers(req: Request, res: Response) {
  */ 
 export async function handleGetUserFields(req: Request, res: Response) {
   try {
-    const projection = { "password": 0 };
+    const projection = { "password": 0, "locations": 0 };
     const find = {};
     const collectionName = DatabaseEngine.getUsersCollectionName();
     const fields = await getCollectionFields(collectionName, find, projection);

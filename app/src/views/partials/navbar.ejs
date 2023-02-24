@@ -32,12 +32,12 @@
             <ul class="nav navbar-nav navbar-right">
 				<% if (user && user.username) { %>
 				<li class="nav-item d-none d-lg-block px-2" id="userInfo">
-					<a class="nav-link text-white">Olá, <%= user.username %>!</a>
+					<a class="nav-link text-white">Hi, <%= user.username %>!</a>
 				</li>
 				<% } %>
                 <li class="nav-item " id="logout">
 					<a class="nav-link btn btn-primary" href="/logout">
-						<i class="fa fa-sign-out" aria-hidden="true"></i> Sair
+						<i class="fa fa-sign-out" aria-hidden="true"></i> Logout
 					</a>
 				</li>
             </ul>

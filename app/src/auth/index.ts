@@ -6,8 +6,7 @@ import { User, Role } from "../types/User.js";
 import { Strategy as LocalStrategy } from "passport-local";
 import { BasicStrategy } from "passport-http";
 import { Strategy as JwtStrategy, ExtractJwt } from "passport-jwt"; 
-import { UniqueTokenStrategy } from "passport-unique-token";
-import { comparePassword } from "./helpers.js";
+import { comparePassword, hashPassword } from "./helpers.js";
 import { PassportStatic } from "passport";
 import { ObjectId } from "mongodb";
 
@@ -67,15 +66,15 @@ export default (passport: PassportStatic) => {
      * Local Authentication
      */
     passport.use('local', new LocalStrategy(
-        function(username, password, done) {
+        async function(username, password, done) {
             const UserCollection = DatabaseEngine.getUsersCollection();
-            UserCollection.findOne({ $or: [ { username: username }, { email: username } ] }, async function (err, user) {
+            UserCollection.findOne({ $or: [ { "username": username }, { "email": username } ] }, async function (err, user) {
                 if (err) return done(err)
-                if (!user) return done(null, false, { message: 'Nome de utilizador incorreto.' })
+                if (!user) return done(null, false, { message: 'Wrong username/email' })
 
                 try {
                     const match = await comparePassword(user.password, password);
-                    if (!match) return done(null, false, { message: 'Password incorreta.' })
+                    if (!match) return done(null, false, { message: 'Wrong password' })
                     return done(null, user)
                 } catch (err) {
                     return done(err);

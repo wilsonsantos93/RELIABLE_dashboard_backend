@@ -2,12 +2,7 @@ import {DatabaseEngine} from "../configs/mongo.js";
 import {convertFeatureCoordinatesToLatLong, requestProjectionInformation, separateMultiPolygons} from "./features.js";
 import {Db, Document, Filter, FindOptions, ObjectId} from "mongodb";
 import {FeatureDocument} from "../types/DatabaseCollections/FeatureDocument";
-import {
-    WeatherCollectionDocument,
-    WeatherCollectionDocumentWithFeature
-} from "../types/DatabaseCollections/WeatherCollectionDocument";
-import {WeatherProjection} from "../types/DatabaseCollections/Projections/WeatherProjection";
-import {FeaturesProjection} from "../types/DatabaseCollections/Projections/FeaturesProjection";
+import { WeatherCollectionDocumentWithFeature } from "../types/DatabaseCollections/WeatherCollectionDocument";
 import {Feature, MultiPolygon, Polygon} from "geojson";
 import {FeatureProperties} from "../types/FeatureProperties";
 import {FeatureCollectionWithCRS} from "../types/FeatureCollectionWithCRS";
