@@ -22,7 +22,7 @@ export function authenticateAPI(...allowed_roles: string[] | null) {
             else return res.status(403).json({ error: 'Forbidden' });
         }
         // Authentication through Authorization Header allowing multiple strategies
-        else return passport.authenticate(['api-basic', 'api-jwt'], (error, user: User) => {
+        else return passport.authenticate(['api-basic', 'api-jwt'], (error:any, user: User) => {
             if (error) return res.status(500).json({ error: 'Authentication error' });
             if (!user) return res.status(401).json({ error: 'Unauthorized' });
             if (!allowed_roles.length || isAuthorized(allowed_roles, user.role)) {

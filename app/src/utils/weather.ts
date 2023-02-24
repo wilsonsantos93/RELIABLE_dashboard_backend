@@ -8,7 +8,6 @@ import glob from 'glob';
 import { allReplacements } from "./database.js";
 
 const KEEP_DATA_PREVIOUS_DAYS = parseInt(process.env.KEEP_DATA_PREVIOUS_DAYS) || 2;
-//const CSV_FOLDER_PATH = process.env.CSV_FOLDER_PATH_DOCKER || process.env.CSV_FOLDER_PATH_LOCAL;
 const CSV_FOLDER_PATH_DOCKER = process.env.CSV_FOLDER_PATH_DOCKER || null;
 const CSV_FOLDER_PATH_LOCAL = process.env.CSV_FOLDER_PATH_LOCAL || null;
 const DATABASE_FIELD_TO_MATCH = "feature.properties.Concelho";
@@ -127,12 +126,7 @@ export async function readWeatherFile() {
             data = [];
         }
 
-        console.log("JOB: Inserted weather data.")
-        /*
-        let data = await csv({ignoreColumns: /^\s*$/}).fromFile(CSV_FILE_PATH);
-        data = await transformData(data);
-        const weatherCollection = DatabaseEngine.getWeatherCollection();
-        await weatherCollection.insertMany(data); */
+        console.log("JOB: Inserted weather data.");
     } catch (e) {
         console.error(e);
     } finally {
@@ -165,6 +159,8 @@ export async function transformData(data: any[]) {
         else fieldsWithoutDate.push(field);
     })
 
+    if (!dates.length) return [];
+
     // Insert dates in DB
     const bulkOps = dates.map(d => {
         const reverseDate = d.split("-").reverse().join("-"); 
@@ -184,6 +180,7 @@ export async function transformData(data: any[]) {
     // Loop through CSV data and create samples
     const regionsCollection = DatabaseEngine.getFeaturesCollection();
     for (const row of data) {
+        if (!row.hasOwnProperty(WEATHER_FIELD_TO_MATCH)) continue;
         const regionPossibleNames = allReplacements(row[WEATHER_FIELD_TO_MATCH], "-", " ");
         const projection: FeaturesProjection = { _id: 1 };
         const regions = await regionsCollection.find(
@@ -206,7 +203,7 @@ export async function transformData(data: any[]) {
                 for (const field of fields) {
                     sample.weather[field.replace(date,"").replace(/^\_+|\_+$/g, '')] = row[field];
                 }
-                sample.regionBorderFeatureObjectId = region._id || null //regions[0]?._id || null;
+                sample.regionBorderFeatureObjectId = region._id || null; //regions[0]?._id || null;
                 sample.weatherDateObjectId = dateObj?._id || null;
 
                 transformedData.push(sample);
