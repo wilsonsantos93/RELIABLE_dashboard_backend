@@ -18,7 +18,7 @@ export async function handleGetWeatherFields(request: Request, response: Respons
     fields.push("date");
     return response.json(fields);
   } catch (e) {
-    return response.status(500).json(e);
+    return response.status(500).json(JSON.stringify(e));
   }
 }
 
@@ -31,11 +31,11 @@ export async function handleDeleteAllWeather(req: Request, res: Response) {
   try {
     await DatabaseEngine.getWeatherCollection().deleteMany({});
     req.flash("success_message", "Server successfully cleared weather information from the database.");
-  } catch (error) {
-    if (error && error.codeName === "NamespaceNotFound") {
+  } catch (e) {
+    if (e && e.codeName === "NamespaceNotFound") {
       req.flash("error_message", "Weather information collection doesn't exist in the database (was probably already deleted).");
-    } else if (error) {
-      req.flash("error_message", JSON.stringify(error));
+    } else if (e) {
+      req.flash("error_message", JSON.stringify(e));
     }
   }
   return res.redirect("/home")
@@ -50,8 +50,8 @@ export async function handleDeleteWeather(req: Request, res: Response) {
   try {
     await DatabaseEngine.getWeatherCollection().deleteOne({ _id: new ObjectId(req.params.id)});
     return res.json({});
-  } catch (error) {
-      console.error(error);
-      return res.status(500).json(JSON.stringify(error));
+  } catch (e) {
+      console.error(e);
+      return res.status(500).json(JSON.stringify(e));
   }
 }

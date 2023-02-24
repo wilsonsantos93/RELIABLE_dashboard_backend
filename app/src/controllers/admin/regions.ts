@@ -4,7 +4,7 @@ import { Filter, ObjectId, Document } from "mongodb";
 import async from "async";
 // @ts-ignore
 import polygonCenter from "geojson-polygon-center";
-import { collectionExistsInDatabase, queryFeatureDocuments, queryAllFeatureDocuments, saveFeatures, getCollectionFields, getDatatablesData } from "../../utils/database.js";
+import { collectionExistsInDatabase, queryFeatureDocuments, saveFeatures, getCollectionFields, getDatatablesData } from "../../utils/database.js";
 import { FeatureProperties } from "../../types/FeatureProperties";
 import { FeatureCollectionWithCRS } from "../../types/FeatureCollectionWithCRS";
 import { MultiPolygon, Polygon } from "geojson";
@@ -26,8 +26,13 @@ export function getRegionsPage(req: Request, res: Response) {
  * @returns Renders region weather page
  */
 export async function getWeatherPage(req: Request, res: Response) {
-  const region = await DatabaseEngine.getFeaturesCollection().findOne({ _id: new ObjectId(req.params.id)})
-  return res.render("regions/weather.ejs", { data: region });
+  try {
+    const region = await DatabaseEngine.getFeaturesCollection().findOne({ _id: new ObjectId(req.params.id)})
+    if (!region) throw "Region not found";
+    return res.render("regions/weather.ejs", { data: region });
+  } catch (e) {
+    return res.redirect("/regions");
+  }
 }
 
 /**
@@ -54,7 +59,7 @@ export async function handleGetRegions(req: Request, res: Response) {
   }
   catch (e) {
     console.error(e);
-    return res.status(500).json(e);
+    return res.status(500).json(JSON.stringify(e));
   }
 }
 
@@ -153,7 +158,7 @@ export async function handleGetRegionWithWeather(req: Request, res: Response) {
 
   } catch (e) {
     console.error(e);
-    return res.status(500).json(e);
+    return res.status(500).json(JSON.stringify(e));
   }
 } 
 
@@ -163,15 +168,15 @@ export async function handleGetRegionWithWeather(req: Request, res: Response) {
  * @param res Client HTTP response object
  * @returns An array of strings containing all fields
  */
-export async function handleGetRegionFields(request: Request, response: Response) {
+export async function handleGetRegionFields(req: Request, res: Response) {
   try {
     const projection = { _id: 1, "feature.type": 0, "feature.geometry": 0, "center.type": 0 };
     const find = {};
     const collectionName = DatabaseEngine.getFeaturesCollectionName();
     const fields = await getCollectionFields(collectionName, find, projection);
-    return response.json(fields);
+    return res.json(fields);
   } catch (e) {
-    return response.status(500).json(e);
+    return res.status(500).json(JSON.stringify(e));
   }
 }
 
@@ -180,14 +185,14 @@ export async function handleGetRegionFields(request: Request, response: Response
  * @param req Client HTTP request object
  * @param res Client HTTP response object
  */
-export async function handleDeleteRegion(request: Request, response: Response) {
+export async function handleDeleteRegion(req: Request, res: Response) {
   try {
-    const id = request.params.id;
+    const id = req.params.id;
     await DatabaseEngine.getFeaturesCollection().deleteOne({ _id: new ObjectId(id) });
-    return response.json({});
+    return res.json({});
   } catch(e) {
     console.error(e);
-    return response.status(500).json(e);
+    return res.status(500).json(JSON.stringify(e));
   }
 }
 
@@ -197,16 +202,16 @@ export async function handleDeleteRegion(request: Request, response: Response) {
  * @param res Client HTTP response object
  * @returns Redirects to previous page
  */
-export async function handleDeleteWeatherRegion(request: Request, response: Response) {
+export async function handleDeleteWeatherRegion(req: Request, res: Response) {
   try {
-    const id = request.params.id;
+    const id = req.params.id;
     await DatabaseEngine.getWeatherCollection().deleteMany({ regionBorderFeatureObjectId: new ObjectId(id) });
-    request.flash("success_message", "Dados eliminados com sucesso.");
+    req.flash("success_message", "Weather data deleted succesfully!");
   } catch(e) {
     console.error(e);
-    request.flash("error_message", "Não foi possível eliminar os dados.");
+    req.flash("error_message", "Unable to delete weather data.");
   }
-  return response.redirect("back")
+  return res.redirect("back")
 }
 
 
@@ -217,7 +222,7 @@ export async function handleDeleteWeatherRegion(request: Request, response: Resp
  * @param response Client HTTP response object
  * @returns Redirects to home page
  */
-export async function handleCalculateCenters(request: Request, response: Response) {
+export async function handleCalculateCenters(req: Request, res: Response) {
   console.log("\nClient requested to calculate the centers for each region border in the collection.");
 
   //* Check if the region border collection exists
@@ -229,7 +234,7 @@ export async function handleCalculateCenters(request: Request, response: Respons
 
   //* If the region borders collection doesn't exist, send error response to the client
   if (!regionBordersCollectionExists) {
-      request.flash("error_message", "Can't calculate centers because the region borders collection doesn't exist.");
+    req.flash("error_message", "Can't calculate centers because the region borders collection doesn't exist.");
   }
 
   //* If the region borders collection exists, calculate and update the centers of each feature in the collection
@@ -274,11 +279,11 @@ export async function handleCalculateCenters(request: Request, response: Respons
     message += "Calculated the center coordinates for every feature in the region borders collection.";
     console.log(message);
 
-    request.flash("success_message", message);
+    req.flash("success_message", message);
   }
 
   console.log("Server finished calculating the centers for each region border in the collection.\n");
-  return response.redirect("/home");
+  return res.redirect("/home");
 }
 
 // TODO: Important. User saves empty geoJSON. Crashes program.
@@ -288,11 +293,11 @@ export async function handleCalculateCenters(request: Request, response: Respons
  * @param response Client HTTP response object
  * @returns Redirects to previous page
  */
-export async function handleSaveRegions(request: Request, response: Response) {
+export async function handleSaveRegions(req: Request, res: Response) {
   console.log("Received geoJSON from the client.");
   try {
     //* Parse received file bytes to geoJSON
-    let fileBuffer = request.file.buffer; // Multer enables the server to access the file sent by the client using "request.file.buffer". The file accessed is in bytes.
+    let fileBuffer = req.file.buffer; // Multer enables the server to access the file sent by the client using "request.file.buffer". The file accessed is in bytes.
     let trimmedFileBuffer = fileBuffer.toString().trimStart().trimEnd(); // Sometimes the geoJSON sent has unnecessary spaces that need to be trimmed
     let geoJSON: FeatureCollectionWithCRS<MultiPolygon | Polygon, FeatureProperties> = JSON.parse(trimmedFileBuffer); // Parse the trimmed file buffer to a correct geoJSON
 
@@ -302,10 +307,10 @@ export async function handleSaveRegions(request: Request, response: Response) {
     console.log("Inserted geoJSON features in the database.");
 
     // Send successful response to the client
-    request.flash("success_message", "Server successfully saved geoJSON.");
-    return response.redirect("back");
+    req.flash("success_message", "Server successfully saved geoJSON.");
+    return res.redirect("back");
   } catch (e) {
-    request.flash("error_message", "Não foi possível carregar o ficheiro.");
-    return response.redirect("back");
+    req.flash("error_message", "Unable to upload file.");
+    return res.redirect("back");
   }
 }

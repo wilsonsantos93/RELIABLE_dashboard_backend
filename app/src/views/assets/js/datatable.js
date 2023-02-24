@@ -129,8 +129,8 @@ class MyDatatable {
 
     // Delete all popup modal
     deleteAllConfirm() {
-        const title = `Eliminar tudo`;
-        const body = `Tem a certeza que pretende eliminar todos os itens?`;
+        const title = `Delete all`;
+        const body = `Are you sure you want to delete all items?`;
         this.setModalData(title, body);
         this.openDeleteModal();
         $(this.selectors.modalConfirmBtn).on("click", function(){ $("#formDeleteAll").submit() });
@@ -138,8 +138,8 @@ class MyDatatable {
 
     // Delete item popup modal
     delFromID(id, url) {
-        const title = `Eliminar item`;
-        const body = `Tem a certeza que pretende eliminar o item <strong>${id}</strong>?`;
+        const title = `Delete item`;
+        const body = `Are you sure you want to delete item <strong>${id}</strong>?`;
         this.setModalData(title, body);
         $(this.selectors.modalConfirmBtn).show();
         $(this.selectors.modalConfirmBtn).on("click", () => { this.deleteItem(url); });
@@ -148,12 +148,10 @@ class MyDatatable {
 
     // Http request to delete item
     deleteItem(url) {
-        $.post(url, (data, status) => {
+        $.post(url, () => {
             $(this.selectors.table).DataTable().ajax.reload();
-            console.log("SUCESSO!")
-            showSuccessAlert("Item eliminado com sucesso!");
+            showSuccessAlert("Item deleted successfully!");
         }).fail(e => {
-            console.log("ERRO", e);
             showErrorAlert(e.responseJSON);
         });
         $(this.selectors.modal).modal('hide');

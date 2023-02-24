@@ -21,20 +21,21 @@
                 <h2>Weather metadata</h2>
                 <div class="container">
                     <div class="row">
-                        <div class="col-xs-12 col-lg-4">
-                        </div>
+                      <div class="col-xs-12 col-lg-6">
+                        <a href="/metadata/create" class="btn btn-primary">Add weather metadata</a>
+                      </div>
 
-                        <div class="col-xs-12 col-lg-8">
-                            <form id="formDeleteAll" action="/metadata/deleteAll" class="pull-right" method="post">
-                                <div>
-                                    <button type="submit" class="btn btn-danger d-none">
-                                        <i class="fa fa-trash-o"></i> Eliminar tudo
-                                    </button>
-                                    <button type="button" onclick=myDT.deleteAllConfirm() class="btn btn-danger">
-                                        <i class="fa fa-trash-o"></i> Eliminar tudo
-                                    </button>
-                                </div>
-                            </form>
+                        <div class="col-xs-12 col-lg-6">
+                          <form id="formDeleteAll" action="/metadata/deleteAll" class="pull-right" method="post">
+                              <div>
+                                  <button type="submit" class="btn btn-danger d-none">
+                                      <i class="fa fa-trash-o"></i>
+                                  </button>
+                                  <button type="button" onclick=myDT.deleteAllConfirm() class="btn btn-danger">
+                                      <i class="fa fa-trash-o"></i> Delete all
+                                  </button>
+                              </div>
+                          </form>
                         </div>
                     </div>
                 </div>
@@ -70,6 +71,10 @@
                         <button class="btn btn-secondary btn-sm" alt="Ver" title="Ver" onclick=myDT.viewFromID(${meta.row})>
                             <i class="fa fa-search"></i>
                         </button>
+
+                        <a class="btn btn-primary btn-sm" target="_blank" alt="Edit" title="Edit" href="/metadata/${row._id}/edit">
+                            <i class="fa fa-edit"></i>
+                        </a>
 
                         <button class="btn btn-danger btn-sm" alt="Eliminar" title="Eliminar" onclick=delFromID("${row._id}")>
                             <i class="fa fa-trash-o"></i>

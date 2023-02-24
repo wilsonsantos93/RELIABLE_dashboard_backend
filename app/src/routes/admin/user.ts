@@ -20,7 +20,7 @@ router.post("/user/create", authenticateAdmin, handleCreateUser);
 router.post("/user/:id/update", authenticateAdmin, handleUpdateUser);
 
 // Route to get users
-router.get("/getUsers", authenticateAdmin, handleGetUsers);
+router.get("/user/getUsers", authenticateAdmin, handleGetUsers);
 
 // Route to delete a user
 router.post("/user/:id/delete", authenticateAdmin, handleDeleteUser);

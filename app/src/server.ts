@@ -43,7 +43,7 @@ app.use(cors());
 app.use(router);
 
 // node schedule
-const job = schedule.scheduleJob('0 * * * *', async function () {
+schedule.scheduleJob('0 * * * *', async function () {
    await handleDeleteWeatherAndDates();
 });
 

@@ -51,7 +51,6 @@ function setLocals(req: Request, res: Response, next: NextFunction) {
 
 // Use routes
 router.use('/', reliableSession, passport.initialize(), passport.session(), flash(), flashLocals, setLocals, adminRouter);
-//router.use('/admin', reliableSession, passport.initialize(), passport.session(), flash(), flashLocals, setLocals, adminRouter);
 router.use('/api', apiRouter);
 router.use('/api/weather', reliableSession, passport.initialize(), passport.session(), weatherRouter);
 router.use('/api/region', reliableSession, passport.initialize(), passport.session(), flash(), flashLocals, regionBordersRouter);

@@ -42,7 +42,7 @@ export async function handleLogin (req: Request, res: Response) {
         })
       }
       else {
-        req.flash("error", "Utilizador não autorizado.");
+        req.flash("error", "Unauthorized user");
         return res.redirect("/login"); 
       }
     } 

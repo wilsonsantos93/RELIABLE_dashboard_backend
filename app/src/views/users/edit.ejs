@@ -14,16 +14,21 @@
         <div class="container">
             <div class="row justify-content-sm-center h-100">
                 <%- include('../partials/alerts.ejs') %>
-                <h2>Editar utilizador <%= user._id %></h2>
+                <h2>Editar utilizador <%= data._id %></h2>
                 <div class="col-xxl-4 col-xl-5 col-lg-5 col-md-7 col-sm-9">
-                    <form action="/user/<%=user._id%>/update" method="post">
+                    <form action="/user/<%=data._id%>/update" method="post">
                         <label for="username">Username:</label>
-                        <input type="text" name="username" class="form-control" value="<%= user.username %>" disabled />
+                        <input type="text" name="username" class="form-control" value="<%= data.username %>" disabled />
+
+                        <% if (String(data._id) === String(user._id)) { %>
+                        <label for="email">Email:</label> 
+                        <input type="email" name="email" class="form-control" value="<%= data.email %>" />
+                        <% } %>
 
                         <label for="role">Role:</label>
                         <select name="role" class="form-select" aria-label="Default select example">
                             <% for (let key in roles) { %>
-                                <% if (user.role == roles[key]) { %>
+                                <% if (data.role == roles[key]) { %>
                                 <option selected value="<%= roles[key] %>"><%= roles[key] %></option>
                                 <% } else { %>
                                 <option value="<%= roles[key] %>"><%= roles[key] %></option>

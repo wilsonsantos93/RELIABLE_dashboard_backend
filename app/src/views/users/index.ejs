@@ -82,7 +82,7 @@
             }
         });
 
-        dtConfig.ajax.url = "/getUsers?dt=true";
+        dtConfig.ajax.url = "/user/getUsers?dt=true";
         dtConfig.getFieldsUrl = "/user/fields";
 
         myDT = new MyDatatable(dtConfig);
@@ -90,7 +90,7 @@
 
     // Delete item function
     async function delFromID(id) {
-      const url = `/admin/user/${id}/delete`;
+      const url = `/user/${id}/delete`;
       await myDT.delFromID(id, url);
     }
   </script>

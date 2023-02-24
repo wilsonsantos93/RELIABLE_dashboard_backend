@@ -144,38 +144,9 @@ export async function queryWeatherDocuments(
     coordinates: BoundingBox = null,
     useCenters: boolean = false
 ) {
-
-    /*const regionBordersCollectionName = DatabaseEngine.getFeaturesCollectionName();
-
-     const regionsWithWeatherDocuments = await DatabaseEngine.getWeatherCollection()
-        .aggregate([
-            {
-                $match: { weatherDateObjectId: weatherDateID }
-            },
-            {
-                $match: { "weather.error.code": { $exists: false } }
-            },
-            {
-                $project: featuresQueryProjection
-            },
-            {
-                $lookup: {
-                    from: regionBordersCollectionName,
-                    localField: 'regionBorderFeatureObjectId',
-                    foreignField: '_id',
-                    as: 'feature'
-                }
-            },
-            {
-                $limit: 2
-            }
-        ])
-        .toArray() as WeatherCollectionDocumentWithFeature[]; */
-
     const weatherCollectionName = DatabaseEngine.getWeatherCollectionName();
 
     const pipeline = [];
-
     pipeline.push({ $match: { "center": { $exists: true } } });
 
     if (coordinates) {
@@ -227,15 +198,18 @@ export async function queryWeatherDocuments(
         }
     });
 
-    //pipeline.push({ $limit: 5 }); // temp
-
     const regionsWithWeatherDocuments = await DatabaseEngine.getFeaturesCollection().aggregate(pipeline).toArray() as WeatherCollectionDocumentWithFeature[];
 
     return regionsWithWeatherDocuments;
 }
 
 
-// Returns a JSON with the various dates the weather was saved in the database
+/**
+ * Gets all weather dates
+ * @param req Client HTTP request object
+ * @param response Client HTTP response object
+ * @returns A JSON with the various dates saved in the database
+ */
 export async function queryAllWeatherDates() {
     let weatherDatesQuery = {}; // Query all weather dates to return to the client
     let weatherDatesProjection = { _id: 1, date: 1 }; // Only the date itself needs to be returned by the query
@@ -256,7 +230,12 @@ export async function queryAllWeatherDates() {
     }
 }
 
-
+/**
+ * Gets fields from the specified collection
+ * @param req Client HTTP request object
+ * @param response Client HTTP response object
+ * @returns An array containing the field names
+ */
 export async function getCollectionFields(collectionName: string, find: any, projection: any) {
     function flattenObject(obj: any, prefix = '') {
         return Object.keys(obj).reduce((acc:any, k) => {
@@ -283,7 +262,12 @@ export async function getCollectionFields(collectionName: string, find: any, pro
     }
 }
 
-
+/**
+ * Gets data to use with Datatables
+ * @param req Client HTTP request object
+ * @param response Client HTTP response object
+ * @returns An object containing the data and number of records
+ */
 export async function getDatatablesData(collectionName: string, projection: any, dtInfo: any, pipeline: any[] = null) {
     try {
         let skip = parseInt(dtInfo.start) || 0;
@@ -303,8 +287,6 @@ export async function getDatatablesData(collectionName: string, projection: any,
         let data = [];
 
         recordsTotal = await DatabaseEngine.getCollection(collectionName).estimatedDocumentCount();
-        //recordsFiltered = (await DatabaseEngine.getCollection(collectionName).find(find).toArray()).length;
-        //recordsFiltered = await DatabaseEngine.getCollection(collectionName).find(find).count()
         recordsFiltered = await DatabaseEngine.getCollection(collectionName).countDocuments(find);
         data = await DatabaseEngine.getCollection(collectionName).find(find, { projection }).skip(skip).limit(limit).toArray();
     
@@ -319,6 +301,12 @@ export async function getDatatablesData(collectionName: string, projection: any,
     }
 }
 
+/**
+ * Generate all possibilites for a string replacement
+ * @param req Client HTTP request object
+ * @param response Client HTTP response object
+ * @returns An array containing all possible strings
+ */
 export function allReplacements(str: string, char: string, replace: string) {
     function powerset (a: any) {
         return _powerset([[]], a) 

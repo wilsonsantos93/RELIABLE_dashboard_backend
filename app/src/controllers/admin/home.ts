@@ -33,7 +33,7 @@ export async function getHomePage (req: Request, res: Response) {
     data = { totalDates, totalRegions, totalUsers, totalWeather };
   } catch (e) {
     console.error(e);
-    req.flash("error_message", "Erro a obter dados.");
+    req.flash("error_message", "Error getting data.");
   }
   res.render("home.ejs", { data: data });
 }
@@ -54,11 +54,11 @@ export async function handleDeleteAll(req: Request, res: Response) {
   try {
     await DatabaseEngine.getFeaturesCollection().deleteMany({});
     successMsgs.push("Server successfully cleared region borders from the database.");
-  } catch (error) {
-    if (error && error.codeName === "NamespaceNotFound") {
+  } catch (e) {
+    if (e && e.codeName === "NamespaceNotFound") {
       errorMsgs.push("Region borders collection doesn't exist in the database (was probably already deleted).");
-    } else if (error) {
-      errorMsgs.push(JSON.stringify(error));
+    } else if (e) {
+      errorMsgs.push(JSON.stringify(e));
     }
   }
 
@@ -66,11 +66,11 @@ export async function handleDeleteAll(req: Request, res: Response) {
   try {
     await DatabaseEngine.getWeatherDatesCollection().deleteMany({});
     successMsgs.push("Server successfully cleared weather saved dates from the database.");
-  } catch (error) {
-    if (error && error.codeName === "NamespaceNotFound") {
+  } catch (e) {
+    if (e && e.codeName === "NamespaceNotFound") {
       errorMsgs.push("Weather saved dates collection doesn't exist in the database (was probably already deleted).");
-    } else if (error) {
-      errorMsgs.push(JSON.stringify(error));
+    } else if (e) {
+      errorMsgs.push(JSON.stringify(e));
     }
   }
 
@@ -78,11 +78,11 @@ export async function handleDeleteAll(req: Request, res: Response) {
   try {
     await DatabaseEngine.getWeatherCollection().deleteMany({});
     successMsgs.push("Server successfully cleared weather information from the database.");
-  } catch (error) {
-    if (error && error.codeName === "NamespaceNotFound") {
+  } catch (e) {
+    if (e && e.codeName === "NamespaceNotFound") {
       errorMsgs.push("Weather information collection doesn't exist in the database (was probably already deleted).");
-    } else if (error) {
-      errorMsgs.push(JSON.stringify(error));
+    } else if (e) {
+      errorMsgs.push(JSON.stringify(e));
     }
   }
 

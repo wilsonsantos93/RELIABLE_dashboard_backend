@@ -35,7 +35,6 @@ export async function requestWeather(locationCoordinates: number[]): Promise<Fea
 
 /**
  * Function that deletes previous data from weather and dates.
- * @returns void
  */
 export async function handleDeleteWeatherAndDates() {
     try {
