@@ -19,6 +19,7 @@ async function saveCurrentDateToCollection() {
     let databaseResponse = await weatherDatesCollection.insertOne({
         date: currentDate,
     } as any);
+
     // insertOne returns some unnecessary parameters
     // it also returns an ObjectId("62266b751239b26c92ec8858") accessed with "databaseResponse.insertedId"
     let insertedDateDatabaseID = databaseResponse.insertedId;
@@ -34,7 +35,7 @@ async function saveCurrentDateToCollection() {
  * @param request Client HTTP request object
  * @param response Client HTTP response object
  */
-export async function handleFetchWeather(request: Request, response: Response) {
+export async function handleFetchWeather(req: Request, res: Response) {
     console.log("Started saving weather of each feature to the database.");
 
     //* Save the current date to the weatherDates collection
@@ -102,7 +103,7 @@ export async function handleFetchWeather(request: Request, response: Response) {
     }
 
     console.log(message);
-    sendResponseWithGoBackLink(response, message);
+    sendResponseWithGoBackLink(res, message);
 }
 
 /**
@@ -110,7 +111,7 @@ export async function handleFetchWeather(request: Request, response: Response) {
  * @param request Client HTTP request object
  * @param response Client HTTP response object
  */
-export async function handleGetWeatherDates(request: Request, response: Response) {
+export async function handleGetWeatherDates(req: Request, res: Response) {
 
     console.log("\nQuerying for weather dates.");
 
@@ -126,7 +127,7 @@ export async function handleGetWeatherDates(request: Request, response: Response
         .toArray();
 
     console.log("Finished for weather dates.");
-    response.json(featuresQueryResults);
+    res.json(featuresQueryResults);
 }
 
 
@@ -145,12 +146,15 @@ export async function handleSaveWeather(req: Request, res: Response) {
         data.push(req.body);
     }
 
+    if (!data.length) return res.status(500).json("Empty data.")
+    console.log("Transforming data", data)
     // Write data in weather collection
     try {
         const weatherCollection = await DatabaseEngine.getWeatherCollection();
         const result = await weatherCollection.bulkWrite(createBulkOps(await transformData(data)));
         return res.json(result);
     } catch (e) {
+        console.error(e);
         return res.status(500).json(e);
     }
 }

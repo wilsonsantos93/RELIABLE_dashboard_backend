@@ -1,32 +1,30 @@
-import {collectionExistsInDatabase, queryFeatureDocuments, queryWeatherDocuments,} from "../../utils/database.js";
-import {DatabaseEngine} from "../../configs/mongo.js";
-import {Document, Filter, ObjectId} from "mongodb";
-import {Request, Response} from "express-serve-static-core";
-/* import {WeatherProjection} from "../../types/DatabaseCollections/Projections/WeatherProjection";
-import {FeaturesProjection} from "../../types/DatabaseCollections/Projections/FeaturesProjection";
-import {FeatureCollection, Polygon} from "geojson";
-import {FeatureProperties} from "../../types/FeatureProperties";
-import async from "async"; */
+import { collectionExistsInDatabase, queryWeatherDocuments } from "../../utils/database.js";
+import { DatabaseEngine } from "../../configs/mongo.js";
+import { ObjectId } from "mongodb";
+import { Request, Response } from "express-serve-static-core";
 import { BoundingBox } from "../../types/BoundingBox.js";
+import sanitize from "mongo-sanitize";
 
 /**
  * Sends an array of geoJSONs with the border regions and its weather information on a certain date
  * @param request Client HTTP request object
  * @param response Client HTTP response object
  */
-export async function handleGetRegionBordersAndWeatherByDate(request: Request, response: Response) {
+export async function handleGetRegionBordersAndWeatherByDate(req: Request, res: Response) {
     //* Check if date or dateId was sent 
-    if (!request.query.dateId && !request.query.date) return response.status(500).json("Date is missing.");
+    if (!req.query.dateId && !req.query.date) return res.status(500).json("Date is missing.");
 
     // Transform date id string into ObjectId
     let weatherDateObjectID: ObjectId;
-    if (request.query.date) { 
+    if (req.query.date) { 
+        req.query.date = sanitize(req.query.date);
         const datesCollection = DatabaseEngine.getWeatherDatesCollection();
-        const dateId: any = await datesCollection.find({ "date": { $lte: new Date(request.query.date as string) } }).sort({"date": -1}).limit(1).toArray();
-        if (!dateId.length) return response.status(404).json("Date not found.");
+        const dateId: any = await datesCollection.find({ "date": { $lte: new Date(req.query.date as string) } }).sort({"date": -1}).limit(1).toArray();
+        if (!dateId.length) return res.status(404).json("Date not found.");
         weatherDateObjectID = dateId[0]._id;
     } else {
-        weatherDateObjectID = new ObjectId(request.query.dateId as string);
+        req.query.dateId = sanitize(req.query.dateId);
+        weatherDateObjectID = new ObjectId(req.query.dateId as string);
     }
 
     console.log(`Client requested region borders and weather (Date: ${weatherDateObjectID})`);
@@ -57,50 +55,25 @@ export async function handleGetRegionBordersAndWeatherByDate(request: Request, r
 
     if (!regionBordersCollectionExists || !weatherCollectionExists) {
         console.log(message);
-        return response.status(404).json(message);
+        return res.status(404).json(message);
     }
-
-
-    // We are going to use the returning query parameters to add the weather information and associated feature to the current geoJSON
-    // As such, the _id, weatherDateObjectId aren't needed
-    // We only need the weather field and the regionBorderFeatureObjectId
-
- /*    let weatherQuery: Filter<Document> = {
-        weatherDateObjectId: new ObjectId(weatherDateID),
-        "weather.error.code": { $exists: false }
-    };
-    let weatherQueryProjection: WeatherProjection = {
-        _id: 0,
-        weatherDateObjectId: 0,
-    }; */
-
     
     // Set coordinates object or null
     let coordinates: BoundingBox = null;
-    if (request.query.sw_lng && request.query.sw_lat && request.query.ne_lng && request.query.ne_lat) {
+    if (req.query.sw_lng && req.query.sw_lat && req.query.ne_lng && req.query.ne_lat) {
         coordinates = {
-            sw_lng: parseFloat(request.query.sw_lng as string),
-            sw_lat: parseFloat(request.query.sw_lat as string),
-            ne_lng: parseFloat(request.query.ne_lng as string),
-            ne_lat: parseFloat(request.query.ne_lat as string)
+            sw_lng: parseFloat(sanitize(req.query.sw_lng) as string),
+            sw_lat: parseFloat(sanitize(req.query.sw_lat) as string),
+            ne_lng: parseFloat(sanitize(req.query.ne_lng) as string),
+            ne_lat: parseFloat(sanitize(req.query.ne_lat) as string)
         }
     }
 
     // Set flag useCenters
-    const useCenters = request.query.hasOwnProperty("useCenters") && request.query.useCenters == "true" ? true : false;
+    const useCenters = req.query.hasOwnProperty("useCenters") && req.query.useCenters == "true" ? true : false;
 
     // Get regions with weather data
     const weatherDocuments = await queryWeatherDocuments(weatherDateObjectID, coordinates, useCenters)
-
-    /* let featuresWithWeather = [];
-    for (const weatherDocument of weatherDocuments) {
-        let featureWithWeather = weatherDocument.feature;
-        if (!featureWithWeather.length) continue;
-        //featureWithWeather[0].feature.properties.weather = weatherDocument.weather;
-        featureWithWeather[0].feature.weather = weatherDocument.weather;
-        featuresWithWeather.push(featureWithWeather[0].feature);
-        console.log(featuresWithWeather);
-    } */
 
     for (const weatherDocument of weatherDocuments as any) {
         if (!weatherDocument.weather.length) weatherDocument.weather = null;
@@ -109,9 +82,9 @@ export async function handleGetRegionBordersAndWeatherByDate(request: Request, r
     
     const geoJsonArrayWithWeather = {
         type: "FeatureCollection",
-        features: weatherDocuments //featuresWithWeather
+        features: weatherDocuments
     };
 
     console.log("Finished sending geoJSONs to the client.");
-    return response.json(geoJsonArrayWithWeather);
+    return res.json(geoJsonArrayWithWeather);
 }

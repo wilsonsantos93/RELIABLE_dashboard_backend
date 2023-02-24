@@ -1,7 +1,7 @@
 import { NextFunction } from "express";
 import { Request, Response } from "express-serve-static-core";
 import passport from "passport";
-import { Role } from "../../types/User.js";
+import { Role, User } from "../../types/User.js";
 
 /**
  * Get the login page
@@ -20,7 +20,7 @@ export function getLoginPage (req: Request, res: Response) {
  * @returns Redirects to home or login page
  */
 export async function handleLogin (req: Request, res: Response) {
-  passport.authenticate("local", (error, user, info) => {
+  passport.authenticate("local", (error: any, user: User, info: any) => {
     if (error) {
       req.flash("error", error.message);
       return res.redirect("/login");

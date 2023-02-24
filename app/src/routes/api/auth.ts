@@ -6,7 +6,7 @@ const router = Router();
 
 // Route that handles user login
 router.post('/login', function(req, res, next) { 
-    passport.authenticate("local", (error, user, info) => {
+    passport.authenticate("local", (error: any, user: any, info: any) => {
 
         if (error) return res.status(500).json({
             error: error.message

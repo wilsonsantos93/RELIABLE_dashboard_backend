@@ -17,8 +17,8 @@
                 <h2>Add user</h2>
                 <div class="col-xxl-4 col-xl-5 col-lg-5 col-md-7 col-sm-9">
                     <form id="form" action="/user/create" method="POST">
-                        <!-- <label for="username">Username (optional):</label>
-                        <input type="text" name="username" class="form-control" value="<%= data.length ? data[0].username : '' %>" /> -->
+                        <label for="username">Username:</label>
+                        <input type="text" name="username" class="form-control" value="<%= data.length ? data[0].username : '' %>" />
 
                         <label for="email">Email:</label>
                         <input type="email" name="email" class="form-control" value="<%= data.length ? data[0].email : '' %>" required />
