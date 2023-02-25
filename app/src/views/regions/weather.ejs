@@ -69,11 +69,11 @@
             targets: -1,
             render: function (data, type, row, meta) {
                 return `<div>
-                        <button class="btn btn-secondary btn-sm" alt="Ver" title="Ver" onclick=myDT.viewFromID(${meta.row})>
+                        <button class="btn btn-secondary btn-sm" alt="View" title="View" onclick=myDT.viewFromID(${meta.row})>
                             <i class="fa fa-search"></i>
                         </button>
 
-                        <button class="btn btn-danger btn-sm" alt="Eliminar" title="Eliminar" onclick=delFromID("${row._id}")>
+                        <button class="btn btn-danger btn-sm" alt="Delete" title="Delete" onclick=delFromID("${row._id}")>
                             <i class="fa fa-trash-o"></i>
                         </button>
                     </div>

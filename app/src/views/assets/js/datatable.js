@@ -113,7 +113,7 @@ class MyDatatable {
     // Open deletion modal
     openDeleteModal() {
         $(this.selectors.modalConfirmBtn).addClass("btn-danger").removeClass("btn-primary");
-        $(this.selectors.modalConfirmBtn).text("Eliminar");
+        $(this.selectors.modalConfirmBtn).text("Delete");
         $(this.selectors.modal).modal('show');
     }
 
