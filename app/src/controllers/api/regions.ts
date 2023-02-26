@@ -2,7 +2,7 @@ import { DatabaseEngine } from "../../configs/mongo.js";
 import { collectionExistsInDatabase, queryFeatureDocuments, queryAllFeatureDocuments } from "../../utils/database.js";
 // @ts-ignore
 import { Request, Response } from "express-serve-static-core";
-import { AggregateOptions, ObjectId } from "mongodb";
+import { ObjectId } from "mongodb";
 
 
 /**
@@ -66,8 +66,14 @@ export async function handleGetRegionBorderWithWeather(req: Request, res: Respon
         if (!req.params.id) throw "Must specify a region ID";
 
         let start, end;
-        if (req.query.start) start = new Date(req.query.start as string);
-        if (req.query.end) end = new Date(req.query.start as string);
+        if (req.query.start) {
+            start = new Date(req.query.start as string);
+            if (isNaN(start.valueOf())) throw "Start date is invalid";
+        }
+        if (req.query.end){
+            end = new Date(req.query.end as string);
+            if (isNaN(end.valueOf())) throw "End date is invalid";
+        } 
 
         const weatherCollection = DatabaseEngine.getWeatherCollection();
         const datesCollectionName = DatabaseEngine.getWeatherDatesCollectionName();
@@ -97,9 +103,13 @@ export async function handleGetRegionBorderWithWeather(req: Request, res: Respon
 
         pipeline.push({ $match: { "date": { "$ne": [] } } });
         pipeline.push({ $project: { "_id":0, "weatherDateObjectId": 0 } });
-
+        
         // run query
         const data = await weatherCollection.aggregate(pipeline).toArray();
+
+        for (const d of data) {
+            d.date = d.date[0].date;
+        }
 
         return res.json(data);
 
