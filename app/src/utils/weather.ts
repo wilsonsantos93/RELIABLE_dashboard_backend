@@ -220,7 +220,7 @@ export async function transformData(data: any[]) {
 
         // Insert dates into DB
         const bulkOps = originalDates.map((date: string) => {
-            const dateToInsert = extractAndFormatDateFromString(date);
+            const dateToInsert = new Date(extractAndFormatDateFromString(date));
             formattedDates.push(dateToInsert);
             return { updateOne: 
                 {
