@@ -23,6 +23,9 @@
                       <label for="">Description</label>
                       <input required class="form-control" type="text" name="description" placeholder="Descrição" value="<%= data.description %>" />
 
+                      <label for="">Unit of measure</label>
+                      <input required class="form-control" type="text" name="unit" placeholder="ºC, m/s, %..." value="<%= data.unit %>" />
+
                       <p>Authentication required to view on map:</p>
                       <% if (!data.authRequired) { %>
                         <input class="form-check-input" type="radio" id="yes" name="authRequired" value="true" />
