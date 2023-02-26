@@ -52,7 +52,9 @@ export async function createMetadata(req: Request, res: Response) {
             !req.body.data.name || 
             req.body.data.name == '' || 
             !req.body.data.description ||
-            req.body.data.description == ''
+            req.body.data.description == '' ||
+            !req.body.data.unit ||
+            req.body.data.unit == ''
         ) throw "Some fields are missing.";
 
         const data: WeatherMetadata = { 
@@ -137,7 +139,9 @@ export async function updateMetadata(req: Request, res: Response) {
             !req.body.data.name || 
             req.body.data.name == '' || 
             !req.body.data.description ||
-            req.body.data.description == ''
+            req.body.data.description == '' ||
+            !req.body.data.unit ||
+            req.body.data.unit == ''
         ) throw "Some fields are missing.";
 
         const data: WeatherMetadata = { 

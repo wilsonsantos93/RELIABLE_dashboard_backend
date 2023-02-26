@@ -135,103 +135,29 @@ export async function readWeatherFile() {
 }
 
 /**
- * Function that transforms raw data
- * @param data Array containing the raw weather data to be transformed.
- * @returns The transformed data to insert into database.
+ * Function that extracts the date from a string
+ * @param str The string that may contain a date
+ * @param regex (optional) The regular expression to match
+ * @returns The regular expression match array
  */
-export async function transformData(data: any[]) {
-    if (!data.length) return [];
-
-    const transformedData: any[] = [];
-    //const regex = "(\d{4}|[0-9]{2})(-|\/)([0-9]{2})(-|\/)([0-9]{4}|[0-9]{2})";
-    const regex = new RegExp("[0-9]{2,4}(-|/)[0-9]{2}(-|/)[0-9]{2,4}(( |_|T)[0-9]{0,2}(:||_)[0-9]{0,2}(:||_)[0-9]{0,2}(\.[0-9]{0,3})?){0,1}");
-    const dates: string[] = [];
-    const fieldsWithoutDate: string[] = [];
-    const fieldsWithDate: string[] = [];
-    const originalDates:string[] = [];
-
-    // Get fields with date and fields without date
-    (Object.keys(data[0])).forEach(field => {
-        /* const matchArr = field.match(regex);
-        if (matchArr) {
-            fieldsWithDate.push(field);
-            const date = matchArr[0]//.replace(/\//g, "-");
-            if (!dates.includes(date)) dates.push(date);
-        }
-        else fieldsWithoutDate.push(field); */
-
-        const originalDate = field.match(regex);
-        if (originalDate) originalDates.push(originalDate[0]);
-
-        const formattedDate = extractDateFromString(field);
-        if (formattedDate) {
-            fieldsWithDate.push(field);
-            if (!dates.includes(formattedDate)) dates.push(formattedDate);
-        } 
-        else fieldsWithoutDate.push(field);  
-    })
-
-    if (!dates.length) return [];
-
-    // Insert dates in DB
-    const bulkOps = dates.map(d => {
-        /*const reverseDate = d.split("-").reverse().join("-"); 
-        const dateToInsert = new Date(reverseDate); */
-        const dateToInsert = d;
-        return { updateOne: 
-            {
-                filter: { "date": dateToInsert }, 
-                update: { $setOnInsert: { "date": dateToInsert } }, 
-                upsert: true 
-            }
-        }
-    });
-    const datesCollection = DatabaseEngine.getWeatherDatesCollection();
-    await datesCollection.bulkWrite(bulkOps);
-    const datesFromDB = await datesCollection.find({}).toArray();
-
-    // Loop through CSV data and create samples
-    const regionsCollection = DatabaseEngine.getFeaturesCollection();
-    for (const row of data) {
-        if (!row.hasOwnProperty(WEATHER_FIELD_TO_MATCH)) continue;
-        const regionPossibleNames = allReplacements(row[WEATHER_FIELD_TO_MATCH], "-", " ");
-        const projection: FeaturesProjection = { _id: 1 };
-        const regions = await regionsCollection.find(
-                //{ "feature.properties.Concelho": row.county },
-                { [DATABASE_FIELD_TO_MATCH]: { $in: regionPossibleNames } },
-                { projection }
-            )
-            .collation({ locale: "pt", strength: 1 })
-            .toArray();
-        
-        if (!regions.length) continue;
-
-        for (const date of dates) {
-            //const fields = [...fieldsWithoutDate, ...fieldsWithDate.filter(f => f.includes(date))];
-            //const reverseDate = date.split("-").reverse().join("-"); 
-            const fields = [...fieldsWithoutDate, ...fieldsWithDate];
-            const dateObj = datesFromDB.find(d => new Date(d.date).valueOf() === new Date(date).valueOf());
-
-            for (const region of regions) {
-                const sample: any = { weather: {} };
-                for (const field of fields) {
-                    sample.weather[field.replace(date,"").replace(/^\_+|\_+$/g, '')] = row[field];
-                }
-                sample.regionBorderFeatureObjectId = region._id || null; //regions[0]?._id || null;
-                sample.weatherDateObjectId = dateObj?._id || null;
-
-                transformedData.push(sample);
-            }
-        }
-    }
-
-    return transformedData;
-}
-
 function extractDateFromString(str: string, regex: string | RegExp = null) {
     if (!regex) regex = new RegExp("[0-9]{2,4}(-|/)[0-9]{2}(-|/)[0-9]{2,4}(( |_|T)[0-9]{0,2}(:||_)[0-9]{0,2}(:||_)[0-9]{0,2}(\.[0-9]{0,3})?){0,1}");
 
     const match = str.match(regex);
+
+    if (!match) return null;
+
+    return match;
+}
+
+/**
+ * Function that extracts the date from a string and formats it
+ * @param data Array containing the raw weather data to be transformed.
+ * @param regex (optional) The regular expression to match
+ * @returns The formatted date to insert into database.
+ */
+function extractAndFormatDateFromString(str: string, regex: string | RegExp = null) {
+    const match = extractDateFromString(str);
 
     if (!match) return null;
 
@@ -252,4 +178,92 @@ function extractDateFromString(str: string, regex: string | RegExp = null) {
     }
 
     return `${year}-${month}-${day}${time ? ' '+time : ''}`;
+}
+
+
+/**
+ * Function that transforms raw data
+ * @param data Array containing the raw weather data to be transformed.
+ * @returns The transformed data to insert into database.
+ */
+export async function transformData(data: any[]) {
+    const transformedData: any = [];
+    const formattedDates: any = [];
+    const originalDates: any = [];
+    const fieldsNotDate: string[] = [];
+    const regionsCollection = DatabaseEngine.getFeaturesCollection();
+    const datesCollection = DatabaseEngine.getWeatherDatesCollection();
+
+    // Loop through data 
+    for (const d of data) {
+        if (!d.hasOwnProperty(WEATHER_FIELD_TO_MATCH)) continue;
+        const regionPossibleNames = allReplacements(d[WEATHER_FIELD_TO_MATCH], "-", " ");
+        const projection: FeaturesProjection = { _id: 1 };
+        const regions = await regionsCollection.find(
+            { [DATABASE_FIELD_TO_MATCH]: { $in: regionPossibleNames } },
+            { projection }
+        )
+        .collation({ locale: "pt", strength: 1 })
+        .toArray();
+        
+        if (!regions.length) continue;
+        
+        // Loop through fields
+        for (const key in d) {
+            const match = extractDateFromString(key);
+            const originalDate = match && match.length ? match[0] : null;
+            if (originalDate && !originalDates.includes(originalDate)) originalDates.push(originalDate);
+            if (!originalDate) fieldsNotDate.push(key);
+        }
+
+        if (!originalDates.length) return [];
+
+        // Insert dates into DB
+        const bulkOps = originalDates.map((date: string) => {
+            const dateToInsert = extractAndFormatDateFromString(date);
+            formattedDates.push(dateToInsert);
+            return { updateOne: 
+                {
+                    filter: { "date": dateToInsert }, 
+                    update: { $setOnInsert: { "date": dateToInsert } }, 
+                    upsert: true 
+                }
+            }
+        });
+        await datesCollection.bulkWrite(bulkOps);
+        const datesFromDB = await datesCollection.find({ date: { $in: formattedDates }}).toArray();
+
+        // build sample for each date
+        for (const date of originalDates) {
+            let sample: any = {};
+
+            // Add fields with this date to the sample
+            const fields = Object.keys(d).filter(f => f.includes(date));
+            if (!fields || !fields.length) continue;
+
+            sample.weather = {};
+            fields.forEach(f => {
+                sample.weather[f.replace(date,"").replace(/^\_+|\_+$/g, '')] = parseFloat(d[f]) || d[f];
+            });
+
+            // Add fields not having any date to the sample
+            fieldsNotDate.forEach(f => {
+                sample.weather[f] = parseFloat(d[f]) || d[f];
+            });
+
+            // Add dateId
+            sample.weatherDateObjectId = datesFromDB.find(doc => new Date(doc.date).valueOf() == new Date(extractAndFormatDateFromString(date)).valueOf())?._id;
+
+            // Add region id and push to array
+            for (const region of regions) {
+                // Add region Id
+                sample.regionBorderFeatureObjectId = region?._id || null;
+
+                // Push sample to array
+                if (Object.keys(sample).length > 0) transformedData.push(sample);
+            }  
+        }
+    }
+
+    return transformedData;
 }
