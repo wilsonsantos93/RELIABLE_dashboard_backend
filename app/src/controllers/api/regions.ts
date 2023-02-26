@@ -2,7 +2,7 @@ import { DatabaseEngine } from "../../configs/mongo.js";
 import { collectionExistsInDatabase, queryFeatureDocuments, queryAllFeatureDocuments } from "../../utils/database.js";
 // @ts-ignore
 import { Request, Response } from "express-serve-static-core";
-import { ObjectId } from "mongodb";
+import { AggregateOptions, ObjectId } from "mongodb";
 
 
 /**
@@ -58,5 +58,53 @@ export async function handleGetRegionBorders(req: Request, res: Response) {
     } catch (e) {
         console.error(e);
         return res.status(500).json("Error getting regions");
+    }
+}
+
+export async function handleGetRegionBorderWithWeather(req: Request, res: Response) {
+    try {
+        if (!req.params.id) throw "Must specify a region ID";
+
+        let start, end;
+        if (req.query.start) start = new Date(req.query.start as string);
+        if (req.query.end) end = new Date(req.query.start as string);
+
+        const weatherCollection = DatabaseEngine.getWeatherCollection();
+        const datesCollectionName = DatabaseEngine.getWeatherDatesCollectionName();
+
+        // aggregation pipeline
+        let pipeline: any = [];
+        pipeline.push({ $match: { regionBorderFeatureObjectId: new ObjectId(req.params.id) }});
+
+        // aggregate with date
+        pipeline.push({ 
+            $lookup: {
+                from: datesCollectionName,
+                localField: 'weatherDateObjectId',
+                foreignField: '_id',
+                as: 'date'
+            }
+        });
+
+        // add match to lookup if start or date exist
+        if (start || end) {
+            let matchObj: any = { date: {} };
+            if (start) matchObj.date["$gte"] = start;
+            if (end) matchObj.date["$lte"] = end;
+            pipeline[1]["$lookup"].pipeline = [];
+            pipeline[1]["$lookup"].pipeline.push({ $match: { ...matchObj } });
+        }
+
+        pipeline.push({ $match: { "date": { "$ne": [] } } });
+        pipeline.push({ $project: { "_id":0, "weatherDateObjectId": 0 } });
+
+        // run query
+        const data = await weatherCollection.aggregate(pipeline).toArray();
+
+        return res.json(data);
+
+    } catch(e) {
+        console.error(e);
+        return res.status(500).json(JSON.stringify(e));
     }
 }
