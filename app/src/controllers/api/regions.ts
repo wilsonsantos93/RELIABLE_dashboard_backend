@@ -115,6 +115,6 @@ export async function handleGetRegionBorderWithWeather(req: Request, res: Respon
 
     } catch(e) {
         console.error(e);
-        return res.status(500).json(JSON.stringify(e));
+        return res.status(500).json(e);
     }
 }

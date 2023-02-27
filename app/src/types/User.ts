@@ -10,7 +10,7 @@ export type User = {
     _id: ObjectId | string;
     username: string;
     password?: string;
-    token: string;
     email: string;
     role: Role;
+    locations?: { name: string, lat: number, lng: number }[];
 }

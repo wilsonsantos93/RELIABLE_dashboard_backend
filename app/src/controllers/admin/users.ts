@@ -68,7 +68,6 @@ export async function handleCreateUser(req: Request, res: Response) {
     }
 
     const user = req.body;
-   // user.username = user.email.split("@")[0];
     const passwordHash = await hashPassword(user.password);
     user.password = passwordHash;
 
