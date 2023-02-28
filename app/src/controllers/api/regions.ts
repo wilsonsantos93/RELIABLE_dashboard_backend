@@ -54,12 +54,20 @@ export async function handleGetRegionBorders(req: Request, res: Response) {
             // We are going to use the returning query parameters to build the geoJSON
             // As such, the feature _id, center, and crsObjectId aren't needed
             // We only need the type, properties and geometry
-            let regionBordersQueryProjection = {
+            /* let regionBordersQueryProjection: any = {
                 _id: 0,
                 type: 1,
                 properties: 1,
                 geometry: 1,
-            };
+            }; */
+            let regionBordersQueryProjection: any = { _id: 0, crsObjectId: 0 };
+
+            if (req.query.hasOwnProperty("geometry") && (req.query.geometry == '0' || req.query.geometry == 'false')) {
+                regionBordersQueryProjection["geometry"] = 0
+            }
+            if (req.query.hasOwnProperty("center") && (req.query.center == '0' || req.query.center == 'false')) {
+                regionBordersQueryProjection["center"] = 0
+            }
 
             if (req.params.id) {
                 regionBordersQuery._id = new ObjectId(req.params.id as string);

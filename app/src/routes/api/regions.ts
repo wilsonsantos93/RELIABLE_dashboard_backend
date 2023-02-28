@@ -5,7 +5,6 @@ import express from "express";
 //! Client sends a geoJSON to be saved to the database
 //! Calculate centers of each feature in the database route
 import { handleGetRegionBorders, handleGetRegionBorderWithWeather } from "../../controllers/api/regions.js";
-import { authenticateAPI } from "../../utils/routes.js";
 
 const router = express.Router();
 

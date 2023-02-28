@@ -238,13 +238,16 @@ export async function queryAllFeatureDocuments(queryProjection: any, skip: numbe
  */
 export async function queryWeatherDocuments(
     weatherDateID: ObjectId, 
+    crsObjectId: ObjectId = null,
     coordinates: BoundingBox = null,
-    useCenters: boolean = false
+    useCenters: boolean = false,
 ) {
     const weatherCollectionName = DatabaseEngine.getWeatherCollectionName();
 
-    const pipeline = [];
+    const pipeline: any = [];
     pipeline.push({ $match: { "center": { $exists: true } } });
+
+    if (crsObjectId) pipeline[0]["$match"].crsObjectId = crsObjectId;
 
     if (coordinates) {
         if (useCenters) {
@@ -314,7 +317,6 @@ export async function queryAllWeatherDates() {
         projection: weatherDatesProjection,
     };
 
-    // The following query returns [{type: "Feature",...}, {type:"Feature",...}]
     try {
         const featuresQueryResults = await DatabaseEngine.getWeatherDatesCollection()
             .find(weatherDatesQuery, weatherDatesQueryOptions)
