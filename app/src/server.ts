@@ -44,11 +44,10 @@ app.use(router);
 // node schedule
 schedule.scheduleJob('0 * * * *', async function () {
    await handleDeleteWeatherAndDates();
+   await readWeatherFile();
 });
 
 //! Start server
 app.listen(process.env.PORT, function () {
     console.log("Weather data server started listening on port " + process.env.PORT + ".\n");
 });
-
-//readWeatherFile()
