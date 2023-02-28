@@ -79,6 +79,8 @@ export async function handleGetRegionBordersAndWeatherByDate(req: Request, res: 
         for (const weatherDocument of weatherDocuments as any) {
             if (!weatherDocument.weather.length) weatherDocument.weather = null;
             else weatherDocument.weather = weatherDocument.weather[0].weather;
+            /* if (!weatherDocument.weather.length) weatherDocument.feature.properties.weather = null;
+            else weatherDocument.feature.properties.weather = weatherDocument.weather[0].weather; */
         }
         
         const geoJsonArrayWithWeather = {

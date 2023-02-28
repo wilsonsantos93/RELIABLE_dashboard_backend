@@ -1,5 +1,5 @@
 import { DatabaseEngine } from "../../configs/mongo.js";
-import { collectionExistsInDatabase, queryFeatureDocuments, queryAllFeatureDocuments } from "../../utils/database.js";
+import { collectionExistsInDatabase, queryFeatureDocuments, queryAllFeatureDocuments, queryAllCoordinatesReferenceSystems } from "../../utils/database.js";
 // @ts-ignore
 import { Request, Response } from "express-serve-static-core";
 import { ObjectId } from "mongodb";
@@ -29,7 +29,59 @@ export async function handleGetRegionBorders(req: Request, res: Response) {
         }
 
         //* If the region borders collection exists, send the various saved geoJSONs to the client
-        let projection: any = {};
+        console.log("Started sending geoJSONs to the client.");
+        let geoJSONs = [];
+
+        //* Query the region borders collection for the crs
+        //* The _id and the crs of each CRS document, is going to be used to return a geoJSON with the crs, and the associated region border features
+        let crsQueryProjection = {_id: 1, crs: 1};
+        console.log("Started querying coordinates reference systems collection for all CRSs.");
+
+        let crsQueryResults = await queryAllCoordinatesReferenceSystems(
+            crsQueryProjection
+        );
+        console.log("Finished querying coordinates reference systems collection for all CRSs.");
+
+        //* Query each CRS in the database for the associated border region features
+        console.log("Started query each CRS in the database for the associated border region features.");
+        for (const crs of crsQueryResults) {
+            let geoJSON: any = {
+                type: "FeatureCollection",
+                crs: crs.crs,
+            };
+
+            let regionBordersQuery: any = {crsObjectId: crs._id}; // Query for all the features that have the same crsObjectId as the current CRS _id
+            // We are going to use the returning query parameters to build the geoJSON
+            // As such, the feature _id, center, and crsObjectId aren't needed
+            // We only need the type, properties and geometry
+            let regionBordersQueryProjection = {
+                _id: 0,
+                type: 1,
+                properties: 1,
+                geometry: 1,
+            };
+
+            if (req.params.id) {
+                regionBordersQuery._id = new ObjectId(req.params.id as string);
+            }
+            
+            let regionBordersFeaturesArray = await queryFeatureDocuments(
+                regionBordersQuery,
+                regionBordersQueryProjection
+            );
+
+            // Add the queried features to the geoJSON
+            geoJSON.features = regionBordersFeaturesArray;
+
+            // Add the geoJSON to the geoJSONs array
+            geoJSONs.push(geoJSON);
+        }
+        console.log("Finished query each CRS in the database for the associated border region features.");
+
+        return res.json(geoJSONs);
+
+
+        /*let projection: any = {};
         if (req.query.hasOwnProperty("geometry") && (req.query.geometry == '0' || req.query.geometry == 'false')) {
             projection["feature.geometry"] = 0
         }
@@ -52,9 +104,10 @@ export async function handleGetRegionBorders(req: Request, res: Response) {
         const geoJSON = {
             type: "FeatureCollection",
             features: regionBordersDocumentsArray
-        }
+        } 
 
-        return res.json(geoJSON);
+        return res.json(geoJSON);*/
+
     } catch (e) {
         console.error(e);
         return res.status(500).json("Error getting regions");

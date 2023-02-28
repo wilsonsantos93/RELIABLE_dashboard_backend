@@ -10,7 +10,7 @@ import { allReplacements } from "./database.js";
 const KEEP_DATA_PREVIOUS_DAYS = parseInt(process.env.KEEP_DATA_PREVIOUS_DAYS) || 2;
 const CSV_FOLDER_PATH_DOCKER = process.env.CSV_FOLDER_PATH_DOCKER || null;
 const CSV_FOLDER_PATH_LOCAL = process.env.CSV_FOLDER_PATH_LOCAL || null;
-const DATABASE_FIELD_TO_MATCH = "feature.properties.Concelho";
+const DATABASE_FIELD_TO_MATCH = "properties.Concelho";
 const WEATHER_FIELD_TO_MATCH = "county";
 
 /**

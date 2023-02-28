@@ -2,8 +2,8 @@ import { Router } from "express";
 import passport from "passport";
 import jwt from "jsonwebtoken";
 import { DatabaseEngine } from "../../configs/mongo.js";
-import { hashPassword } from "../../auth/helpers";
-import { Role } from "../../types/User";
+import { hashPassword } from "../../auth/helpers.js";
+import { Role } from "../../types/User.js";
 import { decrypt } from "../../utils/encrypt.js";
 
 const router = Router();

@@ -5,7 +5,7 @@ import proj4 from "proj4";
 import fetch from "cross-fetch";
 import {Feature, FeatureCollection, MultiPolygon, Polygon, Position} from "geojson";
 import {FeatureProperties} from "../types/FeatureProperties";
-import {CRS} from "../types/FeatureCollectionWithCRS";
+import {CRS, FeatureCollectionWithCRS} from "../types/FeatureCollectionWithCRS";
 
 /**
  * Requests and returns the projection information of a {@link CoordinatesReferenceSystem} from an external API.
@@ -28,9 +28,9 @@ export async function requestProjectionInformation(crs: CRS) {
  * @param  geoJSON - to separate MultiPolygon features.
  * @return separatedGeoJSON - geoJSON with the MultiPolygon features separated.
  */
-export function separateMultiPolygons(geoJSON: FeatureCollection<MultiPolygon | Polygon, FeatureProperties> ) {
+export function separateMultiPolygons(geoJSON: FeatureCollectionWithCRS) {
 
-    let separatedGeoJSON: FeatureCollection<Polygon, FeatureProperties> = {
+    /* let separatedGeoJSON: FeatureCollection<Polygon, FeatureProperties> = {
         type: geoJSON.type,
         features: []
     };
@@ -78,8 +78,44 @@ export function separateMultiPolygons(geoJSON: FeatureCollection<MultiPolygon | 
 
     }
 
-    return separatedGeoJSON;
+    return separatedGeoJSON; */
 
+    let separatedGeoJSON: any = {};
+
+    separatedGeoJSON.type = geoJSON.type;
+    separatedGeoJSON.crs = geoJSON.crs;
+    separatedGeoJSON.features = [];
+
+    for (const currentFeature of geoJSON.features) {
+
+        // If the feature is of the type Polygon, then simply append it to the separated geoJSON
+        if (currentFeature.geometry.type === "Polygon") {
+            separatedGeoJSON.features.push(currentFeature);
+        }
+
+        // If the feature is of the type MultiPolygon, every Polygon in the MultiPolygon needs to be separated into a new feature
+        else if (currentFeature.geometry.type === "MultiPolygon") {
+
+            for (const polygon of currentFeature.geometry.coordinates) {
+
+                let tempFeature: any = {
+                    type: String,
+                    properties: Object,
+                }
+
+                tempFeature.type = currentFeature.type;
+                tempFeature.properties = currentFeature.properties;
+                tempFeature.geometry = {}
+                tempFeature.geometry.type = "Polygon";
+                tempFeature.geometry.coordinates = polygon;
+
+                separatedGeoJSON.features.push(tempFeature);
+
+            }
+        }
+    }
+
+    return separatedGeoJSON;
 }
 
 /**

@@ -4,7 +4,7 @@ import { Filter, ObjectId, Document } from "mongodb";
 import async from "async";
 // @ts-ignore
 import polygonCenter from "geojson-polygon-center";
-import { collectionExistsInDatabase, queryFeatureDocuments, saveFeatures, getCollectionFields, getDatatablesData } from "../../utils/database.js";
+import { collectionExistsInDatabase, queryFeatureDocuments, saveFeatures, getCollectionFields, getDatatablesData, saveCRS, associateCRStoFeatures, queryAllFeatureDocuments } from "../../utils/database.js";
 import { FeatureProperties } from "../../types/FeatureProperties";
 import { FeatureCollectionWithCRS } from "../../types/FeatureCollectionWithCRS";
 import { MultiPolygon, Polygon } from "geojson";
@@ -45,14 +45,14 @@ export async function handleGetRegions(req: Request, res: Response) {
   try {
     let projection: any = {};
     if (req.query.hasOwnProperty("geometry") && (req.query.geometry == '0' || req.query.geometry == 'false')) {
-      projection["feature.geometry"] = 0
+      projection["geometry"] = 0
     }
     if (req.query.hasOwnProperty("center") && (req.query.center == '0' || req.query.center == 'false')) {
-      projection["feature.center"] = 0
+      projection["center"] = 0
     }
 
     projection["center.type"] = 0;
-    projection["feature.type"] = 0;
+    projection["type"] = 0;
     const collectionName = DatabaseEngine.getFeaturesCollectionName();
     const data = await getDatatablesData(collectionName, projection, req.query);
     return res.json(data);
@@ -170,12 +170,13 @@ export async function handleGetRegionWithWeather(req: Request, res: Response) {
  */
 export async function handleGetRegionFields(req: Request, res: Response) {
   try {
-    const projection = { _id: 1, "feature.type": 0, "feature.geometry": 0, "center.type": 0 };
+    const projection = { _id: 1, "type": 0, "geometry": 0, "center.type": 0 };
     const find = {};
     const collectionName = DatabaseEngine.getFeaturesCollectionName();
     const fields = await getCollectionFields(collectionName, find, projection);
     return res.json(fields);
   } catch (e) {
+    console.error(e);
     return res.status(500).json(JSON.stringify(e));
   }
 }
@@ -242,19 +243,20 @@ export async function handleCalculateCenters(req: Request, res: Response) {
     //* Query the region borders collection for the various features
     // The query results are going to be used by server to calculate the FeatureCenter of each and all features (geometry field), and save it to the corresponding feature (using the id).
     // As such, the properties don't need to be returned, and the FeatureCenter coordinates of each region don't need to be returned (because they shouldn't exist yet).
-    let featuresQuery: Filter<Document> = { center: { $exists: false } };
+    //let featuresQuery: Filter<Document> = { center: { $exists: false } };
     let featuresQueryProjection = {
       _id: 1,
       properties: 0,
       center: 0,
       crsObjectId: 0,
     };
-    let featureDocuments = await queryFeatureDocuments(
+
+    /*let featureDocuments = await queryFeatureDocuments(
       featuresQuery,
       featuresQueryProjection
     );
 
-    let currentFeatureIndex = 1;
+     let currentFeatureIndex = 1;
     await async.each(featureDocuments, async (currentFeature) => {
       if ((currentFeatureIndex % 10) === 0) {
         console.log("Calculating center of feature number: " + currentFeatureIndex)
@@ -273,7 +275,26 @@ export async function handleCalculateCenters(req: Request, res: Response) {
       );
 
       currentFeatureIndex++;
-    })
+    }) */
+
+    let featuresQueryResults = await queryAllFeatureDocuments(
+      featuresQueryProjection
+    );
+
+    for (const feature of featuresQueryResults) {
+      let center = polygonCenter(feature.geometry);
+
+      // Add the centre data to the feature in the database
+      await DatabaseEngine.getFeaturesCollection().updateOne(
+        {_id: feature._id}, // Updates the region feature document that has the same id as the current feature
+        {
+          $set: {
+            center: center,
+          },
+        }
+      );
+  }
+
 
     let message = "";
     message += "Calculated the center coordinates for every feature in the region borders collection.";
@@ -301,10 +322,33 @@ export async function handleSaveRegions(req: Request, res: Response) {
     let trimmedFileBuffer = fileBuffer.toString().trimStart().trimEnd(); // Sometimes the geoJSON sent has unnecessary spaces that need to be trimmed
     let geoJSON: FeatureCollectionWithCRS<MultiPolygon | Polygon, FeatureProperties> = JSON.parse(trimmedFileBuffer); // Parse the trimmed file buffer to a correct geoJSON
 
+    //* Save geoJSON coordinate reference system to the collection, if it doesn't already exist
+    let insertedCRSObjectId;
+
+    try {
+      console.log(
+          "Started inserting geoJSON coordinate reference system in the database."
+      );
+      insertedCRSObjectId = await saveCRS(geoJSON);
+      console.log(
+          "Inserted geoJSON coordinate reference system in the database. CRS ID in database:",
+          // To extract the ID string inside the ObjectId, we use ObjectId.toHexString
+          insertedCRSObjectId.toHexString() // The ID string of the CRS document that was inserted in the database
+      );
+    } catch (e) {
+      console.error(e);
+      res.send(e);
+    }
+    
     //* Save each geoJSON feature to the collection individually
     console.log("Started inserting geoJSON features in the database.");
-    await saveFeatures(geoJSON);
+    let insertedFeaturesObjectIds = await saveFeatures(geoJSON);
     console.log("Inserted geoJSON features in the database.");
+
+     //* Create a field with on each feature with its associated coordinates reference system
+     console.log("Starting associating each feature with its CRS.");
+     await associateCRStoFeatures(insertedCRSObjectId, insertedFeaturesObjectIds);
+     console.log("Finished associating each feature with its CRS.\n");
 
     // Send successful response to the client
     req.flash("success_message", "Server successfully saved geoJSON.");

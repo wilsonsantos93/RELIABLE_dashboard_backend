@@ -9,15 +9,15 @@ import { authenticateAPI } from "../../utils/routes.js";
 
 const router = express.Router();
 
-router.get("/", authenticateAPI(), async function (request, response) {
+router.get("/", async function (request, response) {
   await handleGetRegionBorders(request, response);
 });
 
-router.get("/:id", authenticateAPI(), async function (request, response) {
+router.get("/:id", async function (request, response) {
   await handleGetRegionBorders(request, response);
 });
 
-router.get("/:id/weather", authenticateAPI(), async function (request, response) {
+router.get("/:id/weather", async function (request, response) {
   await handleGetRegionBorderWithWeather(request, response);
 });
 

@@ -10,9 +10,6 @@ import schedule from "node-schedule";
 import { handleDeleteWeatherAndDates, readWeatherFile } from "./utils/weather.js";
 import path from "path";
 import { fileURLToPath } from 'url';
-import { decrypt, encrypt } from "./utils/encrypt.js";
-import crypto from 'crypto';
-
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 

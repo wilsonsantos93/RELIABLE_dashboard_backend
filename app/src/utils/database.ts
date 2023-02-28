@@ -1,12 +1,13 @@
 import {DatabaseEngine} from "../configs/mongo.js";
 import {convertFeatureCoordinatesToLatLong, requestProjectionInformation, separateMultiPolygons} from "./features.js";
-import {Db, Document, Filter, FindOptions, ObjectId} from "mongodb";
+import {Collection, Db, Document, Filter, FindOptions, ObjectId} from "mongodb";
 import {FeatureDocument} from "../types/DatabaseCollections/FeatureDocument";
 import { WeatherCollectionDocumentWithFeature } from "../types/DatabaseCollections/WeatherCollectionDocument";
 import {Feature, MultiPolygon, Polygon} from "geojson";
 import {FeatureProperties} from "../types/FeatureProperties";
 import {FeatureCollectionWithCRS} from "../types/FeatureCollectionWithCRS";
 import { BoundingBox } from "../types/BoundingBox.js";
+import fetch from "cross-fetch";
 
 /**
  * Checks if a collection exists in a database.
@@ -32,14 +33,102 @@ export async function collectionExistsInDatabase(collectionName: string, databas
     return collectionExists;
 }
 
+//* Returns a CRS database _id given that it already exists in the CRS collection
+//* Returns null otherwise
+export async function queryCrsCollectionID(CRS: any, crsCollection: Collection) {
+    let crsQuery = {crs: CRS}; // Query for the database document that has the same crs field as the CRS passed as argument
+    // We only want to verify if the CRS passed as argument already exists in the database
+    // To do so, we only need a crs document field to be returned by the query, like the _id field
+    // If no field is returned we know that the CRS argument doesn't exist in the database
+    let crsQueryProjection = {_id: 1};
+    let crsQueryOptions = {
+        projection: crsQueryProjection,
+    };
+
+    let databaseCRS = await crsCollection.findOne(crsQuery, crsQueryOptions);
+
+    //* Returns a CRS database _id given that it exists in the CRS collection
+    if (databaseCRS != null) {
+        return databaseCRS._id;
+    }
+
+    //* Returns null otherwise
+    if (databaseCRS == null) {
+        return null;
+    }
+}
+
+//* Fetch the projection information of the feature associated CRS, and return it
+async function fetchProjectionInformation(crsName: string) {
+    let projectionNumber = crsName.split("::")[1]; // The number of the EPSG projection, used to fetch the projection information from an external API
+    let projectionInformationURL =
+        "https://epsg.io/" + projectionNumber + ".proj4"; // The URL of the projection information
+    const projectionResponse = await fetch(projectionInformationURL);
+    let projectionInformation = await projectionResponse.text();
+
+    return projectionInformation;
+}
+
+//* Save a coordinates reference system found on a geoJSON to the database
+//* Returns the database ObjectId of the crs document inserted
+//* If the crs already exists in the database, return its ObjectId
+export async function saveCRS(geoJSON: any) {
+    let crsCollection = DatabaseEngine.getCRSCollection();
+
+    // Verify if the crs already exists in the database
+    let crsCollectionID = await queryCrsCollectionID(geoJSON.crs, crsCollection);
+
+    //* If the crs already exists in the database, return its ObjectID
+    if (crsCollectionID != null) {
+        return crsCollectionID;
+    }
+
+    //* If the crs already doesn't already exist in the database, insert it and its projection information, and return its ObjectID.
+    let databaseResponse = await crsCollection.insertOne({
+        crs: geoJSON.crs,
+        crsProjection: await fetchProjectionInformation(geoJSON.crs.properties.name)
+    });
+    // insertOne returns some unnecessary parameters
+    // it also returns an ObjectId("62266b751239b26c92ec8858") accessed with "databaseResponse.insertedId"
+    return databaseResponse.insertedId;
+}
+
+//* Create a field on each feature with its associated coordinates reference system
+export async function associateCRStoFeatures(crsObjectId: any, featureObjectIds: any[]) {
+    //* For each feature that had its ID passed as parameter, associate a crs ID
+    for (const featureObjectId of featureObjectIds) {
+        // Update the crs ID of a feature in the database
+        await DatabaseEngine.getFeaturesCollection().updateOne(
+            {_id: featureObjectId}, // Updates the feature database document that has the same ObjectId as the current featureObjectId
+            {
+                $set: {
+                    crsObjectId: crsObjectId,
+                },
+            }
+        );
+    }
+}
+
+//* Query the coordinates reference systems collection for all CRSs, and return them in an array
+export async function queryAllCoordinatesReferenceSystems(queryProjection: any) {
+    let CRSsQuery = {}; // Query for all documents in the coordinates reference systems collection
+    let CRSsQueryOptions = {
+        projection: queryProjection,
+    };
+
+    let CRSsQueryResults = await DatabaseEngine.getCRSCollection()
+        .find(CRSsQuery, CRSsQueryOptions)
+        .toArray();
+
+    return CRSsQueryResults;
+}
 
 /**
  * Save each {@link \"GeoJSON\"} {@link Feature} to the <u>regionBorders</u> collection individually.
  * @param geoJSON {@link \"GeoJSON\"} to insert to the collection.
  */
 export async function saveFeatures(geoJSON: FeatureCollectionWithCRS<MultiPolygon | Polygon, FeatureProperties>) {
-
-    let geoJSONProjectionInformation = await requestProjectionInformation(geoJSON.crs)
+    /* let geoJSONProjectionInformation = await requestProjectionInformation(geoJSON.crs)
 
     console.log("Started separating Multi Polygons.")
     let separatedGeoJSON = separateMultiPolygons(geoJSON)
@@ -65,7 +154,21 @@ export async function saveFeatures(geoJSON: FeatureCollectionWithCRS<MultiPolygo
     let regionBordersCollection = DatabaseEngine.getFeaturesCollection();
     await regionBordersCollection.insertMany(
         convertedFeaturesDocuments
+    ); */
+    let regionBordersCollection = DatabaseEngine.getFeaturesCollection();
+
+    let separatedGeoJSON = separateMultiPolygons(geoJSON)  // Separates the geoJSON MultiPolygon features into multiple features
+
+    let databaseResponse = await regionBordersCollection.insertMany(
+        separatedGeoJSON.features
     );
+    // insertMany returns some unnecessary parameters
+    // it also returns {'0': new ObjectId("62266ee5a6f882dc9e143bfa"), '1': new ObjectId("62266ee5a6f882dc9e143bfb"), ...}
+    // This JSON with the various ObjectIDs can be accessed with databaseResponse.insertedIds
+    // To convert the returned JSON to an array with only the ObjectIDs, we use Object.values(databaseResponse.insertedIds)
+    let ObjectIdsArray = Object.values(databaseResponse.insertedIds);
+
+    return ObjectIdsArray;
 }
 
 
@@ -93,7 +196,7 @@ export async function queryFeatureDocuments(
         .limit(limit)
         .skip(skip)
         .collation({ locale: "pt", strength: 1 })
-        .toArray() as FeatureDocument[];
+        .toArray();
 
     return featuresQueryResults;
 }
@@ -113,12 +216,11 @@ export async function queryAllFeatureDocuments(queryProjection: any, skip: numbe
     // The following query returns [{type: "Feature",...}, {type:"Feature",...}]
     try {
         console.log("Querying features collection for all features.");
-        console.log(skip, limit)
         let featuresQueryResults = await DatabaseEngine.getFeaturesCollection()
             .find(featuresQuery, featuresQueryOptions)
             .limit(limit)
             .skip(skip)
-            .toArray() as FeatureDocument[];
+            .toArray();
 
         return featuresQueryResults;
     } catch (e) {

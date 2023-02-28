@@ -1,5 +1,4 @@
 import {Feature, GeoJsonObject, GeoJsonProperties, Geometry} from "geojson";
-import { FeatureDocument } from "./DatabaseCollections/FeatureDocument";
 
 export interface CRS {
     type: string;

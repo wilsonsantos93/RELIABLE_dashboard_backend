@@ -1,7 +1,7 @@
 import { Router } from "express";
-import { authenticateAPI } from "../../utils/routes";
-import { saveLocations, updatePassword } from "../../controllers/api/user";
-import { Role } from "../../types/User";
+import { authenticateAPI } from "../../utils/routes.js";
+import { saveLocations, updatePassword } from "../../controllers/api/user.js";
+import { Role } from "../../types/User.js";
 
 const router = Router();
 

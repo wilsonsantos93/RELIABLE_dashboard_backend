@@ -12,6 +12,7 @@ export class DatabaseEngine {
     private static regionBordersCollectionName = process.env.DB_REGION_BORDERS_COLLECTION_NAME; // Name of the collection that contains region borders information such as the coordinates that make the border on the map, the region name, and those coordinates reference system
     private static usersCollectionName = process.env.DB_USERS_COLLECTION_NAME || "users";
     private static weatherMetadataCollectionName = process.env.DB_WEATHER_METADATA_COLLECTION_NAME || "metadata";
+    private static crsCollectionName = process.env.DB_WEATHER_CRS_COLLECTION_NAME || "crs";
 
     /**
      * Connects node to the database engine
@@ -80,12 +81,21 @@ export class DatabaseEngine {
         return this.getDashboardDatabase().collection(this.usersCollectionName);
     }
 
-     //! Weather Metadata collection
+    //! Weather Metadata collection
      static getWeatherMetadataCollectionName() {
         return this.weatherMetadataCollectionName;
     }
 
     static getWeatherMetadataCollection() {
         return this.getDashboardDatabase().collection(this.weatherMetadataCollectionName);
+    }
+
+    //! CRS collection
+    static getCRSCollectionName() {
+        return this.crsCollectionName;
+    }
+
+    static getCRSCollection() {
+        return this.getDashboardDatabase().collection(this.crsCollectionName);
     }
 }

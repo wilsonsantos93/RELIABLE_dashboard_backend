@@ -148,6 +148,7 @@ export async function handleSaveWeather(req: Request, res: Response) {
 
     if (!data.length) return res.status(500).json("Empty data.")
     console.log("Transforming data", data)
+    
     // Write data in weather collection
     try {
         const weatherCollection = await DatabaseEngine.getWeatherCollection();
