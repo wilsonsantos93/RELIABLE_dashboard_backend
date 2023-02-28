@@ -298,6 +298,8 @@ export async function queryWeatherDocuments(
         }
     });
 
+    pipeline.push({ $limit: 2 })
+
     const regionsWithWeatherDocuments = await DatabaseEngine.getFeaturesCollection().aggregate(pipeline).toArray() as WeatherCollectionDocumentWithFeature[];
 
     return regionsWithWeatherDocuments;

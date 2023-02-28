@@ -3,7 +3,8 @@ import { collectionExistsInDatabase, queryFeatureDocuments, queryAllFeatureDocum
 // @ts-ignore
 import { Request, Response } from "express-serve-static-core";
 import { ObjectId } from "mongodb";
-
+import { FeatureCollectionWithCRS } from "../../types/FeatureCollectionWithCRS.js";
+import { WeatherCollectionDocument } from "../../types/DatabaseCollections/WeatherCollectionDocument.js";
 
 /**
  * Sends a response with an array of geoJSONs. <p>
@@ -30,7 +31,7 @@ export async function handleGetRegionBorders(req: Request, res: Response) {
 
         //* If the region borders collection exists, send the various saved geoJSONs to the client
         console.log("Started sending geoJSONs to the client.");
-        let geoJSONs = [];
+        let geoJSONs: FeatureCollectionWithCRS[] = [];
 
         //* Query the region borders collection for the crs
         //* The _id and the crs of each CRS document, is going to be used to return a geoJSON with the crs, and the associated region border features

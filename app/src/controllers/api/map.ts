@@ -156,7 +156,7 @@ export async function handleGetRegionBordersAndWeatherByDate(req: Request, res: 
     //* If the weather collection exists, so does the weather data collection
     if (regionBordersCollectionExists && weatherCollectionExists) {
         console.log("Started sending geoJSONs to the client.");
-        let geoJSONs = [];
+        let geoJSONs: FeatureCollectionWithCRS[] = [];
 
         //* Query the region borders collection for the various CRSs
         //* The _id and the crs of the CRS document, is going to be used to return a geoJSON with the crs, and the associated region border features
