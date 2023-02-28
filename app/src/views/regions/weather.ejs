@@ -20,8 +20,8 @@
             <div class="col-xs-12">
                 <h2>Weather</h2>
                 <div class="bg-light rounded-3 p-3 mb-3">
-                  <% for (const key in data.feature.properties) { %>
-                    <span><strong><%= key %></strong>: <%= data.feature.properties[key]%></span>
+                  <% for (const key in data.properties) { %>
+                    <span><strong><%= key %></strong>: <%= data.properties[key]%></span>
                   <% } %>
                 </div>
                 <div class="container">
