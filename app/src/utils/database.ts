@@ -8,6 +8,7 @@ import {FeatureProperties} from "../types/FeatureProperties";
 import {FeatureCollectionWithCRS} from "../types/FeatureCollectionWithCRS";
 import { BoundingBox } from "../types/BoundingBox.js";
 import fetch from "cross-fetch";
+import { Request } from "express-serve-static-core";
 
 /**
  * Checks if a collection exists in a database.
@@ -237,10 +238,11 @@ export async function queryAllFeatureDocuments(queryProjection: any, skip: numbe
  * @return  Array containing each {@link FeatureDocument} queried.
  */
 export async function queryWeatherDocuments(
+    req: Request,
     weatherDateID: ObjectId, 
     crsObjectId: ObjectId = null,
     coordinates: BoundingBox = null,
-    useCenters: boolean = false,
+    useCenters: boolean = false
 ) {
     const weatherCollectionName = DatabaseEngine.getWeatherCollectionName();
 
@@ -297,6 +299,18 @@ export async function queryWeatherDocuments(
             ],
         }
     });
+
+    // project weather fields
+    if (!req.user) {
+        const fields = await DatabaseEngine.getWeatherMetadataCollection().find({ authRequired: true }).toArray();
+        if (fields && fields.length) {
+            let projection: any = { weather: {} };
+            fields.forEach(field => {
+                projection.weather[field.name] = 0;
+            })
+            pipeline[pipeline.length-1]["$lookup"]["pipeline"].push({ $project: projection });
+        }
+    }
 
     const regionsWithWeatherDocuments = await DatabaseEngine.getFeaturesCollection().aggregate(pipeline).toArray() as WeatherCollectionDocumentWithFeature[];
 

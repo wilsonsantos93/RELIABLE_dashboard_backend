@@ -17,14 +17,17 @@
                 <h2>Edit weather metadata <%= data._id %></h2>
                 <div class="col-xxl-6 col-xl-6 col-lg-9 col-md-9 col-sm-12">
                   <form id="form-main" method="POST" action="/metadata/redirect">
-                      <label for="">Name</label>
-                      <input required class="form-control" type="text" name="name" placeholder="Nome do campo" value="<%= data.name %>" />
+                      <label for="">Field name</label>
+                      <input required class="form-control" type="text" name="name" placeholder="The name that comes on the data" value="<%= data.name %>" />
+
+                      <label for="">Display name</label>
+                      <input required class="form-control" type="text" name="displayName" placeholder="Name to display on interface" value="<%= data.displayName %>" />
 
                       <label for="">Description</label>
                       <input required class="form-control" type="text" name="description" placeholder="Descrição" value="<%= data.description %>" />
 
                       <label for="">Unit of measure</label>
-                      <input required class="form-control" type="text" name="unit" placeholder="ºC, m/s, %..." value="<%= data.unit %>" />
+                      <input class="form-control" type="text" name="unit" placeholder="ºC, m/s, %..." value="<%= data.unit %>" />
 
                       <p>Authentication required to view on map:</p>
                       <% if (!data.authRequired) { %>
@@ -43,44 +46,64 @@
 
                   <label for="">Colours:</label>
                   <div class="clonable-block" data-toggle="cloner">
-                      <% data.colours.forEach( (c,i) => { %>
-                      <%  if (i == 0) { %>
-                        <div class="clonable" data-ss="1">
-                      <% } else { %>
-                        <div>
-                      <% } %>    
-                          <form class="row d-flex flex-row align-items-center flex-wrap border border-1 p-2">
-                              <div class="col-md-3">
-                                  <label class="clonable-increment-html" for="">Mínimo</label>
-                                  <input id="min_1" type="number" class="form-control clonable-increment-id" placeholder="" name="min" value="<%= c.min %>" />
-                              </div>
-                              <div class="col-md-3">
-                                  <label class="clonable-increment-html" for="">Máximo</label>
-                                  <input id="max_1" type="number" class="form-control clonable-increment-id" placeholder="" name="max" value="<%= c.max %>" />
-                              </div>
-                              <div class="col-md-3">
-                                  <label class="clonable-increment-html" for="">Cor</label>
-                                  <input id="color_1" type="color" class="form-control clonable-increment-id" name="colour" placeholder="#333333" value="<%= c.colour %>" />
-                              </div>
-                              <div class="col-md-3">
-                                  <label class="clonable-increment-html" for=""></label>
-                                  <button class="btn btn-danger btn-sm clonable-button-close d-block">
-                                      <i class="fa fa-trash"></i>
-                                  </button>
-                              </div>
-                          </form>
-                        <% }) %>
+                    <% data.colours.forEach((c,i) => { %>
+                    <% if (i == data.colours.length-1) { %>
+                      <div class="clonable" data-ss="1">
+                        <form class="row d-flex flex-row align-items-center flex-wrap border border-1 p-2">
+                          <div class="col-md-3">
+                              <label class="clonable-increment-html" for="">Mínimo</label>
+                              <input id="min_1" type="number" class="form-control clonable-increment-id" placeholder="" name="min" value="<%= c.min %>" />
+                          </div>
+                          <div class="col-md-3">
+                              <label class="clonable-increment-html" for="">Máximo</label>
+                              <input id="max_1" type="number" class="form-control clonable-increment-id" placeholder="" name="max" value="<%= c.max %>" />
+                          </div>
+                          <div class="col-md-3">
+                              <label class="clonable-increment-html" for="">Cor</label>
+                              <input id="color_1" type="color" class="form-control clonable-increment-id" name="colour" placeholder="#333333" value="<%= c.colour %>" />
+                          </div>
+                          <div class="col-md-3">
+                              <label class="clonable-increment-html" for=""></label>
+                              <button class="btn btn-danger btn-sm clonable-button-close d-block">
+                                  <i class="fa fa-trash"></i>
+                              </button>
+                          </div>
+                        </form>
                       </div>
-                      <button class="clonable-button-add btn btn-secondary mt-3" type="button">Add rule</button>  
+                    <% } else { %>
+                      <div>
+                        <form class="row d-flex flex-row align-items-center flex-wrap border border-1 p-2">
+                          <div class="col-md-3">
+                              <label for="">Mínimo</label>
+                              <input id="min_1" type="number" class="form-control" placeholder="" name="min" value="<%= c.min %>" />
+                          </div>
+                          <div class="col-md-3">
+                              <label for="">Máximo</label>
+                              <input id="max_1" type="number" class="form-control" placeholder="" name="max" value="<%= c.max %>" />
+                          </div>
+                          <div class="col-md-3">
+                              <label for="">Cor</label>
+                              <input id="color_1" type="color" class="form-control" name="colour" placeholder="#333333" value="<%= c.colour %>" />
+                          </div>
+                          <div class="col-md-3">
+                              <label  for=""></label>
+                              <button class="btn btn-danger btn-sm d-block">
+                                  <i class="fa fa-trash"></i>
+                              </button>
+                          </div>
+                        </form>
+                      </div>
+                    <% } %>    
+                        
+                    <% }) %>
+                    <button class="clonable-button-add btn btn-secondary mt-3" type="button">Add rule</button>  
                   </div>
 
                   <div class="d-grid mt-2">
-                      <button id="send"  type="button" class="btn btn-primary btn-block">Send</button>
+                    <button id="send" type="button" class="btn btn-primary btn-block">Send</button>
                   </div>
               </div>
             </div>
-
-        </div>
     </main>
 
     <footer>

@@ -164,7 +164,19 @@ export async function handleGetRegionBorderWithWeather(req: Request, res: Respon
         }
 
         pipeline.push({ $match: { "date": { "$ne": [] } } });
-        pipeline.push({ $project: { "_id":0, "weatherDateObjectId": 0 } });
+        pipeline.push({ $project: { "_id": 0, "weatherDateObjectId": 0 } });
+
+        // project weather fields
+        if (!req.user) {
+            const fields = await DatabaseEngine.getWeatherMetadataCollection().find({ authRequired: true }).toArray();
+            if (fields && fields.length) {
+                let projection: any = { weather: {} };
+                fields.forEach(field => {
+                    projection.weather[field.name] = 0;
+                })
+                pipeline.push({ $project: projection });
+            }
+        }
         
         // run query
         const data = await weatherCollection.aggregate(pipeline).toArray();

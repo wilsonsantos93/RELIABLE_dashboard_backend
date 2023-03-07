@@ -124,6 +124,7 @@ export async function handleGetWeatherDates(req: Request, res: Response) {
     // The following query returns [{type: "Feature",...}, {type:"Feature",...}]
     const featuresQueryResults = await DatabaseEngine.getWeatherDatesCollection()
         .find(weatherDatesQuery, weatherDatesQueryOptions)
+        .sort({ date: 1 })
         .toArray();
 
     console.log("Finished for weather dates.");
@@ -154,6 +155,22 @@ export async function handleSaveWeather(req: Request, res: Response) {
         const weatherCollection = await DatabaseEngine.getWeatherCollection();
         const result = await weatherCollection.bulkWrite(createBulkOps(await transformData(data)));
         return res.json(result);
+    } catch (e) {
+        console.error(e);
+        return res.status(500).json(e);
+    }
+}
+
+export async function handleGetWeatherMetadata(req: Request, res: Response) {
+    try { 
+        let find: any = {};
+        const projection: any = { authRequired: 0 };
+        // if not logged in, filter fields
+        if (!req.user) {
+            find = { authRequired: false };
+        }
+        const data = await DatabaseEngine.getWeatherMetadataCollection().find(find, {projection}).toArray();
+        return res.json(data);
     } catch (e) {
         console.error(e);
         return res.status(500).json(e);

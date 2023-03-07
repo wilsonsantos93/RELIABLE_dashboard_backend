@@ -65,8 +65,11 @@ export function createBulkOps(data: any[]) {
     return data.map(d => {
         return { updateOne: 
             {
-                filter: { "weatherDateObjectId": d.weatherDateObjectId, "regionBorderFeatureObjectId": d.regionBorderFeatureObjectId }, 
-                update: { $set: d }, 
+                filter: { 
+                    "weatherDateObjectId": d.weatherDateObjectId, 
+                    "regionBorderFeatureObjectId": d.regionBorderFeatureObjectId 
+                }, 
+                update: { $set: { ...d } }, 
                 upsert: true 
             }
         }
@@ -109,12 +112,16 @@ export async function readWeatherFile() {
         let data: any[] = [];
         await csv({ignoreColumns: /^\s*$/}).fromStream(readStream).subscribe((json) => {
             i++;
+            data.push(json);
             return new Promise( async (resolve, reject) => {
-                data.push(json);
-                // At every N rows insert into DB
-                if (i % 300 == 0) {
-                    await weatherCollection.bulkWrite(createBulkOps(await transformData(data)));
-                    data = [];
+                try {
+                    // At every N rows insert into DB
+                    if (i % 300 == 0) {
+                        await weatherCollection.bulkWrite(createBulkOps(await transformData(data)));
+                        data = [];
+                    }
+                } catch (e) {
+                    console.error(e);
                 }
                 return resolve();
             })
@@ -197,8 +204,9 @@ export async function transformData(data: any[]) {
     // Loop through data 
     for (const d of data) {
         if (!d.hasOwnProperty(WEATHER_FIELD_TO_MATCH)) continue;
+
         const regionPossibleNames = allReplacements(d[WEATHER_FIELD_TO_MATCH], "-", " ");
-        const projection: FeaturesProjection = { _id: 1 };
+        const projection: FeaturesProjection = { _id: 1, geometry: 0 };
         const regions = await regionsCollection.find(
             { [DATABASE_FIELD_TO_MATCH]: { $in: regionPossibleNames } },
             { projection }
@@ -233,6 +241,7 @@ export async function transformData(data: any[]) {
         await datesCollection.bulkWrite(bulkOps);
         const datesFromDB = await datesCollection.find({ date: { $in: formattedDates }}).toArray();
 
+        
         // build sample for each date
         for (const date of originalDates) {
             let sample: any = {};
@@ -256,11 +265,13 @@ export async function transformData(data: any[]) {
 
             // Add region id and push to array
             for (const region of regions) {
+                let newSample = { ...sample };
+
                 // Add region Id
-                sample.regionBorderFeatureObjectId = region?._id || null;
+                newSample.regionBorderFeatureObjectId = region?._id || null;
 
                 // Push sample to array
-                if (Object.keys(sample).length > 0) transformedData.push(sample);
+                if (Object.keys(newSample).length > 0) transformedData.push(newSample);
             }  
         }
     }

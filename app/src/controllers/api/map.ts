@@ -5,6 +5,7 @@ import { Request, Response } from "express-serve-static-core";
 import { BoundingBox } from "../../types/BoundingBox.js";
 import sanitize from "mongo-sanitize";
 import { FeatureCollectionWithCRS } from "../../types/FeatureCollectionWithCRS.js";
+import { WeatherCollectionDocument } from "../../types/DatabaseCollections/WeatherCollectionDocument.js";
 
 /**
  * Sends an array of geoJSONs with the border regions and its weather information on a certain date
@@ -216,9 +217,9 @@ export async function handleGetRegionBordersAndWeatherByDate(req: Request, res: 
             const useCenters = req.query.hasOwnProperty("useCenters") && req.query.useCenters == "true" ? true : false;
 
             // Get regions with weather data
-            const weatherDocuments = await queryWeatherDocuments(weatherDateObjectID, crs._id, coordinates, useCenters);
+            const weatherDocuments = await queryWeatherDocuments(req, weatherDateObjectID, crs._id, coordinates, useCenters);
 
-            for (const weatherDocument of weatherDocuments as any) {
+            for (const weatherDocument of weatherDocuments as WeatherCollectionDocument[]) {
                 if (!weatherDocument.weather.length) weatherDocument.weather = null;
                 else weatherDocument.weather = weatherDocument.weather[0].weather;
             }

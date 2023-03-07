@@ -1,4 +1,4 @@
-import { handleGetWeatherDates, handleFetchWeather, handleSaveWeather } from "../../controllers/api/weather.js";
+import { handleGetWeatherDates, handleFetchWeather, handleSaveWeather, handleGetWeatherMetadata } from "../../controllers/api/weather.js";
 import { Role } from "../../types/User.js";
 import { Router } from "express";
 import { authenticateAPI } from "../../utils/routes.js";
@@ -13,6 +13,10 @@ router.post("/fetch", async function (request, response) {
 //! Route that requests the various dates the weather information was saved at
 router.get("/dates", async function (request, response) {
     await handleGetWeatherDates(request, response); 
+});
+
+router.get("/metadata", async function (request, response) {
+    await handleGetWeatherMetadata(request, response); 
 });
 
 //! Route that receives weather data from external source
