@@ -103,7 +103,7 @@ export async function associateCRStoFeatures(crsObjectId: any, featureObjectIds:
             {_id: featureObjectId}, // Updates the feature database document that has the same ObjectId as the current featureObjectId
             {
                 $set: {
-                    crsObjectId: crsObjectId,
+                    crsObjectId: crsObjectId
                 },
             }
         );

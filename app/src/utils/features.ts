@@ -96,7 +96,7 @@ export function separateMultiPolygons(geoJSON: FeatureCollectionWithCRS) {
         // If the feature is of the type MultiPolygon, every Polygon in the MultiPolygon needs to be separated into a new feature
         else if (currentFeature.geometry.type === "MultiPolygon") {
 
-            for (const polygon of currentFeature.geometry.coordinates) {
+            /* for (const polygon of currentFeature.geometry.coordinates) {
 
                 let tempFeature: any = {
                     type: String,
@@ -111,7 +111,8 @@ export function separateMultiPolygons(geoJSON: FeatureCollectionWithCRS) {
 
                 separatedGeoJSON.features.push(tempFeature);
 
-            }
+            } */
+            separatedGeoJSON.features.push(currentFeature);
         }
     }
 

@@ -337,7 +337,8 @@ export async function handleSaveRegions(req: Request, res: Response) {
       );
     } catch (e) {
       console.error(e);
-      res.send(e);
+      req.flash("error_message", "Unable to upload file. No CRS info found in file.");
+      return res.redirect("back");
     }
     
     //* Save each geoJSON feature to the collection individually
