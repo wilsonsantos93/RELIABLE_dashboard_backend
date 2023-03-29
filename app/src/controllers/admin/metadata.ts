@@ -31,9 +31,24 @@ export function getCreateMetadataPage(req: Request, res: Response) {
  * @returns Renders metadata edit page
  */
 export async function getEditMetadataPage(req: Request, res: Response) {
+    function compare(a: any, b: any) {
+        if (!a.min || isNaN(a.min)) a.min = 0;
+        if (!b.min || isNaN(b.min)) b.min = 0;
+        if ( a.min < b.min ){
+          return -1;
+        }
+        if ( a.min > b.min ){
+          return 1;
+        }
+        return 0;
+    }
+      
     let data: any = [];
     try {
-        data = await DatabaseEngine.getWeatherMetadataCollection().findOne({ _id: new ObjectId(req.params.id) }); 
+        data = await DatabaseEngine.getWeatherMetadataCollection().findOne({ _id: new ObjectId(req.params.id) });
+        if (data.ranges.length) {
+            data.ranges.sort(compare);
+        }
     } catch (e) {
         console.error(e);
         req.flash("error_message", JSON.stringify(e));
@@ -58,14 +73,16 @@ export async function createMetadata(req: Request, res: Response) {
         const data: WeatherMetadata = { 
             ...req.body.data, 
             authRequired: req.body.data.authRequired === 'true',
-            colours: req.body.data.colours.map((c: any) => { 
+            ranges: req.body.data.ranges.map((c: any) => { 
                 return { 
                     ...c, 
                     max: parseFloat(c.max),
-                    min: parseFloat(c.min)
+                    min: parseFloat(c.min),
+                    recommendations: c.recommendations && c.recomendations != "" ? c.recommendations : []
                 }
             })
         };
+
         await DatabaseEngine.getWeatherMetadataCollection().insertOne(data);
         return res.json({});
     } catch (e) {
@@ -143,14 +160,16 @@ export async function updateMetadata(req: Request, res: Response) {
         const data: WeatherMetadata = { 
             ...req.body.data, 
             authRequired: req.body.data.authRequired === 'true',
-            colours: req.body.data.colours.map((c: any) => { 
+            ranges: req.body.data.ranges.map((c: any) => { 
                 return { 
                     ...c, 
                     max: parseFloat(c.max),
-                    min: parseFloat(c.min)
+                    min: parseFloat(c.min),
+                    recommendations: c.recommendations && c.recomendations != "" ? c.recommendations : []
                 }
             })
         };
+
         await DatabaseEngine.getWeatherMetadataCollection().updateOne({ _id: new ObjectId(req.params.id) }, { $set: { ...data } });
         return res.json({});
     } catch (e) {

@@ -1,6 +1,8 @@
 import { NextFunction, Request, Response } from "express";
 import { Role, User } from "../types/User.js";
 import passport from "passport";
+import { decrypt } from "./encrypt.js";
+import jwt from "jsonwebtoken";
 
 /**
  * Check if user is allowed through roles
@@ -8,6 +10,37 @@ import passport from "passport";
 function isAuthorized(allowedRoles: string[], userRole: string) {
     if (allowedRoles.includes(userRole)) return true
     return false
+}
+
+/**
+ * Generate JWT token and data for auth
+ */
+
+
+export async function createJWTtoken(user: any) {
+    const date = new Date().valueOf();
+
+    const payload = {
+        iat: Math.floor(date/1000),
+        exp: Math.floor(date/1000) + 0.01*60*24,
+        user_id: user.id || user._id
+    }
+
+    try {
+        const data = await new Promise((resolve, reject) => {
+            jwt.sign(payload, '8gj48jfog84basd8f1h3rhq9rghrav', (error, jwtoken) => {
+                if (error) return reject(error);
+                return resolve({
+                    user,
+                    jwt: jwtoken
+                });
+            })
+        })
+        return data;
+    } catch (e) {
+        console.error(e);
+        throw e;
+    }
 }
 
 /**

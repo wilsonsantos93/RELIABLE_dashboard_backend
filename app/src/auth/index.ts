@@ -92,7 +92,7 @@ export default (passport: PassportStatic) => {
         jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken()
     }, function (jwt_payload, done) {
         const UserCollection = DatabaseEngine.getUsersCollection();
-        UserCollection.findOne({ _id: jwt_payload.user_id }, function (err, user) {
+        UserCollection.findOne({ _id: new ObjectId(jwt_payload.user_id) }, function (err, user) {
             if (err) return done(err, false)
             if (!user) return done(null, false)
             return done(null, user)

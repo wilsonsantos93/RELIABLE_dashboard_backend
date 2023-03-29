@@ -16,7 +16,7 @@
                     <%- include('../partials/alerts.ejs') %>
 
                     <h2>Add weather field metadata</h2>
-                    <div class="col-xxl-6 col-xl-6 col-lg-9 col-md-9 col-sm-12">
+                    <div class="col-xxl-9 col-xl-9 col-lg-9 col-md-12 col-sm-12">
                         <form id="form-main" method="POST" action="/metadata/redirect">
                             <label for="">Field name</label>
                             <input required class="form-control" type="text" name="name" placeholder="The name that comes on the data" value="" />
@@ -38,23 +38,30 @@
                         </form>
                         <br>
 
-                        <label for="">Colours:</label>
+                        <label for="">Ranges:</label>
                         <div class="clonable-block" data-toggle="cloner">
                             <div class="clonable" data-ss="1">
                                 <form class="row d-flex flex-row align-items-center flex-wrap border border-1 p-2">
-                                    <div class="col-md-3">
-                                        <label class="clonable-increment-html" for="">Mínimo</label>
+                                    <div class="col-md-2">
+                                        <label class="clonable-increment-html" for="">Min</label>
                                         <input id="min_4" type="number" class="form-control clonable-increment-id" placeholder="" name="min" value="" />
                                     </div>
-                                    <div class="col-md-3">
-                                        <label class="clonable-increment-html" for="">Máximo</label>
+                                    <div class="col-md-2">
+                                        <label class="clonable-increment-html" for="">Max</label>
                                         <input id="max_1" type="number" class="form-control clonable-increment-id" placeholder="" name="max" value="" />
                                     </div>
-                                    <div class="col-md-3">
-                                        <label class="clonable-increment-html" for="">Cor</label>
-                                        <input id="color_1" type="color" class="form-control clonable-increment-id" name="colour" placeholder="#333333" value="" />
+                                    <div class="col-md-2">
+                                        <label class="clonable-increment-html" for="">Color</label>
+                                        <input id="color_1" type="color" class="form-control clonable-increment-id" name="color" placeholder="#333333" value="" />
                                     </div>
-                                    <div class="col-md-3">
+
+                                    <div class="col-md-5">
+                                        <label class="clonable-increment-html" for="">Recommendations (comma separated)</label>
+                                        <textarea style="resize: none" class="form-control clonable-increment-id" placeholder="Drink water, Close doors..." id="recommendations_1"></textarea>
+                                    </div>
+
+                                    <!-- DELETE BUTTON -->
+                                    <div class="col-md-1">
                                         <label class="clonable-increment-html" for=""></label>
                                         <button class="btn btn-danger btn-sm clonable-button-close d-block">
                                             <i class="fa fa-trash"></i>
@@ -84,11 +91,21 @@
             $("#send").on("click", function (e) {
                 const form = $("#form-main").get(0);
                 const data = convertFormToJSON(form);
-                data.colours = [];
+                data.ranges = [];
 
                 const colourForms = $(".clonable form");
                 colourForms.each(function() { 
-                    data.colours.push(convertFormToJSON($(this)));
+                    const dataConverted = convertFormToJSON($(this));
+                    if (dataConverted.recommendations && dataConverted.recommendations.length) {
+                        dataConverted.recommendations = dataConverted.recommendations.split(",").map(s => 
+                            s.trim()
+                            .replace("\\n","")
+                            .replace("\\t", "")
+                            .replace("\\r", "")
+                            .replace("\\r\n", "")
+                        );
+                    } else dataConverted.recommendations = "";
+                    data.ranges.push(dataConverted);
                 });
 
                 $.post("/metadata/create", { data }, (data, status) => {

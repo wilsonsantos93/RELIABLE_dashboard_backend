@@ -2,9 +2,10 @@ export type WeatherMetadata = {
     name: string;
     description: string;
     authRequired: boolean;
-    colours: {
+    ranges: {
         max: string | number;
         min: string | number;
-        colour: string;
+        color: string;
+        recommendations: string[];
     }[]
 }
