@@ -116,7 +116,7 @@ export async function handleGetWeatherDates(req: Request, res: Response) {
     console.log("\nQuerying for weather dates.");
 
     const weatherDatesQuery = {}; // Query all weather dates to return to the client
-    const weatherDatesProjection = { _id: 1, date: 1 }; // Only the date itself needs to be returned by the query
+    const weatherDatesProjection = { _id: 1, date: 1, format: 1 }; // Only the date itself needs to be returned by the query
     const weatherDatesQueryOptions: FindOptions = {
         projection: weatherDatesProjection,
     };

@@ -73,6 +73,7 @@ export async function createMetadata(req: Request, res: Response) {
         const data: WeatherMetadata = { 
             ...req.body.data, 
             authRequired: req.body.data.authRequired === 'true',
+            main: req.body.data.main === 'true',
             ranges: req.body.data.ranges.map((c: any) => { 
                 return { 
                     ...c, 
@@ -82,6 +83,10 @@ export async function createMetadata(req: Request, res: Response) {
                 }
             })
         };
+
+        if (data.main == true) {
+            await DatabaseEngine.getWeatherMetadataCollection().updateMany({}, { $set: { main: false } });
+        }
 
         await DatabaseEngine.getWeatherMetadataCollection().insertOne(data);
         return res.json({});
@@ -160,6 +165,7 @@ export async function updateMetadata(req: Request, res: Response) {
         const data: WeatherMetadata = { 
             ...req.body.data, 
             authRequired: req.body.data.authRequired === 'true',
+            main: req.body.data.main === 'true',
             ranges: req.body.data.ranges.map((c: any) => { 
                 return { 
                     ...c, 
@@ -169,6 +175,11 @@ export async function updateMetadata(req: Request, res: Response) {
                 }
             })
         };
+
+        const doc = await DatabaseEngine.getWeatherMetadataCollection().findOne({ _id: new ObjectId(req.params.id) });
+        if (data.main == true && doc.main == false) {
+            await DatabaseEngine.getWeatherMetadataCollection().updateMany({}, { $set: { main: false } });
+        }
 
         await DatabaseEngine.getWeatherMetadataCollection().updateOne({ _id: new ObjectId(req.params.id) }, { $set: { ...data } });
         return res.json({});

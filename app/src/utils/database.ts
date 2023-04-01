@@ -351,6 +351,7 @@ export async function queryAllWeatherDates() {
  */
 export async function getCollectionFields(collectionName: string, find: any, projection: any) {
     function flattenObject(obj: any, prefix = '') {
+        if (!obj) return;
         return Object.keys(obj).reduce((acc:any, k) => {
             const pre = prefix.length ? prefix + '.' : '';
             if (typeof obj[k] === 'object' && k != "_id") Object.assign(acc, flattenObject(obj[k], pre + k));
@@ -387,6 +388,14 @@ export async function getDatatablesData(collectionName: string, projection: any,
         let limit = parseInt(dtInfo.length) || 0;
 
         const find: any = {};
+        if (!Array.isArray(dtInfo.columns)) {
+            let columns = [];
+            for (const key in dtInfo.columns) {
+                columns.push(dtInfo.columns[key]);
+            }
+            dtInfo.columns = columns;
+        }
+
         if (dtInfo.columns && dtInfo.columns.length) {
             for (const col of dtInfo.columns) {
                 if (!col.search.value || col.search.value == '') continue;
@@ -446,3 +455,9 @@ export function allReplacements(str: string, char: string, replace: string) {
 
     return powerset(enumerate(str, char)).map((pos: any) => translate(str, pos, replace));
 }
+
+export function getObjectValue(path: string, obj: any) {
+    return path.split('.').reduce(function(prev, curr) {
+        return prev ? prev[curr] : null
+    }, obj)
+};

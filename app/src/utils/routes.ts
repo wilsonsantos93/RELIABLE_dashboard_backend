@@ -22,7 +22,7 @@ export async function createJWTtoken(user: any) {
 
     const payload = {
         iat: Math.floor(date/1000),
-        exp: Math.floor(date/1000) + 0.01*60*24,
+        exp: Math.floor(date/1000) + 60*60*24,
         user_id: user.id || user._id
     }
 

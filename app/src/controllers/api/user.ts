@@ -4,6 +4,12 @@ import { Request, Response } from "express-serve-static-core";
 import { ObjectId } from "mongodb";
 import { hashPassword } from "../../auth/helpers.js";
 import { decrypt, encrypt } from "../../utils/encrypt.js";
+import { getObjectValue } from "../../utils/database.js";
+import { authenticateAPI } from "../../utils/routes.js";
+import passport from "passport";
+
+const ALERT_NUM_DAYS_AHEAD = parseInt(process.env.ALERT_NUM_DAYS_AHEAD) || 3;
+const DB_REGION_NAME_FIELD = process.env.DB_REGION_NAME_FIELD;
 
 export async function saveLocations(req: Request, res: Response) {
     try {
@@ -101,14 +107,30 @@ export async function deleteLocation(req: Request, res: Response) {
 
 export async function getAlerts(req: Request, res: Response) {
     try {
-        const currentUser = req.user as User || null;
-        //let data: any = {};
+        
+        const weatherFields = await DatabaseEngine.getWeatherMetadataCollection().find().toArray();
+        if (!weatherFields || !weatherFields.length) return res.json([]);
+
+        const weatherField = weatherFields.find((f:any) => f.main);
+        if (!weatherField) return res.json([]);
+
+        const currentUser: User | null = await new Promise((resolve) => {
+            passport.authenticate('api-jwt', (error:any, user: User) => {
+                console.log(error, user);
+                if (error || !user) return resolve(null);
+                return resolve(user);
+            })(req, res)
+        });
+
+        //const currentUser = req.user as User || null;
         let features: any[] = [];
         let locations: any[] = [];
 
         if (currentUser) {
             const userDocument = await DatabaseEngine.getUsersCollection().findOne({ _id : new ObjectId(currentUser._id) });
-            locations = userDocument.locations.map((l:any) => JSON.parse(decrypt(l)));
+            locations = userDocument.locations.map((l:any) => JSON.parse(decrypt(l)))
+                        .map((l:any) => { return {...l, lat: l.position.lat, lng: l.position.lng }});
+        
         } else if (req.query.lat && req.query.lng) {
             locations = [{ lat: parseFloat(req.query.lat as string), lng: parseFloat(req.query.lng as string) }];
         } else {
@@ -134,25 +156,35 @@ export async function getAlerts(req: Request, res: Response) {
             if (ix < 0) {
                 feature.locations = [location];
                 features.push({ _id: feature._id, properties: feature.properties });
-                console.log("ix not found, adding new")
             } else {
-                console.log("ix found, pushing to locations")
                 features[ix].locations.push(location);
             }
         }
 
         const regionsIds = features.map(f => f._id);
         if (!regionsIds.length) return res.status(404).json("Region not found");
+
         const datesCollectionName = DatabaseEngine.getWeatherDatesCollectionName();
-        const numDaysAhead = 3;
-        const startDate = new Date; //(new Date().valueOf() - (45 * 24 * 60 * 60 * 1000));
-        const endDate = new Date(new Date().valueOf() - (numDaysAhead * 24 * 60 * 60 * 1000));
+        const startDate = new Date();
+        const endDate = new Date(new Date().valueOf() + (ALERT_NUM_DAYS_AHEAD * 24 * 60 * 60 * 1000));
+
+        const weatherFieldAlertable = weatherField.ranges.filter((r:any) => r.alert);
+        const orQuery = [];
+        for (const alertable of weatherFieldAlertable) {
+            let min = alertable.min;
+            let max = alertable.max;
+            if (!alertable.min || isNaN(alertable.min)) min = -Infinity;
+            if (!alertable.max || isNaN(alertable.max)) max = Infinity;
+            orQuery.push({ 
+                [`weather.${weatherField.name}`]: { $gte: min, $lt: max }
+            })
+        }
 
         const alerts = await DatabaseEngine.getWeatherCollection().aggregate([
             { 
                 $match: { 
                     regionBorderFeatureObjectId: { $in: regionsIds },
-                    $or: [{"weather.tindoor": { $lte: 15 }}, {"weather.tindoor": { $gte: 16 } }]
+                    $or: orQuery
                 }
             },
             { $lookup: {
@@ -168,17 +200,22 @@ export async function getAlerts(req: Request, res: Response) {
               }
             },
             {
-                $match: {  date: { $ne: [] } }
+                $match: { date: { $ne: [] } }
+            },
+            {
+                $project: { [`weather.${weatherField.name}`]: 1, date: 1, "regionBorderFeatureObjectId": 1, "weatherDateObjectId": 1}
             }
         ]).toArray();
 
         for (const alert of alerts) {
             const feature = features.find(f => f._id.toString() == alert.regionBorderFeatureObjectId);
-            alert.feature = feature.properties;
+            alert.regionName = getObjectValue(DB_REGION_NAME_FIELD, feature);
             alert.locations = feature.locations;
         }
 
-        return res.json(alerts);
+        alerts.sort((a,b) => new Date(a.date[0].date).valueOf() - new Date(b.date[0].date).valueOf())
+
+        return res.json({ numDaysAhead: ALERT_NUM_DAYS_AHEAD, alerts });
     } catch (e) {
         console.error(e);
         return res.status(500).json(e);

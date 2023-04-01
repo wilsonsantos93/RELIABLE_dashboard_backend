@@ -31,6 +31,7 @@ const DTConfig = () => {
             dataSrc: 'data'
         },
         columns: null,
+        columnsToShow: [],
         getFieldsUrl: null
     }
 };
@@ -65,7 +66,8 @@ class MyDatatable {
                         title: colName,
                         data: colName, 
                         name: colName,
-                        className: colName == "date" ? 'all' : 'ctrl'
+                        //className: colName == "date" ? 'all' : 'ctrl'
+                        className: this.dtConfig.columnsToShow.includes(colName) ? 'all' : 'ctrl'
                     });
                     if (colName == "_id") continue;
                     $(this.selectors.select).append(`<option value="${colName}">${colName}</option>`);

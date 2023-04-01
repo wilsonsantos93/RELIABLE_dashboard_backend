@@ -21,9 +21,9 @@ router.post("/location", authenticateAPI(Role.USER), createLocation);
 router.post("/location/:id/update", authenticateAPI(Role.USER), updateLocation);
 
 // Route that deletes a location on the user
-router.post("/location/:id/delete",  authenticateAPI(Role.USER), deleteLocation);
+router.post("/location/:id/delete", authenticateAPI(Role.USER), deleteLocation);
 
-// Route that gets a location on the user
+// Route that gets alerts for user or given coordinates
 router.get("/alerts",  getAlerts);
 
 export default router;

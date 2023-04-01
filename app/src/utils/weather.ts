@@ -6,6 +6,13 @@ import { FeaturesProjection } from "../types/DatabaseCollections/Projections/Fea
 import fs from "fs";
 import glob from 'glob';
 import { allReplacements } from "./database.js";
+import dayjs from 'dayjs';
+import utc from 'dayjs/plugin/utc.js';
+import timezone from 'dayjs/plugin/timezone.js';
+dayjs.extend(utc);
+dayjs.extend(timezone);
+
+const tz = "Europe/Lisbon";
 
 const KEEP_DATA_PREVIOUS_DAYS = parseInt(process.env.KEEP_DATA_PREVIOUS_DAYS) || 2;
 const CSV_FOLDER_PATH_DOCKER = process.env.CSV_FOLDER_PATH_DOCKER || null;
@@ -148,7 +155,7 @@ export async function readWeatherFile() {
  * @returns The regular expression match array
  */
 function extractDateFromString(str: string, regex: string | RegExp = null) {
-    if (!regex) regex = new RegExp("[0-9]{2,4}(-|/)[0-9]{2}(-|/)[0-9]{2,4}(( |_|T)[0-9]{0,2}(:||_)[0-9]{0,2}(:||_)[0-9]{0,2}(\.[0-9]{0,3})?){0,1}");
+    if (!regex) regex = new RegExp("[0-9]{2,4}(-|/)[0-9]{2}(-|/)[0-9]{2,4}(( |_|T)[0-9]{0,2}(:|h|H||_)[0-9]{0,2}(:||_)[0-9]{0,2}(\.[0-9]{0,3})?){0,1}");
 
     const match = str.match(regex);
 
@@ -174,6 +181,8 @@ function extractAndFormatDateFromString(str: string, regex: string | RegExp = nu
     let year = date.split(match[2])[2];
     let time = match[0].split(match[4])[1];
 
+    if (time && (time.includes("h") || time.includes("H"))) time = time.replace(new RegExp("h|H"), ":"); 
+
     if (time && !time.includes(":")) {
         if (time.length == 4) time = time.slice(0,2)+':'+time.slice(2);
         if (time.length == 3) time = time.slice(0,1)+':'+time.slice(1);
@@ -184,7 +193,7 @@ function extractAndFormatDateFromString(str: string, regex: string | RegExp = nu
         year = aux;
     }
 
-    return `${year}-${month}-${day}${time ? ' '+time : ''}`;
+    return { date: `${year}-${month}-${day}${time ? ' '+time : ''}`, format: !time ? "YYYY-MM-DD" : "YYYY-MM-DD HH:mm" };
 }
 
 
@@ -228,12 +237,14 @@ export async function transformData(data: any[]) {
 
         // Insert dates into DB
         const bulkOps = originalDates.map((date: string) => {
-            const dateToInsert = new Date(extractAndFormatDateFromString(date));
+            const extractedDate = extractAndFormatDateFromString(date)
+            const convertedDate = dayjs(extractedDate.date).tz(tz, true).toISOString();
+            const dateToInsert = new Date(convertedDate);
             formattedDates.push(dateToInsert);
             return { updateOne: 
                 {
                     filter: { "date": dateToInsert }, 
-                    update: { $setOnInsert: { "date": dateToInsert } }, 
+                    update: { $setOnInsert: { "date": dateToInsert, "format": extractedDate.format } },
                     upsert: true 
                 }
             }
@@ -261,7 +272,9 @@ export async function transformData(data: any[]) {
             });
 
             // Add dateId
-            sample.weatherDateObjectId = datesFromDB.find(doc => new Date(doc.date).valueOf() == new Date(extractAndFormatDateFromString(date)).valueOf())?._id;
+            const extractedDate = extractAndFormatDateFromString(date)
+            const convertedDate = dayjs(extractedDate.date).tz(tz, true).toISOString();
+            sample.weatherDateObjectId = datesFromDB.find(doc => new Date(doc.date).valueOf() == new Date(convertedDate).valueOf())?._id;
 
             // Add region id and push to array
             for (const region of regions) {
@@ -278,3 +291,128 @@ export async function transformData(data: any[]) {
 
     return transformedData;
 }
+
+
+
+
+
+
+/**
+ * TEST FUNCTION ONLY
+ */
+/* export async function test_transformData(data: any[], regionMetaId?: any) {
+    const transformedData: any = [];
+    const formattedDates: any = [];
+    const originalDates: any = [];
+    const fieldsNotDate: string[] = [];
+    const regionsCollection = DatabaseEngine.getFeaturesCollection();
+    const datesCollection = DatabaseEngine.getWeatherDatesCollection();
+
+    // Get regions Metadata (aggregation)
+    //if (regionMetaId) FindOne 
+    // else Find
+    const metadatas = [
+        { _id: "1", weatherSchema: [{ "name": "tindoor"}], matchers: [{ dataField: "county", dbField: "Concelho"}] },
+        { _id: "2", weatherSchema: [{ "name": "tindoor"}], matchers: [{ dataField: "county", dbField: "Concelho"}] }
+    ]
+        
+    const checker = (arr: string[], target: string[]) => target.every(v => arr.includes(v));
+
+    // Loop through data 
+    for (const d of data) {
+
+        // Loop through fields
+        const weatherFieldsWithDateRemoved: any[] = [];
+        for (const key in d) {
+            const match = extractDateFromString(key);
+            const originalDate = match && match.length ? match[0] : null;
+            if (originalDate && !originalDates.includes(originalDate)) {
+                originalDates.push(originalDate);
+                const field = key.replace(originalDate,"").replace(/^\_+|\_+$/g, '')
+                if (field && !weatherFieldsWithDateRemoved.includes(field))
+                weatherFieldsWithDateRemoved.push(field)
+            } 
+            if (!originalDate) fieldsNotDate.push(key);
+        }
+
+        if (!originalDates.length) return [];
+
+        for (const meta of metadatas) {
+            const metadataMatchersArr = meta.matchers.map(f => f.dataField);
+            const checkMatchers = checker(weatherFieldsWithDateRemoved, metadataMatchersArr);
+            
+            const weatherFields = meta.weatherSchema.map(f => f.name);
+            const checkWeather = checker(weatherFieldsWithDateRemoved, weatherFields)
+            
+            if (!checkMatchers || !checkWeather) continue;
+
+            const find: any = {};
+            meta.matchers.forEach(m => {
+                find[m.dbField] = { $in: allReplacements(d[m.dataField], "-", " ") }
+            })
+
+            const projection: FeaturesProjection = { _id: 1, geometry: 0 };
+            const regions = await regionsCollection.find(
+                find,
+                { projection }
+            )
+            .collation({ locale: "pt", strength: 1 })
+            .toArray();
+            
+            if (!regions.length) continue; 
+
+            // Insert dates into DB
+            const bulkOps = originalDates.map((date: string) => {
+                const convertedDate = dayjs(extractAndFormatDateFromString(date)).tz(tz, true).toISOString();
+                const dateToInsert = new Date(convertedDate);
+                formattedDates.push(dateToInsert);
+                return { updateOne: 
+                    {
+                        filter: { "date": dateToInsert, regionMetadataId: meta._id }, 
+                        update: { $setOnInsert: { "date": dateToInsert, regionMetadataId: meta._id } },
+                        upsert: true 
+                    }
+                }
+            });
+            await datesCollection.bulkWrite(bulkOps);
+            const datesFromDB = await datesCollection.find({ regionMetadataId: meta._id, date: { $in: formattedDates }}).toArray();
+
+            
+            // build sample for each date
+            for (const date of originalDates) {
+                let sample: any = {};
+
+                // Add fields with this date to the sample
+                const fields = Object.keys(d).filter(f => f.includes(date));
+                if (!fields || !fields.length) continue;
+
+                sample.weather = {};
+                fields.forEach(f => {
+                    sample.weather[f.replace(date,"").replace(/^\_+|\_+$/g, '')] = parseFloat(d[f]) || d[f];
+                });
+
+                // Add fields not having any date to the sample
+                fieldsNotDate.forEach(f => {
+                    sample.weather[f] = parseFloat(d[f]) || d[f];
+                });
+
+                // Add dateId
+                const convertedDate = dayjs(extractAndFormatDateFromString(date)).tz(tz, true).toISOString();
+                sample.weatherDateObjectId = datesFromDB.find(doc => new Date(doc.date).valueOf() == new Date(convertedDate).valueOf())?._id;
+
+                // Add region id and push to array
+                for (const region of regions) {
+                    let newSample = { ...sample };
+
+                    // Add region Id
+                    newSample.regionBorderFeatureObjectId = region?._id || null;
+
+                    // Push sample to array
+                    if (Object.keys(newSample).length > 0) transformedData.push(newSample);
+                }  
+            }
+        }
+    }
+
+    return transformedData;
+} */
