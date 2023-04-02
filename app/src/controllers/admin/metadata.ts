@@ -74,12 +74,14 @@ export async function createMetadata(req: Request, res: Response) {
             ...req.body.data, 
             authRequired: req.body.data.authRequired === 'true',
             main: req.body.data.main === 'true',
-            ranges: req.body.data.ranges.map((c: any) => { 
+            active: req.body.data.active === 'true',
+            ranges: req.body.data.ranges.map((r: any) => { 
                 return { 
-                    ...c, 
-                    max: parseFloat(c.max),
-                    min: parseFloat(c.min),
-                    recommendations: c.recommendations && c.recomendations != "" ? c.recommendations : []
+                    ...r, 
+                    max: parseFloat(r.max),
+                    min: parseFloat(r.min),
+                    alert: r.alert === 'true',
+                    recommendations: r.recommendations && r.recomendations != "" ? r.recommendations : []
                 }
             })
         };
@@ -166,12 +168,14 @@ export async function updateMetadata(req: Request, res: Response) {
             ...req.body.data, 
             authRequired: req.body.data.authRequired === 'true',
             main: req.body.data.main === 'true',
-            ranges: req.body.data.ranges.map((c: any) => { 
+            active: req.body.data.active === 'true',
+            ranges: req.body.data.ranges.map((r: any) => { 
                 return { 
-                    ...c, 
-                    max: parseFloat(c.max),
-                    min: parseFloat(c.min),
-                    recommendations: c.recommendations && c.recomendations != "" ? c.recommendations : []
+                    ...r, 
+                    max: parseFloat(r.max),
+                    min: parseFloat(r.min),
+                    alert: r.alert === 'true',
+                    recommendations: r.recommendations && r.recomendations != "" ? r.recommendations : []
                 }
             })
         };

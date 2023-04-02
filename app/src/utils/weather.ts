@@ -5,7 +5,7 @@ import csv from "csvtojson";
 import { FeaturesProjection } from "../types/DatabaseCollections/Projections/FeaturesProjection.js";
 import fs from "fs";
 import glob from 'glob';
-import { allReplacements } from "./database.js";
+import { allReplacements, getObjectValue } from "./database.js";
 import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc.js';
 import timezone from 'dayjs/plugin/timezone.js';
@@ -17,8 +17,10 @@ const tz = "Europe/Lisbon";
 const KEEP_DATA_PREVIOUS_DAYS = parseInt(process.env.KEEP_DATA_PREVIOUS_DAYS) || 2;
 const CSV_FOLDER_PATH_DOCKER = process.env.CSV_FOLDER_PATH_DOCKER || null;
 const CSV_FOLDER_PATH_LOCAL = process.env.CSV_FOLDER_PATH_LOCAL || null;
-const DATABASE_FIELD_TO_MATCH = "properties.Concelho";
-const WEATHER_FIELD_TO_MATCH = "county";
+const DATABASE_FIELD_TO_MATCH = process.env.MATCH_DB_FIELD || "properties.Concelho";
+const WEATHER_FIELD_TO_MATCH = process.env.MATCH_DATA_FIELD || "county";
+const ALERT_NUM_DAYS_AHEAD = parseInt(process.env.ALERT_NUM_DAYS_AHEAD) || 3;
+const DB_REGION_NAME_FIELD = process.env.DB_REGION_NAME_FIELD;
 
 /**
  * Fetch the weather of a location from an external API, and return it.
@@ -293,7 +295,98 @@ export async function transformData(data: any[]) {
 }
 
 
+export async function generateAlerts(locations: any[], numDaysAhead?: number) {
+    const weatherFields = await DatabaseEngine.getWeatherMetadataCollection().find().toArray();
+    if (!weatherFields || !weatherFields.length) return {};
 
+    const weatherField = weatherFields.find((f:any) => f.main == true && f.active == true);
+    if (!weatherField) return [];
+
+    let features: any[] = [];
+
+    for (const location of locations) {
+        const feature = await DatabaseEngine.getFeaturesCollection().findOne({
+            "geometry": {
+                $geoIntersects: {
+                    $geometry: {
+                    "type": "Point",
+                    "coordinates": [location.lng, location.lat]
+                    }
+                }
+            }
+        });
+
+        if (!feature) continue;
+
+        const stringId = feature._id.toString();
+        const ix = features.findIndex((f:any) => f._id == stringId);
+        if (ix < 0) {
+            feature.locations = [location];
+            features.push({ _id: feature._id, properties: feature.properties });
+        } else {
+            features[ix].locations.push(location);
+        }
+    }
+
+    const regionsIds = features.map(f => f._id);
+    if (!regionsIds.length) return {};
+
+    const datesCollectionName = DatabaseEngine.getWeatherDatesCollectionName();
+    const startDate = new Date();
+    if (!numDaysAhead) numDaysAhead = ALERT_NUM_DAYS_AHEAD;
+    const endDate = new Date(new Date().valueOf() + (numDaysAhead * 24 * 60 * 60 * 1000));
+
+    const weatherFieldAlertable = weatherField.ranges.filter((r:any) => r.alert == true);
+    if (!weatherFieldAlertable || !weatherFieldAlertable.length) return {};
+
+    const orQuery = [];
+    for (const alertable of weatherFieldAlertable) {
+        let min = alertable.min;
+        let max = alertable.max;
+        if (!alertable.min || isNaN(alertable.min)) min = -Infinity;
+        if (!alertable.max || isNaN(alertable.max)) max = Infinity;
+        orQuery.push({ 
+            [`weather.${weatherField.name}`]: { $gte: min, $lt: max }
+        })
+    }
+
+    const alerts = await DatabaseEngine.getWeatherCollection().aggregate([
+        { 
+            $match: { 
+                regionBorderFeatureObjectId: { $in: regionsIds },
+                $or: orQuery
+            }
+        },
+        { $lookup: {
+            from: datesCollectionName,
+            localField: 'weatherDateObjectId',
+            foreignField: '_id',
+            as: 'date',
+            pipeline: [
+                {
+                    $match: { "date": { $gt: startDate, $lt: endDate } }
+                }
+            ]
+            }
+        },
+        {
+            $match: { date: { $ne: [] } }
+        },
+        {
+            $project: { [`weather.${weatherField.name}`]: 1, date: 1, "regionBorderFeatureObjectId": 1, "weatherDateObjectId": 1}
+        }
+    ]).toArray();
+
+    for (const alert of alerts) {
+        const feature = features.find(f => f._id.toString() == alert.regionBorderFeatureObjectId);
+        alert.regionName = getObjectValue(DB_REGION_NAME_FIELD, feature);
+        alert.locations = feature.locations;
+    }
+
+    alerts.sort((a,b) => new Date(a.date[0].date).valueOf() - new Date(b.date[0].date).valueOf())
+
+    return { numDaysAhead: ALERT_NUM_DAYS_AHEAD, alerts };
+}
 
 
 

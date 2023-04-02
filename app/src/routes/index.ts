@@ -58,4 +58,10 @@ router.use("/api/map", reliableSession, passport.initialize(), passport.session(
 router.use("/api/user", reliableSession, passport.initialize(), passport.session(), userRouter);
 router.use("/libs", librariesRouter);
 
+router.get("/api/metadata", (req, res) => {
+    return res.json({
+        DB_REGION_NAME_FIELD: process.env.DB_REGION_NAME_FIELD
+    })
+}); 
+
 export default router;

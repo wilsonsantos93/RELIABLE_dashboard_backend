@@ -24,6 +24,6 @@ router.post("/location/:id/update", authenticateAPI(Role.USER), updateLocation);
 router.post("/location/:id/delete", authenticateAPI(Role.USER), deleteLocation);
 
 // Route that gets alerts for user or given coordinates
-router.get("/alerts",  getAlerts);
+router.get("/alerts", authenticateAPI(Role.USER), getAlerts);
 
 export default router;

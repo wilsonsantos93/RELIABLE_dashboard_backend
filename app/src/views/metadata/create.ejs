@@ -15,9 +15,13 @@
                 <div class="row justify-content-sm-center h-100">
                     <%- include('../partials/alerts.ejs') %>
 
-                    <h2>Add weather field metadata</h2>
+                    <h3>Add weather field metadata</h3>
                     <div class="col-xxl-9 col-xl-9 col-lg-9 col-md-12 col-sm-12">
                         <form id="form-main" method="POST" action="/metadata/redirect">
+
+                            <label>Active:</label>
+                            <input checked class="form-check-input mb-2" type="checkbox" id="active-check" name="active" value="true" /><br/>
+
                             <label for="">Field name</label>
                             <input required class="form-control" type="text" name="name" placeholder="The name that comes on the data" value="" />
 
@@ -37,9 +41,9 @@
                             <label for="no">No</label>
 
                             <p style="margin-top:10px">Main field (check Yes for risk level or the most important field in the set):</p>
-                            <input class="form-check-input" type="radio" id="yes" name="main" value="true" />
+                            <input class="form-check-input" type="radio" id="main-check-yes" name="main" value="true" />
                             <label for="yes">Yes</label>
-                            <input checked class="form-check-input" type="radio" id="no" name="main" value="false" />
+                            <input checked class="form-check-input" type="radio" id="main-check-no" name="main" value="false" />
                             <label for="no">No</label>
                             
                         </form>
@@ -57,9 +61,14 @@
                                         <label class="clonable-increment-html" for="">Max</label>
                                         <input id="max_1" type="number" class="form-control clonable-increment-id" placeholder="" name="max" value="" />
                                     </div>
-                                    <div class="col-md-2">
+                                    <div class="col-md-1">
                                         <label class="clonable-increment-html" for="">Color</label>
                                         <input id="color_1" type="color" class="form-control clonable-increment-id" name="color" placeholder="#333333" value="" />
+                                    </div>
+
+                                    <div class="col-md-1 text-center alert-col">
+                                        <label>Alert:</label>
+                                        <input class="form-check-input" type="checkbox" id="alertable" name="alert" value="true" />
                                     </div>
 
                                     <div class="col-md-5">
@@ -130,6 +139,18 @@
                 });
                 return json;
             }
+
+            $("#main-check-yes").on("change", (e) => {
+                if (e.target.checked) $(".alert-col").show();
+            })
+
+            $("#main-check-no").on("change", (e) => {
+                if (e.target.checked) $(".alert-col").hide();
+            })
+
+            // default hide
+            $(".alert-col").hide();
+
         });
     </script>
 </html>

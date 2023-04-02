@@ -64,7 +64,13 @@
     // Document ready event
     $(document).ready(function() {
         const dtConfig = DTConfig();
-        dtConfig.columnsToShow = ["_id", "name", "main"];
+        dtConfig.columnsToShow = ["_id", "name", "active", "main"];
+        dtConfig.columnDefs.push({
+          targets: "col-active",
+          render: function (data, type, row, meta) {
+              return `<div> <i class="fa fa-search"></i> adasd </div>`
+          } 
+        });
         dtConfig.columnDefs.push({
             targets: -1,
             render: function (data, type, row, meta) {
@@ -89,14 +95,27 @@
         dtConfig.getFieldsUrl = "/metadata/fields";
 
         myDT = new MyDatatable(dtConfig);
-        
+
+        // replace true/false by Yes/No
+        $('#table').on('draw.dt', function () {
+          $("#table td.col-main").each(function(){
+            const text = $(this).html() == "true" ? "Yes" : "No";
+            $(this).html(text);
+          });
+
+          $("#table td.col-active").each(function(){
+            const text = $(this).html() == "true" ? "Yes" : "No";
+            $(this).html(text);
+          });
+        });
     });
 
     // Delete item function
     async function delFromID(id) {
-        const url = `/metadata/${id}/delete`;
-        await myDT.delFromID(id, url);
+      const url = `/metadata/${id}/delete`;
+      await myDT.delFromID(id, url);
     }
+
   </script>
 
 </html>

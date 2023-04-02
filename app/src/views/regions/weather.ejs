@@ -65,6 +65,7 @@
     // Document ready event
     $(document).ready(function() {
         const dtConfig = DTConfig();
+        dtConfig.columnsToShow = ["_id", "date"]
         dtConfig.columnDefs.push({
             targets: -1,
             render: function (data, type, row, meta) {

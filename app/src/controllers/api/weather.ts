@@ -3,7 +3,7 @@ import {DatabaseEngine} from "../../configs/mongo.js";
 import sendResponseWithGoBackLink from "../../utils/response.js";
 import {Request, Response} from "express-serve-static-core";
 import {Document, Filter, FindOptions, ObjectId} from "mongodb";
-import { createBulkOps, requestWeather, transformData } from "../../utils/weather.js";
+import { createBulkOps, generateAlerts, requestWeather, transformData } from "../../utils/weather.js";
 import {FeaturesProjection} from "../../types/DatabaseCollections/Projections/FeaturesProjection";
 import async from "async";
 
@@ -171,6 +171,19 @@ export async function handleGetWeatherMetadata(req: Request, res: Response) {
         }
         const data = await DatabaseEngine.getWeatherMetadataCollection().find(find, {projection}).toArray();
         return res.json(data);
+    } catch (e) {
+        console.error(e);
+        return res.status(500).json(e);
+    }
+}
+
+export async function handleGetAlerts(req: Request, res: Response) {
+    if (!req.query.lat || !req.query.lng) return res.status(500).json("Must specify lat and lng");
+
+    try { 
+        const locations = [{ lat: parseFloat(req.query.lat as string), lng: parseFloat(req.query.lng as string) }];
+        const alerts = await generateAlerts(locations);
+        return res.json(alerts);
     } catch (e) {
         console.error(e);
         return res.status(500).json(e);

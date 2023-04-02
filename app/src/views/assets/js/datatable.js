@@ -67,7 +67,7 @@ class MyDatatable {
                         data: colName, 
                         name: colName,
                         //className: colName == "date" ? 'all' : 'ctrl'
-                        className: this.dtConfig.columnsToShow.includes(colName) ? 'all' : 'ctrl'
+                        className: this.dtConfig.columnsToShow.includes(colName) ? `all col-${colName}` : `ctrl col-${colName}`
                     });
                     if (colName == "_id") continue;
                     $(this.selectors.select).append(`<option value="${colName}">${colName}</option>`);

@@ -71,7 +71,7 @@ export default (passport: PassportStatic) => {
             UserCollection.findOne({ $or: [ { "username": username }, { "email": username } ] }, async function (err, user) {
                 if (err) return done(err)
                 if (!user) return done(null, false, { message: 'Wrong username/email' })
-
+                
                 try {
                     const match = await comparePassword(user.password, password);
                     if (!match) return done(null, false, { message: 'Wrong password' })
