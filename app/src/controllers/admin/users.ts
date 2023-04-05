@@ -46,7 +46,7 @@ export async function getEditUserPage (req: Request, res: Response) {
 
     return res.render("users/edit.ejs", { data: user, roles: Role });
   } catch (e) {
-    console.error(e);
+    console.error(new Date().toJSON(), e);
     return res.redirect("/users");
   }
 }
@@ -152,7 +152,7 @@ export async function handleGetUsers(req: Request, res: Response) {
     return res.json(data);
   }
   catch (e) {
-    console.error(e);
+    console.error(new Date().toJSON(), e);
     return res.status(500).json(JSON.stringify(e));
   }
 }

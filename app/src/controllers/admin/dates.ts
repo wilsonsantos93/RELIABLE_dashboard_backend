@@ -11,7 +11,7 @@ export async function handleDeleteWeatherDates(req: Request, res: Response) {
     await DatabaseEngine.getWeatherDatesCollection().deleteMany({});
     req.flash("success_message", "Server successfully cleared weather saved dates from the database.");
   } catch (e) {
-    console.error(e);
+    console.error(new Date().toJSON(), e);
     if (e && e.codeName === "NamespaceNotFound") {
       req.flash("error_message", "Weather saved dates collection doesn't exist in the database (was probably already deleted).");
     } else if (e) {

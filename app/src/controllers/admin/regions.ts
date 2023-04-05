@@ -58,7 +58,7 @@ export async function handleGetRegions(req: Request, res: Response) {
     return res.json(data);
   }
   catch (e) {
-    console.error(e);
+    console.error(new Date().toJSON(), e);
     return res.status(500).json(JSON.stringify(e));
   }
 }
@@ -74,7 +74,7 @@ export async function handleDeleteRegions(req: Request, res: Response) {
     await DatabaseEngine.getFeaturesCollection().deleteMany({});
     req.flash("success_message", "Server successfully cleared region borders from the database.");
   } catch (e) {
-    console.error(e)
+    console.error(new Date().toJSON(), e)
     if (e && e.codeName === "NamespaceNotFound") {
       req.flash("error_message", "Region borders collection doesn't exist in the database (was probably already deleted).");
     } else if (e) {
@@ -157,7 +157,7 @@ export async function handleGetRegionWithWeather(req: Request, res: Response) {
     });
 
   } catch (e) {
-    console.error(e);
+    console.error(new Date().toJSON(), e);
     return res.status(500).json(JSON.stringify(e));
   }
 } 
@@ -176,7 +176,7 @@ export async function handleGetRegionFields(req: Request, res: Response) {
     const fields = await getCollectionFields(collectionName, find, projection);
     return res.json(fields);
   } catch (e) {
-    console.error(e);
+    console.error(new Date().toJSON(), e);
     return res.status(500).json(JSON.stringify(e));
   }
 }
@@ -192,7 +192,7 @@ export async function handleDeleteRegion(req: Request, res: Response) {
     await DatabaseEngine.getFeaturesCollection().deleteOne({ _id: new ObjectId(id) });
     return res.json({});
   } catch(e) {
-    console.error(e);
+    console.error(new Date().toJSON(), e);
     return res.status(500).json(JSON.stringify(e));
   }
 }
@@ -209,7 +209,7 @@ export async function handleDeleteWeatherRegion(req: Request, res: Response) {
     await DatabaseEngine.getWeatherCollection().deleteMany({ regionBorderFeatureObjectId: new ObjectId(id) });
     req.flash("success_message", "Weather data deleted succesfully!");
   } catch(e) {
-    console.error(e);
+    console.error(new Date().toJSON(), e);
     req.flash("error_message", "Unable to delete weather data.");
   }
   return res.redirect("back")
@@ -336,7 +336,7 @@ export async function handleSaveRegions(req: Request, res: Response) {
           insertedCRSObjectId.toHexString() // The ID string of the CRS document that was inserted in the database
       );
     } catch (e) {
-      console.error(e);
+      console.error(new Date().toJSON(), e);
       req.flash("error_message", "Unable to upload file. No CRS info found in file.");
       return res.redirect("back");
     }

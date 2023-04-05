@@ -225,7 +225,7 @@ export async function queryAllFeatureDocuments(queryProjection: any, skip: numbe
 
         return featuresQueryResults;
     } catch (e) {
-        console.error(e);
+        console.error(new Date().toJSON(), e);
         return []
     }
 }
@@ -338,7 +338,7 @@ export async function queryAllWeatherDates() {
             
         return featuresQueryResults;
     } catch (e) {
-        console.error(e);
+        console.error(new Date().toJSON(), e);
         return [];
     }
 }
@@ -371,7 +371,7 @@ export async function getCollectionFields(collectionName: string, find: any, pro
         }
         return columnNames;
     } catch (e) {
-        console.error(e);
+        console.error(new Date().toJSON(), e);
         throw e;
     }
 }

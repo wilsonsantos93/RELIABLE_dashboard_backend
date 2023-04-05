@@ -58,13 +58,13 @@ router.post("/register", async function(req, res, next) {
                 const data = await createJWTtoken(user);
                 return res.json(data);
             } catch (e:any) {
-                console.error(e);
+                console.error(new Date().toJSON(), e);
                 return res.status(500).json("Error generating JWT");
             }
         })(req, res, next)
 
     } catch (e) {
-        console.error(e);
+        console.error(new Date().toJSON(), e);
         return res.status(500).json(e);
     }
 });

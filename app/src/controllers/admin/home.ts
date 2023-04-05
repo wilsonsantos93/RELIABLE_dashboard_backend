@@ -32,7 +32,7 @@ export async function getHomePage (req: Request, res: Response) {
     const totalWeather = await DatabaseEngine.getWeatherCollection().estimatedDocumentCount();
     data = { totalDates, totalRegions, totalUsers, totalWeather };
   } catch (e) {
-    console.error(e);
+    console.error(new Date().toJSON(), e);
     req.flash("error_message", "Error getting data.");
   }
   res.render("home.ejs", { data: data });

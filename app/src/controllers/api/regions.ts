@@ -118,7 +118,7 @@ export async function handleGetRegionBorders(req: Request, res: Response) {
         return res.json(geoJSON);*/
 
     } catch (e) {
-        console.error(e);
+        console.error(new Date().toJSON(), e);
         return res.status(500).json("Error getting regions");
     }
 }
@@ -188,7 +188,7 @@ export async function handleGetRegionBorderWithWeather(req: Request, res: Respon
         return res.json(data);
 
     } catch(e) {
-        console.error(e);
+        console.error(new Date().toJSON(), e);
         return res.status(500).json(e);
     }
 }

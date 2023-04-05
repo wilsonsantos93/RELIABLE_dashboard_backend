@@ -156,7 +156,7 @@ export async function handleSaveWeather(req: Request, res: Response) {
         const result = await weatherCollection.bulkWrite(createBulkOps(await transformData(data)));
         return res.json(result);
     } catch (e) {
-        console.error(e);
+        console.error(new Date().toJSON(), e);
         return res.status(500).json(e);
     }
 }
@@ -172,7 +172,7 @@ export async function handleGetWeatherMetadata(req: Request, res: Response) {
         const data = await DatabaseEngine.getWeatherMetadataCollection().find(find, {projection}).toArray();
         return res.json(data);
     } catch (e) {
-        console.error(e);
+        console.error(new Date().toJSON(), e);
         return res.status(500).json(e);
     }
 }
@@ -185,7 +185,7 @@ export async function handleGetAlerts(req: Request, res: Response) {
         const alerts = await generateAlerts(locations);
         return res.json(alerts);
     } catch (e) {
-        console.error(e);
+        console.error(new Date().toJSON(), e);
         return res.status(500).json(e);
     }
 }

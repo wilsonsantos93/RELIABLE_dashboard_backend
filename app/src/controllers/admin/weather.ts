@@ -51,7 +51,7 @@ export async function handleDeleteWeather(req: Request, res: Response) {
     await DatabaseEngine.getWeatherCollection().deleteOne({ _id: new ObjectId(req.params.id)});
     return res.json({});
   } catch (e) {
-      console.error(e);
+      console.error(new Date().toJSON(), e);
       return res.status(500).json(JSON.stringify(e));
   }
 }

@@ -58,7 +58,7 @@ export async function handleDeleteWeatherAndDates() {
 
         console.log("JOB: Deleted previous weather and dates.");
     } catch (e) {
-        console.error(e);
+        console.error(new Date().toJSON(), e);
     } finally {
         return;
     } 
@@ -130,7 +130,7 @@ export async function readWeatherFile() {
                         data = [];
                     }
                 } catch (e) {
-                    console.error(e);
+                    console.error(new Date().toJSON(), e);
                 }
                 return resolve();
             })
@@ -144,7 +144,7 @@ export async function readWeatherFile() {
 
         console.log("JOB: Inserted weather data.");
     } catch (e) {
-        console.error(e);
+        console.error(new Date().toJSON(), e);
     } finally {
         return;
     }

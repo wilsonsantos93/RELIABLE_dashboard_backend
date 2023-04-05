@@ -38,7 +38,7 @@ export async function createJWTtoken(user: any) {
         })
         return data;
     } catch (e) {
-        console.error(e);
+        console.error(new Date().toJSON(), e);
         throw e;
     }
 }

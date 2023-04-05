@@ -91,7 +91,7 @@ import { WeatherCollectionDocument } from "../../types/DatabaseCollections/Weath
         console.log("Finished sending geoJSONs to the client.");
         return res.json(geoJsonArrayWithWeather);
     } catch (e) {
-        console.error(e);
+        console.error(new Date().toJSON(), e);
         return res.status(500).json(e);
     }
 }

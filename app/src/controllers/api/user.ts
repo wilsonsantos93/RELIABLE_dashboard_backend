@@ -13,7 +13,7 @@ export async function saveLocations(req: Request, res: Response) {
         await DatabaseEngine.getUsersCollection().updateOne({ _id : new ObjectId(currentUser._id) }, { $set: { ...data } });
         return res.json({});
     } catch (e) {
-        console.error(e);
+        console.error(new Date().toJSON(), e);
         return res.status(500).json(e);
     }
 }
@@ -31,7 +31,7 @@ export async function updatePassword(req: Request, res: Response) {
         await DatabaseEngine.getUsersCollection().updateOne({ _id : new ObjectId(currentUser._id) }, { $set: data });
         return res.json({});
     } catch (e) {
-        console.error(e);
+        console.error(new Date().toJSON(), e);
         return res.status(500).json(e);
     }
 }
@@ -43,7 +43,7 @@ export async function getLocations(req: Request, res: Response) {
         const locations = userDocument.locations.map((loc: any) => JSON.parse(decrypt(loc)));
         return res.json(locations);
     } catch (e) {
-        console.error(e);
+        console.error(new Date().toJSON(), e);
         return res.status(500).json(e);
     }
 }
@@ -61,7 +61,7 @@ export async function createLocation(req: Request, res: Response) {
         await DatabaseEngine.getUsersCollection().updateOne({ _id : new ObjectId(currentUser._id) }, { $set: { locations } });
         return res.json(data);
     } catch (e) {
-        console.error(e);
+        console.error(new Date().toJSON(), e);
         return res.status(500).json(e);
     }
 }
@@ -79,7 +79,7 @@ export async function updateLocation(req: Request, res: Response) {
         await DatabaseEngine.getUsersCollection().updateOne({ _id : new ObjectId(currentUser._id) }, { $set: { locations: encryptedLocations } });
         return res.json({});
     } catch (e) {
-        console.error(e);
+        console.error(new Date().toJSON(), e);
         return res.status(500).json(e);
     }
 }
@@ -95,7 +95,7 @@ export async function deleteLocation(req: Request, res: Response) {
         await DatabaseEngine.getUsersCollection().updateOne({ _id : new ObjectId(currentUser._id) }, { $set: { locations } });
         return res.json({});
     } catch (e) {
-        console.error(e);
+        console.error(new Date().toJSON(), e);
         return res.status(500).json(e);
     }
 }
@@ -111,7 +111,7 @@ export async function getAlerts(req: Request, res: Response) {
         const alerts = await generateAlerts(locations);
         return res.json(alerts);
     } catch (e) {
-        console.error(e);
+        console.error(new Date().toJSON(), e);
         return res.status(500).json(e);
     }
 }

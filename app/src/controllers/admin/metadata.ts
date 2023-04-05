@@ -50,7 +50,7 @@ export async function getEditMetadataPage(req: Request, res: Response) {
             data.ranges.sort(compare);
         }
     } catch (e) {
-        console.error(e);
+        console.error(new Date().toJSON(), e);
         req.flash("error_message", JSON.stringify(e));
     }
     return res.render("metadata/edit.ejs", { data: data });
@@ -93,7 +93,7 @@ export async function createMetadata(req: Request, res: Response) {
         await DatabaseEngine.getWeatherMetadataCollection().insertOne(data);
         return res.json({});
     } catch (e) {
-        console.error(e);
+        console.error(new Date().toJSON(), e);
         return res.status(500).json(JSON.stringify(e));
     }
 }
@@ -110,7 +110,7 @@ export async function getMetadata(req: Request, res: Response) {
         const data = await getDatatablesData(collectionName, {}, req.query);
         return res.json(data);
     } catch (e) {
-        console.error(e);
+        console.error(new Date().toJSON(), e);
         return res.status(500).json(JSON.stringify(e));
     }
 }
@@ -129,7 +129,7 @@ export async function getMetadataFields(req: Request, res: Response) {
         const fields = await getCollectionFields(collectionName, find, projection);
         return res.json(fields);
     } catch (e) {
-        console.error(e);
+        console.error(new Date().toJSON(), e);
         return res.status(500).json(JSON.stringify(e));
     }
 }
@@ -145,7 +145,7 @@ export function metadataRedirect(req: Request, res: Response) {
         return res.redirect("/metadata");
     } catch (e) {
         req.flash("error_message", "An error occurred updating metadata.");
-        console.error(e);
+        console.error(new Date().toJSON(), e);
         return res.redirect("back");
     }
 }
@@ -188,7 +188,7 @@ export async function updateMetadata(req: Request, res: Response) {
         await DatabaseEngine.getWeatherMetadataCollection().updateOne({ _id: new ObjectId(req.params.id) }, { $set: { ...data } });
         return res.json({});
     } catch (e) {
-        console.error(e);
+        console.error(new Date().toJSON(), e);
         return res.status(500).json(JSON.stringify(e))
     }
 }
@@ -203,7 +203,7 @@ export async function deleteMetadata(req: Request, res: Response) {
         await DatabaseEngine.getWeatherMetadataCollection().deleteOne({ _id: new ObjectId(req.params.id) });
         return res.json({});
     } catch(e) {
-        console.error(e);
+        console.error(new Date().toJSON(), e);
         return res.status(500).json(JSON.stringify(e));
     }
 }
@@ -218,7 +218,7 @@ export async function deleteAllMetadata(req: Request, res: Response) {
         await DatabaseEngine.getWeatherMetadataCollection().deleteMany({});
         req.flash("success_message", "Weather metadata deleted successfully!");
     } catch(e) {
-        console.error(e);
+        console.error(new Date().toJSON(), e);
         req.flash("error_message", JSON.stringify(e));
     }
     return res.redirect("/metadata");
