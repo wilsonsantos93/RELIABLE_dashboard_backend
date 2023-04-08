@@ -11,6 +11,7 @@ import passport from "passport";
 import { User } from "../types/User";
 import flash from "connect-flash";
 import MongoStore from 'connect-mongo';
+import { readGeneralMetadata } from "../utils/metadata.js";
 
 const router = Router();
 
@@ -58,9 +59,10 @@ router.use("/api/map", reliableSession, passport.initialize(), passport.session(
 router.use("/api/user", reliableSession, passport.initialize(), passport.session(), userRouter);
 router.use("/libs", librariesRouter);
 
-router.get("/api/metadata", (req, res) => {
+router.get("/api/metadata", async (req, res) => {
+    const { DB_REGION_NAME_FIELD } = await readGeneralMetadata();
     return res.json({
-        DB_REGION_NAME_FIELD: process.env.DB_REGION_NAME_FIELD
+        DB_REGION_NAME_FIELD: DB_REGION_NAME_FIELD
     })
 }); 
 

@@ -5,7 +5,7 @@
   "main": "dist/server.js",
   "scripts": {
     "build-dev": "cp .env dist/.env && cp output_06-02-2023.csv dist/output_06-02-2023.csv && tsc --build",
-    "dev": "nodemon -L src/server.ts",
+    "dev": "nodemon --ignore 'src/configs/*.json' -L src/server.ts",
     "build": "tsc -p .",
     "start": "node dist/server.js"
   },

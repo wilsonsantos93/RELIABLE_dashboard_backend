@@ -9,18 +9,19 @@ import { allReplacements, getObjectValue } from "./database.js";
 import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc.js';
 import timezone from 'dayjs/plugin/timezone.js';
+import { readGeneralMetadata } from "./metadata.js";
 dayjs.extend(utc);
 dayjs.extend(timezone);
 
 const tz = "Europe/Lisbon";
 
-const KEEP_DATA_PREVIOUS_DAYS = parseInt(process.env.KEEP_DATA_PREVIOUS_DAYS) || 2;
+/*const KEEP_DATA_PREVIOUS_DAYS = parseInt(process.env.KEEP_DATA_PREVIOUS_DAYS) || 2;
 const CSV_FOLDER_PATH_DOCKER = process.env.CSV_FOLDER_PATH_DOCKER || null;
 const CSV_FOLDER_PATH_LOCAL = process.env.CSV_FOLDER_PATH_LOCAL || null;
 const DATABASE_FIELD_TO_MATCH = process.env.MATCH_DB_FIELD || "properties.Concelho";
 const WEATHER_FIELD_TO_MATCH = process.env.MATCH_DATA_FIELD || "county";
-const ALERT_NUM_DAYS_AHEAD = parseInt(process.env.ALERT_NUM_DAYS_AHEAD) || 3;
-const DB_REGION_NAME_FIELD = process.env.DB_REGION_NAME_FIELD;
+const ALERT_NUM_DAYS_AHEAD = parseInt(process.env.ALERT_NUM_DAYS_AHEAD) || 2;
+const DB_REGION_NAME_FIELD = process.env.DB_REGION_NAME_FIELD; */
 
 /**
  * Fetch the weather of a location from an external API, and return it.
@@ -46,6 +47,8 @@ export async function requestWeather(locationCoordinates: number[]): Promise<Fea
  */
 export async function handleDeleteWeatherAndDates() {
     try {
+        const data = await readGeneralMetadata();
+        const KEEP_DATA_PREVIOUS_DAYS = data.KEEP_DATA_PREVIOUS_DAYS ? parseInt(data.KEEP_DATA_PREVIOUS_DAYS) : 1;
         const datesCollection = await DatabaseEngine.getWeatherDatesCollection();
         const date = new Date(new Date().valueOf() - KEEP_DATA_PREVIOUS_DAYS*24*60*60*1000);
         const ids = await (await datesCollection.find({ "date": { $lt: date } }).toArray()).map((doc) => doc._id);
@@ -94,23 +97,16 @@ export async function readWeatherFile() {
         const totalRegions = await DatabaseEngine.getFeaturesCollection().estimatedDocumentCount();
         if (!totalRegions) return;
 
-        /* if (!CSV_FOLDER_PATH || CSV_FOLDER_PATH == "" || !fs.existsSync(CSV_FOLDER_PATH)) { 
-            throw "ERROR in CSV Folder: Path not specified or does not exist.";
-        } */
+        const { CSV_FOLDER_PATH_LOCAL, CSV_FOLDER_PATH_DOCKER } = await readGeneralMetadata();
 
-        let CSV_FOLDER_PATH = null;
-        if (!CSV_FOLDER_PATH_DOCKER || CSV_FOLDER_PATH_DOCKER == "" || !fs.existsSync(CSV_FOLDER_PATH_DOCKER)) {
-            if (!CSV_FOLDER_PATH_LOCAL || CSV_FOLDER_PATH_LOCAL == "" || !fs.existsSync(CSV_FOLDER_PATH_LOCAL)) {
-                throw "ERROR in CSV Folder: Path not specified or does not exist.";
-            }
-            CSV_FOLDER_PATH = CSV_FOLDER_PATH_LOCAL;
-        } 
-        else CSV_FOLDER_PATH = CSV_FOLDER_PATH_DOCKER;
-
+        let CSV_FOLDER_PATH = CSV_FOLDER_PATH_DOCKER || CSV_FOLDER_PATH_LOCAL || null;
+        if (!CSV_FOLDER_PATH) throw "ERROR in CSV Folder: Path not specified or does not exist.";
 
         const newestFile = glob.sync(`${CSV_FOLDER_PATH}/*.csv`)
             .map((name: any) => ({name, ctime: fs.statSync(name).ctime}))
             .sort((a: any, b: any) => b.ctime - a.ctime)[0]?.name;
+
+        if (!newestFile) throw "No CSV file found.";
 
         console.log("JOB: Reading CSV file:", newestFile);
 
@@ -212,6 +208,8 @@ export async function transformData(data: any[]) {
     const regionsCollection = DatabaseEngine.getFeaturesCollection();
     const datesCollection = DatabaseEngine.getWeatherDatesCollection();
 
+    const { WEATHER_FIELD_TO_MATCH, DATABASE_FIELD_TO_MATCH } = await readGeneralMetadata();
+
     // Loop through data 
     for (const d of data) {
         if (!d.hasOwnProperty(WEATHER_FIELD_TO_MATCH)) continue;
@@ -309,8 +307,8 @@ export async function generateAlerts(locations: any[], numDaysAhead?: number) {
             "geometry": {
                 $geoIntersects: {
                     $geometry: {
-                    "type": "Point",
-                    "coordinates": [location.lng, location.lat]
+                        "type": "Point",
+                        "coordinates": [location.lng, location.lat]
                     }
                 }
             }
@@ -333,7 +331,9 @@ export async function generateAlerts(locations: any[], numDaysAhead?: number) {
 
     const datesCollectionName = DatabaseEngine.getWeatherDatesCollectionName();
     const startDate = new Date();
-    if (!numDaysAhead) numDaysAhead = ALERT_NUM_DAYS_AHEAD;
+    const { ALERT_NUM_DAYS_AHEAD, DB_REGION_NAME_FIELD } = await readGeneralMetadata();
+
+    if (!numDaysAhead) numDaysAhead = parseInt(ALERT_NUM_DAYS_AHEAD);
     const endDate = new Date(new Date().valueOf() + (numDaysAhead * 24 * 60 * 60 * 1000));
 
     const weatherFieldAlertable = weatherField.ranges.filter((r:any) => r.alert == true);

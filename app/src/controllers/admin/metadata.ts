@@ -3,25 +3,67 @@ import { ObjectId } from "mongodb";
 import { getCollectionFields, getDatatablesData } from "../../utils/database.js";
 import { DatabaseEngine } from "../../configs/mongo.js";
 import { WeatherMetadata } from "../../types/WeatherMetadata.js";
+import { readGeneralMetadata, writeGeneralMetadata } from "../../utils/metadata.js";
 
 /**
- * Get metadata page
+ * Get general metadata page
+ * @param req Client HTTP request object
+ * @param res Client HTTP response object
+ * @returns Renders general metadata index page
+ */
+export async function getGeneralMetadataPage(req: Request, res: Response) {
+    try {
+        const data = await readGeneralMetadata();
+        return res.render("metadata/general/index.ejs", { data });
+    } catch (e) {
+        return res.render("metadata/general/index.ejs", { data: {} });
+    }
+    
+}
+
+/**
+ * Updates general metadata variables
+ * @param req Client HTTP request object
+ * @param res Client HTTP response object
+ * @returns Renders general metadata index page
+ */
+export async function updateGeneralMetadata(req: Request, res: Response) {
+    const srcObj = await readGeneralMetadata();
+    const reqObj = req.body; 
+
+    for (const prop in reqObj){
+        srcObj[prop] = reqObj[prop];
+    }
+    
+    try {
+        const updatedJson = JSON.stringify(srcObj, null, 4);
+        writeGeneralMetadata(updatedJson);
+        req.flash("success_message", "General metadata updated successfully!");
+    } catch (e) {
+        req.flash("error_message", "Error updating metadata.");
+    } finally {
+        return res.redirect("/metadata/general");
+    }
+}
+
+/**
+ * Get weather metadata page
  * @param req Client HTTP request object
  * @param res Client HTTP response object
  * @returns Renders metadata index page
  */
 export function getMetadataPage(req: Request, res: Response) {
-    return res.render("metadata/index.ejs");
+    return res.render("metadata/weather/index.ejs");
 }
 
 /**
- * Get create metadata page
+ * Get create weather metadata page
  * @param req Client HTTP request object
  * @param res Client HTTP response object
  * @returns Renders metadata create page
  */
 export function getCreateMetadataPage(req: Request, res: Response) {
-    return res.render("metadata/create.ejs");
+    return res.render("metadata/weather/create.ejs");
 }
 
 /**
@@ -53,7 +95,7 @@ export async function getEditMetadataPage(req: Request, res: Response) {
         console.error(new Date().toJSON(), e);
         req.flash("error_message", JSON.stringify(e));
     }
-    return res.render("metadata/edit.ejs", { data: data });
+    return res.render("metadata/weather/edit.ejs", { data: data });
 }
 
 /**
@@ -142,7 +184,7 @@ export async function getMetadataFields(req: Request, res: Response) {
 export function metadataRedirect(req: Request, res: Response) {
     try {
         req.flash("success_message", "Weather metadata updated succesfully!");
-        return res.redirect("/metadata");
+        return res.redirect("/metadata/weather");
     } catch (e) {
         req.flash("error_message", "An error occurred updating metadata.");
         console.error(new Date().toJSON(), e);
@@ -221,5 +263,5 @@ export async function deleteAllMetadata(req: Request, res: Response) {
         console.error(new Date().toJSON(), e);
         req.flash("error_message", JSON.stringify(e));
     }
-    return res.redirect("/metadata");
+    return res.redirect("/metadata/weather");
 }

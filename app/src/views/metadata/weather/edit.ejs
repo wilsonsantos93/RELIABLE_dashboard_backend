@@ -2,21 +2,21 @@
 
 <html>
   <head>
-    <%- include('../partials/head.ejs') %>
+    <%- include('../../partials/head.ejs') %>
   </head>
 
   <body>
     <header>    
-      <%- include('../partials/navbar.ejs') %>
+      <%- include('../../partials/navbar.ejs') %>
     </header>
 
     <main style="margin-top: 50px;">
         <div class="container">
             <div class="row justify-content-sm-center h-100">
-                <%- include('../partials/alerts.ejs') %>
+                <%- include('../../partials/alerts.ejs') %>
                 <h3>Edit weather metadata <%= data._id %></h3>
                 <div class="col-xxl-9 col-xl-9 col-lg-9 col-md-9 col-sm-12">
-                  <form id="form-main" method="POST" action="/metadata/redirect">
+                  <form id="form-main" method="POST" action="/metadata/weather/redirect">
 
                       <label>Active:</label>
                       <% if (!data.active) { %>
@@ -161,12 +161,12 @@
     </main>
 
     <footer>
-        <%- include('../partials/footer.ejs') %>
+        <%- include('../../partials/footer.ejs') %>
     </footer>
 
 </body>
 
-<%- include('../partials/scripts.ejs') %>
+<%- include('../../partials/scripts.ejs') %>
 <script src="/js/jquery.cloner.min.js"></script>
 <script>
   $(document).ready(function() {
@@ -190,7 +190,7 @@
         data.ranges.push(dataConverted);
       });
 
-      $.post("/metadata/<%= data._id %>/update", { data }, (data, status) => {
+      $.post("/metadata/weather/<%= data._id %>/update", { data }, (data, status) => {
         $("#form-main").submit(); // make normal request just to redirect
       }).fail(e => {
         showErrorAlert(e.responseJSON);
