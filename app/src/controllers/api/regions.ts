@@ -4,7 +4,6 @@ import { collectionExistsInDatabase, queryFeatureDocuments, queryAllFeatureDocum
 import { Request, Response } from "express-serve-static-core";
 import { ObjectId } from "mongodb";
 import { FeatureCollectionWithCRS } from "../../types/FeatureCollectionWithCRS.js";
-import { WeatherCollectionDocument } from "../../types/DatabaseCollections/WeatherCollectionDocument.js";
 
 /**
  * Sends a response with an array of geoJSONs. <p>
@@ -52,15 +51,7 @@ export async function handleGetRegionBorders(req: Request, res: Response) {
             };
 
             let regionBordersQuery: any = {crsObjectId: crs._id}; // Query for all the features that have the same crsObjectId as the current CRS _id
-            // We are going to use the returning query parameters to build the geoJSON
-            // As such, the feature _id, center, and crsObjectId aren't needed
-            // We only need the type, properties and geometry
-            /* let regionBordersQueryProjection: any = {
-                _id: 0,
-                type: 1,
-                properties: 1,
-                geometry: 1,
-            }; */
+
             let regionBordersQueryProjection: any = { _id: 0, crsObjectId: 0 };
 
             if (req.query.hasOwnProperty("geometry") && (req.query.geometry == '0' || req.query.geometry == 'false')) {
@@ -88,34 +79,6 @@ export async function handleGetRegionBorders(req: Request, res: Response) {
         console.log("Finished query each CRS in the database for the associated border region features.");
 
         return res.json(geoJSONs);
-
-
-        /*let projection: any = {};
-        if (req.query.hasOwnProperty("geometry") && (req.query.geometry == '0' || req.query.geometry == 'false')) {
-            projection["feature.geometry"] = 0
-        }
-        if (req.query.hasOwnProperty("center") && (req.query.center == '0' || req.query.center == 'false')) {
-            projection["center"] = 0
-        }
-
-        let regionBordersDocumentsArray = [];
-        if (req.params.id) {
-            const find = {
-                _id: new ObjectId(req.params.id as string)
-            }
-            regionBordersDocumentsArray = await queryFeatureDocuments(find, projection);
-        }
-        else {
-            regionBordersDocumentsArray = await queryAllFeatureDocuments(projection);
-        }
-
-
-        const geoJSON = {
-            type: "FeatureCollection",
-            features: regionBordersDocumentsArray
-        } 
-
-        return res.json(geoJSON);*/
 
     } catch (e) {
         console.error(new Date().toJSON(), e);

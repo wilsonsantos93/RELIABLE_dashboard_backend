@@ -1,5 +1,5 @@
 import {DatabaseEngine} from "../configs/mongo.js";
-import {convertFeatureCoordinatesToLatLong, requestProjectionInformation, separateMultiPolygons} from "./features.js";
+import {separateMultiPolygons} from "./features.js";
 import {Collection, Db, Document, Filter, FindOptions, ObjectId} from "mongodb";
 import {FeatureDocument} from "../types/DatabaseCollections/FeatureDocument";
 import { WeatherCollectionDocumentWithFeature } from "../types/DatabaseCollections/WeatherCollectionDocument";
@@ -129,33 +129,6 @@ export async function queryAllCoordinatesReferenceSystems(queryProjection: any) 
  * @param geoJSON {@link \"GeoJSON\"} to insert to the collection.
  */
 export async function saveFeatures(geoJSON: FeatureCollectionWithCRS<MultiPolygon | Polygon, FeatureProperties>) {
-    /* let geoJSONProjectionInformation = await requestProjectionInformation(geoJSON.crs)
-
-    console.log("Started separating Multi Polygons.")
-    let separatedGeoJSON = separateMultiPolygons(geoJSON)
-    console.log("Finished separating Multi Polygons.")
-
-
-    // Convert each feature of the geoJSON
-    let convertedFeatures: Feature<Polygon, FeatureProperties>[] = []
-    for (const currentFeature of separatedGeoJSON.features) {
-        let convertedFeature = convertFeatureCoordinatesToLatLong(currentFeature, geoJSONProjectionInformation)
-        convertedFeatures.push(convertedFeature)
-    }
-
-    let convertedFeaturesDocuments: FeatureDocument[] = []
-    for (const currentFeature of convertedFeatures) {
-        let featureDocument: FeatureDocument = {
-            feature: currentFeature
-        }
-        convertedFeaturesDocuments.push(featureDocument)
-    }
-
-    // Save the converted features to the database
-    let regionBordersCollection = DatabaseEngine.getFeaturesCollection();
-    await regionBordersCollection.insertMany(
-        convertedFeaturesDocuments
-    ); */
     let regionBordersCollection = DatabaseEngine.getFeaturesCollection();
 
     let separatedGeoJSON = separateMultiPolygons(geoJSON)  // Separates the geoJSON MultiPolygon features into multiple features

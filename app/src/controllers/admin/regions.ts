@@ -1,10 +1,9 @@
 import { DatabaseEngine } from "../../configs/mongo.js";
 import { Request, Response } from "express-serve-static-core";
-import { Filter, ObjectId, Document } from "mongodb";
-import async from "async";
+import { ObjectId } from "mongodb";
 // @ts-ignore
 import polygonCenter from "geojson-polygon-center";
-import { collectionExistsInDatabase, queryFeatureDocuments, saveFeatures, getCollectionFields, getDatatablesData, saveCRS, associateCRStoFeatures, queryAllFeatureDocuments } from "../../utils/database.js";
+import { collectionExistsInDatabase, saveFeatures, getCollectionFields, getDatatablesData, saveCRS, associateCRStoFeatures, queryAllFeatureDocuments } from "../../utils/database.js";
 import { FeatureProperties } from "../../types/FeatureProperties";
 import { FeatureCollectionWithCRS } from "../../types/FeatureCollectionWithCRS";
 import { MultiPolygon, Polygon } from "geojson";
@@ -251,31 +250,6 @@ export async function handleCalculateCenters(req: Request, res: Response) {
       crsObjectId: 0,
     };
 
-    /*let featureDocuments = await queryFeatureDocuments(
-      featuresQuery,
-      featuresQueryProjection
-    );
-
-     let currentFeatureIndex = 1;
-    await async.each(featureDocuments, async (currentFeature) => {
-      if ((currentFeatureIndex % 10) === 0) {
-        console.log("Calculating center of feature number: " + currentFeatureIndex)
-      }
-
-      const center = polygonCenter(currentFeature.feature.geometry);
-
-      // Add the centre data to the regionBorderDocument in the database
-      await DatabaseEngine.getFeaturesCollection().updateOne(
-        { _id: currentFeature._id }, 
-        {
-          $set: {
-            center: center,
-          },
-        }
-      );
-
-      currentFeatureIndex++;
-    }) */
 
     let featuresQueryResults = await queryAllFeatureDocuments(
       featuresQueryProjection

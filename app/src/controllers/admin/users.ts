@@ -136,13 +136,6 @@ export async function handleGetUsers(req: Request, res: Response) {
   try {
     const projection: any = { "password": 0, "locations": 0 };
     const data = await getDatatablesData("users", projection, req.query);
-    /* for (const user of data.data) {
-      if (typeof user.email != "string") {
-        const currentUser = req.user as User;
-        if (String(user._id) === String(currentUser._id)) user.email = decrypt(user.email);
-        else user.email = user.email.encryptedData;
-      }
-    } */
 
     const currentUser = req.user as User;
     for (const user of data.data) {

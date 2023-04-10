@@ -15,14 +15,6 @@ dayjs.extend(timezone);
 
 const tz = "Europe/Lisbon";
 
-/*const KEEP_DATA_PREVIOUS_DAYS = parseInt(process.env.KEEP_DATA_PREVIOUS_DAYS) || 2;
-const CSV_FOLDER_PATH_DOCKER = process.env.CSV_FOLDER_PATH_DOCKER || null;
-const CSV_FOLDER_PATH_LOCAL = process.env.CSV_FOLDER_PATH_LOCAL || null;
-const DATABASE_FIELD_TO_MATCH = process.env.MATCH_DB_FIELD || "properties.Concelho";
-const WEATHER_FIELD_TO_MATCH = process.env.MATCH_DATA_FIELD || "county";
-const ALERT_NUM_DAYS_AHEAD = parseInt(process.env.ALERT_NUM_DAYS_AHEAD) || 2;
-const DB_REGION_NAME_FIELD = process.env.DB_REGION_NAME_FIELD; */
-
 /**
  * Fetch the weather of a location from an external API, and return it.
  * @param locationCoordinates The array of the location to fetch the weather.

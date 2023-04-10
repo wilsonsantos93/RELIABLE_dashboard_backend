@@ -30,56 +30,6 @@ export async function requestProjectionInformation(crs: CRS) {
  */
 export function separateMultiPolygons(geoJSON: FeatureCollectionWithCRS) {
 
-    /* let separatedGeoJSON: FeatureCollection<Polygon, FeatureProperties> = {
-        type: geoJSON.type,
-        features: []
-    };
-
-    for (const currentFeature of geoJSON.features) {
-
-        // If the feature is of the type Polygon, then simply append it to the separated geoJSON
-        if (currentFeature.geometry.type === "Polygon") {
-
-            let tempFeature: Feature<Polygon, FeatureProperties> ={
-
-                type: currentFeature.type,
-                properties: currentFeature.properties,
-                geometry: {
-                    type: "Polygon",
-                    coordinates: currentFeature.geometry.coordinates,
-                }
-
-            }
-
-            separatedGeoJSON.features.push(tempFeature);
-        }
-
-        // If the feature is of the type MultiPolygon, every Polygon in the MultiPolygon needs to be separated into a new feature
-        else if (currentFeature.geometry.type === "MultiPolygon") {
-
-            for (const polygon of currentFeature.geometry.coordinates) {
-
-                let tempFeature: Feature<Polygon, FeatureProperties> = {
-
-                    type: currentFeature.type,
-                    properties: currentFeature.properties,
-                    geometry: {
-                        type: "Polygon",
-                        coordinates: polygon,
-                    }
-
-                }
-
-                separatedGeoJSON.features.push(tempFeature);
-
-            }
-
-        }
-
-    }
-
-    return separatedGeoJSON; */
-
     let separatedGeoJSON: any = {};
 
     separatedGeoJSON.type = geoJSON.type;
