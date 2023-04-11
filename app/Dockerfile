@@ -15,4 +15,4 @@ COPY package.json ./
 RUN npm install --only=production && npm install pm2 -g
 COPY --from=builder /usr/dist .
 EXPOSE 80
-CMD ["pm2-runtime","src/server.js"]
+CMD ["pm2-runtime","server.js"]

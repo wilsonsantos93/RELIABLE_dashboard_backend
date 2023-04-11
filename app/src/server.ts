@@ -32,7 +32,8 @@ passport.session();
 
 //! EJS Template engine
 app.set("view engine", "ejs");
-app.set("views", ("./src/views/"));
+//app.set("views", ("./src/views/"));
+app.set("views", path.join( __dirname, "views" ));
 app.use(express.static(path.join(__dirname, 'views/assets')));
 
 // use CORS
@@ -42,10 +43,12 @@ app.use(cors());
 app.use(router);
 
 // node schedule
-schedule.scheduleJob('0 * * * *', async function () {
-   await handleDeleteWeatherAndDates();
-   await readWeatherFile();
-});
+if (process.env.NODE_APP_INSTANCE === '0') {
+    schedule.scheduleJob('0 * * * *', async function () {
+        await handleDeleteWeatherAndDates();
+        await readWeatherFile();
+    });
+}
 
 //! Start server
 app.listen(process.env.PORT, function () {

@@ -60,10 +60,14 @@ router.use("/api/user", reliableSession, passport.initialize(), passport.session
 router.use("/libs", librariesRouter);
 
 router.get("/api/metadata", async (req, res) => {
-    const { DB_REGION_NAME_FIELD } = await readGeneralMetadata();
-    return res.json({
-        DB_REGION_NAME_FIELD: DB_REGION_NAME_FIELD
-    })
+    try {
+        const { DB_REGION_NAME_FIELD } = await readGeneralMetadata();
+        return res.json({
+            DB_REGION_NAME_FIELD: DB_REGION_NAME_FIELD
+        })
+    } catch (e) {
+        return res.status(500).json("Error getting data.");
+    }
 }); 
 
 export default router;

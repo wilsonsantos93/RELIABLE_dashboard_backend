@@ -4,9 +4,10 @@
   "description": "Server that gathers weather data and exposes the weather and region borders as API endpoints.",
   "main": "dist/server.js",
   "scripts": {
-    "build-dev": "cp .env dist/.env && cp output_06-02-2023.csv dist/output_06-02-2023.csv && tsc --build",
+    "build-dev": "tsc --build",
     "dev": "nodemon --ignore 'src/configs/*.json' -L src/server.ts",
     "build": "tsc -p .",
+    "postbuild": "cp -r src/libs dist && cp src/configs/generalMetadata.json dist/configs && cp ./package.json dist && cp -r src/views dist",
     "start": "node dist/server.js"
   },
   "keywords": [],
