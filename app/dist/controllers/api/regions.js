@@ -11,7 +11,7 @@ import { ObjectId } from "mongodb";
  */
 export async function handleGetRegionBorders(req, res) {
     try {
-        console.log(new Date().toJSON(), "\nClient requested region borders.");
+        //console.log(new Date().toJSON(), "\nClient requested region borders.");
         //* Check if the region border collection exists
         const regionBordersCollectionExists = await collectionExistsInDatabase(DatabaseEngine.getFeaturesCollectionName(), DatabaseEngine.getDashboardDatabase());
         //* If the region borders collection doesn't exist, send error response to the client
@@ -19,16 +19,16 @@ export async function handleGetRegionBorders(req, res) {
             return res.status(404).json("Couldn't get region borders because the collection doesn't exist.");
         }
         //* If the region borders collection exists, send the various saved geoJSONs to the client
-        console.log("Started sending geoJSONs to the client.");
+        //console.log("Started sending geoJSONs to the client.");
         let geoJSONs = [];
         //* Query the region borders collection for the crs
         //* The _id and the crs of each CRS document, is going to be used to return a geoJSON with the crs, and the associated region border features
         let crsQueryProjection = { _id: 1, crs: 1 };
-        console.log("Started querying coordinates reference systems collection for all CRSs.");
+        //console.log("Started querying coordinates reference systems collection for all CRSs.");
         let crsQueryResults = await queryAllCoordinatesReferenceSystems(crsQueryProjection);
-        console.log("Finished querying coordinates reference systems collection for all CRSs.");
+        //console.log("Finished querying coordinates reference systems collection for all CRSs.");
         //* Query each CRS in the database for the associated border region features
-        console.log("Started query each CRS in the database for the associated border region features.");
+        //console.log("Started query each CRS in the database for the associated border region features.");
         for (const crs of crsQueryResults) {
             let geoJSON = {
                 type: "FeatureCollection",
@@ -51,7 +51,7 @@ export async function handleGetRegionBorders(req, res) {
             // Add the geoJSON to the geoJSONs array
             geoJSONs.push(geoJSON);
         }
-        console.log("Finished query each CRS in the database for the associated border region features.");
+        //console.log("Finished query each CRS in the database for the associated border region features.");
         return res.json(geoJSONs);
     }
     catch (e) {

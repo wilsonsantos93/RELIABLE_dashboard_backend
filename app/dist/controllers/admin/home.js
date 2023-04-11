@@ -41,7 +41,7 @@ export async function getHomePage(req, res) {
  * @returns Redirects to home page
  */
 export async function handleDeleteAll(req, res) {
-    console.log("Client requested to clear the all collections.");
+    //console.log("Client requested to clear the all collections.");
     let successMsgs = [];
     let errorMsgs = [];
     // Delete region borders data
