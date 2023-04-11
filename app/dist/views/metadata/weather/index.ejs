@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <%- include('../../partials/head.ejs') %>
+    <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/v/dt/dt-1.13.2/r-2.4.0/datatables.min.css"/>
+  </head>
+
+  <body>
+    <header>    
+      <%- include('../../partials/navbar.ejs') %>
+    </header>
+
+    <main style="margin-top: 50px;">
+      <div class="container">
+        
+      <%- include('../../partials/alerts.ejs') %>
+
+        <div class="row">
+            <div class="col-xs-12">
+                <h2>Weather metadata</h2>
+                <div class="container">
+                    <div class="row">
+                      <div class="col-xs-12 col-lg-6">
+                        <a href="/metadata/weather/create" class="btn btn-primary">Add weather metadata</a>
+                      </div>
+
+                        <div class="col-xs-12 col-lg-6">
+                          <form id="formDeleteAll" action="/metadata/weather/deleteAll" class="pull-right" method="post">
+                              <div>
+                                  <button type="submit" class="btn btn-danger d-none">
+                                      <i class="fa fa-trash-o"></i>
+                                  </button>
+                                  <button type="button" onclick=myDT.deleteAllConfirm() class="btn btn-danger">
+                                      <i class="fa fa-trash-o"></i> Delete all
+                                  </button>
+                              </div>
+                          </form>
+                        </div>
+                    </div>
+                </div>
+
+                <%- include('../../partials/datatable.ejs') %>
+
+            </div>
+        </div>
+      </div>
+    </main>
+    
+    <%- include('../../partials/modal.ejs') %>
+    
+    <footer>
+      <%- include('../../partials/footer.ejs') %>
+    </footer>
+  </body>
+
+  <%- include('../../partials/scripts.ejs') %>
+  <script type="text/javascript" src="https://cdn.datatables.net/v/dt/dt-1.13.2/r-2.4.0/datatables.min.js"></script>
+  <script type="text/javascript" src="/js/datatable.js"></script>
+  <script>
+    // MyDatatable object
+    let myDT; 
+
+    // Document ready event
+    $(document).ready(function() {
+        const dtConfig = DTConfig();
+        dtConfig.columnsToShow = ["_id", "name", "active", "main"];
+        dtConfig.columnDefs.push({
+          targets: "col-active",
+          render: function (data, type, row, meta) {
+              return `<div> <i class="fa fa-search"></i> adasd </div>`
+          } 
+        });
+        dtConfig.columnDefs.push({
+            targets: -1,
+            render: function (data, type, row, meta) {
+                return `<div>
+                        <button class="btn btn-secondary btn-sm" alt="Ver" title="Ver" onclick=myDT.viewFromID(${meta.row})>
+                            <i class="fa fa-search"></i>
+                        </button>
+
+                        <a class="btn btn-primary btn-sm" target="_blank" alt="Edit" title="Edit" href="/metadata/weather/${row._id}/edit">
+                            <i class="fa fa-edit"></i>
+                        </a>
+
+                        <button class="btn btn-danger btn-sm" alt="Eliminar" title="Eliminar" onclick=delFromID("${row._id}")>
+                            <i class="fa fa-trash-o"></i>
+                        </button>
+                    </div>
+                `;
+            }
+        });
+
+        dtConfig.ajax.url = "/metadata/weather/getMetadata?dt=true";
+        dtConfig.getFieldsUrl = "/metadata/weather/fields";
+
+        myDT = new MyDatatable(dtConfig);
+
+        // replace true/false by Yes/No
+        $('#table').on('draw.dt', function () {
+          $("#table td.col-main").each(function(){
+            const text = $(this).html() == "true" ? 
+            '<i style="color:green" class="fa fa-check"></i>' : '<i style="color:red" class="fa fa-times"></i>';
+            $(this).html(text);
+          });
+
+          $("#table td.col-active").each(function(){
+            const text = $(this).html() == "true" ? 
+            '<i style="color:green" class="fa fa-check"></i>' : '<i style="color:red" class="fa fa-times"></i>';
+            $(this).html(text);
+          });
+        });
+    });
+
+    // Delete item function
+    async function delFromID(id) {
+      const url = `/metadata/weather/${id}/delete`;
+      await myDT.delFromID(id, url);
+    }
+
+  </script>
+
+</html>

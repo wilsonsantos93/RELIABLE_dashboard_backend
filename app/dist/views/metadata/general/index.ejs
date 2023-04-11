@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <%- include('../../partials/head.ejs') %>
+  </head>
+
+  <body>
+    <header>    
+      <%- include('../../partials/navbar.ejs') %>
+    </header>
+
+    <main style="margin-top: 50px;">
+        <div class="container">
+            <div class="row justify-content-sm-center h-100">
+                <%- include('../../partials/alerts.ejs') %>
+                <h3>General metadata</h3>
+                <div class="col-xxl-4 col-xl-5 col-lg-5 col-md-7 col-sm-9">
+                    <form action="/metadata/general" method="POST">
+                        <label for="KEEP_DATA_PREVIOUS_DAYS">Keep data from previous days:</label>
+                        <input type="text" name="KEEP_DATA_PREVIOUS_DAYS" class="form-control" value="<%= data.KEEP_DATA_PREVIOUS_DAYS %>" />
+
+                        <label class="mt-2" for="ALERT_NUM_DAYS_AHEAD">Alert days ahead:</label>
+                        <input type="text" name="ALERT_NUM_DAYS_AHEAD" class="form-control" value="<%= data.ALERT_NUM_DAYS_AHEAD %>" />
+
+                        <label class="mt-2" for="CSV_FOLDER_PATH_LOCAL">CSV folder path:</label>
+                        <input type="text" name="CSV_FOLDER_PATH_LOCAL" class="form-control" value="<%= data.CSV_FOLDER_PATH_LOCAL %>" />
+
+                        <label class="mt-2" for="DB_REGION_NAME_FIELD">Region name field in DB:</label>
+                        <input type="text" name="DB_REGION_NAME_FIELD" class="form-control" value="<%= data.DB_REGION_NAME_FIELD %>" />
+                        
+                        <label class="mt-2" for="WEATHER_FIELD_TO_MATCH">Field to match in data:</label>
+                        <input type="text" name="WEATHER_FIELD_TO_MATCH" class="form-control" value="<%= data.WEATHER_FIELD_TO_MATCH %>" />
+
+                        <label class="mt-2" for="DATABASE_FIELD_TO_MATCH">Field to match in DB:</label>
+                        <input type="text" name="DATABASE_FIELD_TO_MATCH" class="form-control" value="<%= data.DATABASE_FIELD_TO_MATCH %>" />
+
+                        <div class="d-grid mt-2">
+                          <button type="submit" class="btn btn-primary">Update</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+        </div>
+    </main>
+
+    <footer>
+        <%- include('../../partials/footer.ejs') %>
+    </footer>
+
+</body>
+
+<%- include('../../partials/scripts.ejs') %>
+
+</html>

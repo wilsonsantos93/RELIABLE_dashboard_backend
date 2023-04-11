@@ -1,0 +1,48 @@
+<!doctype html>
+<html>
+    <head>
+        <%- include('partials/head.ejs') %>
+    </head>
+    <body>
+        <section class="h-100">
+            <div class="container h-100">
+                <div class="row justify-content-sm-center h-100">
+                    <div class="col-xxl-4 col-xl-5 col-lg-5 col-md-7 col-sm-9">
+                        <%- include('partials/alerts.ejs') %>
+                        
+                        <div class="card shadow-lg">
+                            <div class="card-body p-5">
+                                <h1 class="fs-4 card-title fw-bold mb-4">Login</h1>
+                                <form action="/login" method="POST" class="needs-validation" novalidate="" autocomplete="off">
+                                    <div class="mb-3">
+                                        <label class="mb-2 text-muted" for="email">Username or Email</label>
+                                        <input id="text" type="text" class="form-control" name="username" value="" required autofocus>
+                                    </div>
+    
+                                    <div class="mb-3">
+                                        <div class="mb-2 w-100">
+                                            <label class="text-muted" for="password">Password</label>
+                                        </div>
+                                        <input id="password" type="password" class="form-control" name="password" required>
+                                        <div class="invalid-feedback">
+                                            Password is required
+                                        </div>
+                                    </div>
+    
+                                    <div class="d-grid">
+                                        <button type="submit" class="btn btn-primary">
+                                            Login
+                                        </button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+        <footer>
+            <%- include('partials/footer.ejs') %>
+        </footer>
+    </body>
+</html>

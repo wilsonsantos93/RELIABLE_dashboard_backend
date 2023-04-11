@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <%- include('../../partials/head.ejs') %>
+  </head>
+
+    <body>
+        <header>    
+            <%- include('../../partials/navbar.ejs') %>
+        </header>
+
+        <main style="margin-top: 50px;">
+            <div class="container">
+                <div class="row justify-content-sm-center h-100">
+                    <%- include('../../partials/alerts.ejs') %>
+
+                    <h3>Add weather field metadata</h3>
+                    <div class="col-xxl-9 col-xl-9 col-lg-9 col-md-12 col-sm-12">
+                        <form id="form-main" method="POST" action="/metadata/weather/redirect">
+
+                            <label>Active:</label>
+                            <input checked class="form-check-input mb-2" type="checkbox" id="active-check" name="active" value="true" /><br/>
+
+                            <label for="">Field name</label>
+                            <input required class="form-control" type="text" name="name" placeholder="The name that comes on the data" value="" />
+
+                            <label for="">Display name</label>
+                            <input required class="form-control" type="text" name="displayName" placeholder="Name to display on interface" value="" />
+                            
+                            <label for="">Description</label>
+                            <input required class="form-control" type="text" name="description" placeholder="Description" value="" />
+
+                            <label for="">Unit of measure</label>
+                            <input class="form-control" type="text" name="unit" placeholder="ºC, m/s, %..." value="" />
+
+                            <p>Authentication required to view on map:</p>
+                            <input class="form-check-input" type="radio" id="yes" name="authRequired" value="true" />
+                            <label for="yes">Yes</label>
+                            <input checked class="form-check-input" type="radio" id="no" name="authRequired" value="false" />
+                            <label for="no">No</label>
+
+                            <p style="margin-top:10px">Main field (check Yes for risk level or the most important field in the set):</p>
+                            <input class="form-check-input" type="radio" id="main-check-yes" name="main" value="true" />
+                            <label for="yes">Yes</label>
+                            <input checked class="form-check-input" type="radio" id="main-check-no" name="main" value="false" />
+                            <label for="no">No</label>
+                            
+                        </form>
+                        <br>
+
+                        <label for="">Ranges:</label>
+                        <div class="clonable-block" data-toggle="cloner">
+                            <div class="clonable" data-ss="1">
+                                <form class="row d-flex flex-row align-items-center flex-wrap border border-1 p-2">
+                                    <div class="col-md-2">
+                                        <label class="clonable-increment-html" for="">Min</label>
+                                        <input id="min_4" type="number" class="form-control clonable-increment-id" placeholder="" name="min" value="" />
+                                    </div>
+                                    <div class="col-md-2">
+                                        <label class="clonable-increment-html" for="">Max</label>
+                                        <input id="max_1" type="number" class="form-control clonable-increment-id" placeholder="" name="max" value="" />
+                                    </div>
+                                    <div class="col-md-1">
+                                        <label class="clonable-increment-html" for="">Color</label>
+                                        <input id="color_1" type="color" class="form-control clonable-increment-id" name="color" placeholder="#333333" value="" />
+                                    </div>
+
+                                    <div class="col-md-1 text-center alert-col">
+                                        <label>Alert:</label>
+                                        <input class="form-check-input" type="checkbox" id="alertable" name="alert" value="true" />
+                                    </div>
+
+                                    <div class="col-md-5">
+                                        <label class="clonable-increment-html" for="">Recommendations (comma separated)</label>
+                                        <textarea style="resize: none" class="form-control clonable-increment-id" placeholder="Drink water, Close doors..." id="recommendations_1"></textarea>
+                                    </div>
+
+                                    <!-- DELETE BUTTON -->
+                                    <div class="col-md-1">
+                                        <label class="clonable-increment-html" for=""></label>
+                                        <button class="btn btn-danger btn-sm clonable-button-close d-block">
+                                            <i class="fa fa-trash"></i>
+                                        </button>
+                                    </div>
+                                </form>
+                            </div>
+                            <button class="clonable-button-add btn btn-secondary mt-3" type="button">Add rule</button>  
+                        </div>
+
+                        <div class="d-grid mt-2">
+                            <button id="send"  type="button" class="btn btn-primary btn-block">Send</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <footer>
+            <%- include('../../partials/footer.ejs') %>
+        </footer>
+    </body>
+    <%- include('../../partials/scripts.ejs') %>
+    <script src="/js/jquery.cloner.min.js"></script>
+    <script>
+        $(document).ready(function() {
+            $("#send").on("click", function (e) {
+                const form = $("#form-main").get(0);
+                const data = convertFormToJSON(form);
+                data.ranges = [];
+
+                const colourForms = $(".clonable form");
+                colourForms.each(function() { 
+                    const dataConverted = convertFormToJSON($(this));
+                    if (dataConverted.recommendations && dataConverted.recommendations.length) {
+                        dataConverted.recommendations = dataConverted.recommendations.split(",").map(s => 
+                            s.trim()
+                            .replace("\\n","")
+                            .replace("\\t", "")
+                            .replace("\\r", "")
+                            .replace("\\r\n", "")
+                        );
+                    } else dataConverted.recommendations = "";
+                    data.ranges.push(dataConverted);
+                });
+
+                $.post("/metadata/weather/create", { data }, (data, status) => {
+                    $("#form-main").submit(); // make normal request just to redirect
+                }).fail(e => {
+                    showErrorAlert(e.responseJSON);
+                });
+            });
+                
+            function convertFormToJSON(form) {
+                const array = $(form).serializeArray();
+                const json = {};
+                $.each(array, function () {
+                    json[this.name] = this.value || null;
+                });
+                return json;
+            }
+
+            $("#main-check-yes").on("change", (e) => {
+                if (e.target.checked) $(".alert-col").show();
+            })
+
+            $("#main-check-no").on("change", (e) => {
+                if (e.target.checked) $(".alert-col").hide();
+            })
+
+            // default hide
+            $(".alert-col").hide();
+
+        });
+    </script>
+</html>

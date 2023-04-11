@@ -1,0 +1,55 @@
+<div class="navbar navbar-expand-lg navbar-dark bg-dark fixed-top">
+	<div class="container-fluid">
+		<a class="navbar-brand" href="/">RELIABLE</a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+          <span class="navbar-toggler-icon"></span>
+        </button>
+
+		<div class="navbar-collapse collapse" id="navbarSupportedContent">
+			<ul class="navbar-nav me-auto mb-2 mb-lg-0">
+				<li class="nav-item" id="regions">
+					<a class="nav-link btn" href="/regions">
+						Regions
+					</a>
+				</li>
+				<li class="nav-item" id="regions">
+					<a class="nav-link btn" href="/users">
+						Users
+					</a>
+				</li>
+				<li class="nav-item dropdown">
+					<a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+					  Metadata
+					</a>
+					<ul class="dropdown-menu" aria-labelledby="navbarDropdown">
+					  <li><a class="dropdown-item" href="/metadata/general">General</a></li>
+					  <li><a class="dropdown-item" href="/metadata/weather">Weather</a></li>
+					</ul>
+				  </li>
+				<!-- <li class="nav-item" id="metadata">
+					<a class="nav-link btn" href="/metadata">
+						Weather metadata
+					</a>
+				</li> -->
+                <li class="nav-item" id="mongo-express">
+					<a class="nav-link btn btn-outline-success" href="/mongo-express" target="_blank">
+						<i class="fa fa-external-link" aria-hidden="true"></i> Mongo-Express
+					</a>
+				</li>
+			</ul>
+
+            <ul class="nav navbar-nav navbar-right">
+				<% if (user && user.username) { %>
+				<li class="nav-item d-none d-lg-block px-2" id="userInfo">
+					<a class="nav-link text-white">Hi, <%= user.username %>!</a>
+				</li>
+				<% } %>
+                <li class="nav-item " id="logout">
+					<a class="nav-link btn btn-primary" href="/logout">
+						<i class="fa fa-sign-out" aria-hidden="true"></i> Logout
+					</a>
+				</li>
+            </ul>
+		</div>
+	</div>
+</div>
