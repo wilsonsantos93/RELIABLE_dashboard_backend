@@ -1,0 +1,109 @@
+/**
+ * Module dependencies
+ */
+import { DatabaseEngine } from "../configs/mongo.js";
+import { Strategy as LocalStrategy } from "passport-local";
+import { BasicStrategy } from "passport-http";
+import { Strategy as JwtStrategy, ExtractJwt } from "passport-jwt";
+import { comparePassword } from "./helpers.js";
+import { ObjectId } from "mongodb";
+/* const uniqueTokenstrategyOptions = {
+    tokenQuery: 'custom-token',
+    tokenParams: 'custom-token',
+    tokenField: 'custom-token',
+    tokenHeader: 'custom-token',
+    failOnMissing: false
+}; */
+export default (passport) => {
+    /**
+     * Session Serialize Function
+     */
+    passport.serializeUser(function (user, done) {
+        return done(null, user._id);
+    });
+    /**
+     * Session Deserialize Function
+     */
+    passport.deserializeUser(function (id, done) {
+        const userId = new ObjectId(id);
+        const UserCollection = DatabaseEngine.getUsersCollection();
+        UserCollection.findOne({ _id: userId }, (error, user) => {
+            if (error)
+                return done(error);
+            return done(null, user);
+        });
+    });
+    /**
+     * User Authentication (stateless)
+     */
+    passport.use('api-basic', new BasicStrategy(function (username, password, done) {
+        const UserCollection = DatabaseEngine.getUsersCollection();
+        UserCollection.findOne({ username: username }, async function (err, user) {
+            if (err)
+                return done(err);
+            if (!user)
+                return done(null, false);
+            try {
+                const result = await comparePassword(user.password, password);
+                if (!result)
+                    return done(null, false);
+                done(null, user);
+            }
+            catch (err) {
+                return done(err);
+            }
+        });
+    }));
+    /**
+     * Local Authentication
+     */
+    passport.use('local', new LocalStrategy(async function (username, password, done) {
+        const UserCollection = DatabaseEngine.getUsersCollection();
+        UserCollection.findOne({ $or: [{ "username": username }, { "email": username }] }, async function (err, user) {
+            if (err)
+                return done(err);
+            if (!user)
+                return done(null, false, { message: 'Wrong username/email' });
+            try {
+                const match = await comparePassword(user.password, password);
+                if (!match)
+                    return done(null, false, { message: 'Wrong password' });
+                return done(null, user);
+            }
+            catch (err) {
+                return done(err);
+            }
+        });
+    }));
+    /**
+     * API Authentication (JWT token)
+     */
+    passport.use('api-jwt', new JwtStrategy({
+        secretOrKey: '8gj48jfog84basd8f1h3rhq9rghrav',
+        jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken()
+    }, function (jwt_payload, done) {
+        const UserCollection = DatabaseEngine.getUsersCollection();
+        UserCollection.findOne({ _id: new ObjectId(jwt_payload.user_id) }, function (err, user) {
+            if (err)
+                return done(err, false);
+            if (!user)
+                return done(null, false);
+            return done(null, user);
+        });
+    }));
+    /**
+     * API Authentication (API key)
+     */
+    /* passport.use('api-key', new UniqueTokenStrategy((token, done) => {
+        const UserCollection = DatabaseEngine.getUsersCollection();
+        UserCollection.findOne({ token: token, //expireToken: { $gt: Date.now() },
+        }, function (err, user) {
+            if (err) return done(err);
+            if (!user) return done(null, false);
+            return done(null, user);
+            },
+        );
+        }),
+    ) */
+};
+//# sourceMappingURL=index.js.map

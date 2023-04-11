@@ -1,0 +1,9 @@
+{
+    "KEEP_DATA_PREVIOUS_DAYS": "1",
+    "ALERT_NUM_DAYS_AHEAD": "2",
+    "CSV_FOLDER_PATH_DOCKER": "/usr/reliable_data",
+    "CSV_FOLDER_PATH_LOCAL": "C:\\Users\\wilson\\Desktop\\RELIABLE\\data",
+    "DB_REGION_NAME_FIELD": "properties.Concelho",
+    "WEATHER_FIELD_TO_MATCH": "county",
+    "DATABASE_FIELD_TO_MATCH": "properties.Concelho"
+}

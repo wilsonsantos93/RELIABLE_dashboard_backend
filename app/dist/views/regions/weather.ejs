@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <%- include('../partials/head.ejs') %>
+    <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/v/dt/dt-1.13.2/r-2.4.0/datatables.min.css"/>
+  </head>
+
+  <body>
+    <header>    
+      <%- include('../partials/navbar.ejs') %>
+    </header>
+
+    <main style="margin-top: 50px;">
+      <div class="container">
+        
+      <%- include('../partials/alerts.ejs') %>
+
+        <div class="row">
+            <div class="col-xs-12">
+                <h2>Weather</h2>
+                <div class="bg-light rounded-3 p-3 mb-3">
+                  <% for (const key in data.properties) { %>
+                    <span><strong><%= key %></strong>: <%= data.properties[key]%></span>
+                  <% } %>
+                </div>
+                <div class="container">
+                    <div class="row">
+                        <div class="col-xs-12">
+                            <form id="formDeleteAll" action="/admin/region/<%=data._id%>/weather/deleteAll" class="pull-right" method="post">
+                                <div>
+                                    <button type="submit" class="btn btn-danger d-none">
+                                        <i class="fa fa-trash-o"></i>
+                                    </button>
+                                    <button type="button" onclick=myDT.deleteAllConfirm() class="btn btn-danger">
+                                        <i class="fa fa-trash-o"></i> Delete all
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+
+                <%- include('../partials/datatable.ejs') %>
+
+            </div>
+        </div>
+      </div>
+    </main>
+    
+    <%- include('../partials/modal.ejs') %>
+    
+    <footer>
+      <%- include('../partials/footer.ejs') %>
+    </footer>
+  </body>
+
+  <%- include('../partials/scripts.ejs') %>
+  <script type="text/javascript" src="https://cdn.datatables.net/v/dt/dt-1.13.2/r-2.4.0/datatables.min.js"></script>
+  <script type="text/javascript" src="/js/datatable.js"></script>
+  <script>
+    // MyDatatable object
+    let myDT; 
+
+    // Document ready event
+    $(document).ready(function() {
+        const dtConfig = DTConfig();
+        dtConfig.columnsToShow = ["_id", "date"]
+        dtConfig.columnDefs.push({
+            targets: -1,
+            render: function (data, type, row, meta) {
+                return `<div>
+                        <button class="btn btn-secondary btn-sm" alt="View" title="View" onclick=myDT.viewFromID(${meta.row})>
+                            <i class="fa fa-search"></i>
+                        </button>
+
+                        <button class="btn btn-danger btn-sm" alt="Delete" title="Delete" onclick=delFromID("${row._id}")>
+                            <i class="fa fa-trash-o"></i>
+                        </button>
+                    </div>
+                `;
+            }
+        });
+
+        dtConfig.ajax.url = "/admin/region/<%=data._id%>/getWeather?dt=true";
+        dtConfig.getFieldsUrl = "/admin/region/<%=data._id%>/weather/fields";
+
+        myDT = new MyDatatable(dtConfig);
+    });
+
+    // Delete item function
+    async function delFromID(id) {
+      const url = `/admin/weather/${id}/delete`;
+      await myDT.delFromID(id, url);
+    }
+  </script>
+
+</html>

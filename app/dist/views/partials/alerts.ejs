@@ -1,0 +1,21 @@
+<div class="alerts">
+    <% if ((error && error.length) || (error_message && error_message.length > 0)) { 
+        (error.concat(error_message)).forEach(function(msg) { 
+    %>
+        <div class="alert alert-danger" role="alert">
+            <%= msg %>
+        </div>
+    <% }); } else { %>
+        <div class="alert alert-danger" style="display: none; position:fixed; z-index: 3; bottom: 20px; right:20px;" role="alert"></div>
+    <% } %>
+
+    <% if (success_message && success_message.length > 0) { 
+        success_message.forEach(function(msg) { 
+    %>
+        <div class="alert alert-success" role="alert">
+            <%= msg %>
+        </div>
+    <% }); } else { %>
+        <div class="alert alert-success" style="display: none; position:fixed; z-index: 3; bottom: 20px; right:20px;"  role="alert"></div>
+    <% } %>
+</div>
