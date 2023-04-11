@@ -31,7 +31,7 @@ export async function handleGetRegionBordersAndWeatherByDate(req: Request, res: 
         weatherDateObjectID = new ObjectId(req.query.dateId as string);
     }
 
-    console.log(`Client requested region borders and weather (Date: ${weatherDateObjectID})`);
+    //console.log(`Client requested region borders and weather (Date: ${weatherDateObjectID})`);
 
     let message = "";
 
@@ -62,7 +62,7 @@ export async function handleGetRegionBordersAndWeatherByDate(req: Request, res: 
     }
 
     if (!regionBordersCollectionExists || !weatherCollectionExists) {
-        console.log(message);
+        //console.log(message);
         return res.status(404).json(message);
     }
 
@@ -72,20 +72,20 @@ export async function handleGetRegionBordersAndWeatherByDate(req: Request, res: 
     //* If the region borders collection exists, so does the coordinates reference systems collection
     //* If the weather collection exists, so does the weather data collection
     if (regionBordersCollectionExists && weatherCollectionExists) {
-        console.log("Started sending geoJSONs to the client.");
+        //console.log("Started sending geoJSONs to the client.");
         let geoJSONs: FeatureCollectionWithCRS[] = [];
 
         //* Query the region borders collection for the various CRSs
         //* The _id and the crs of the CRS document, is going to be used to return a geoJSON with the crs, and the associated region border features
-        console.log("Started querying coordinates reference systems collection for all CRSs.");
+        //console.log("Started querying coordinates reference systems collection for all CRSs.");
         let crsQueryProjection = {_id: 1, crs: 1};
         let crsQueryResults = await queryAllCoordinatesReferenceSystems(
             crsQueryProjection
         );
-        console.log("Finished querying coordinates reference systems collection for all CRSs.");
+        //console.log("Finished querying coordinates reference systems collection for all CRSs.");
 
         //* Query each CRS in the database for the associated border region features
-        console.log( "Started query each CRS in the database for the associated border region features.");
+        //console.log( "Started query each CRS in the database for the associated border region features.");
         for (const crs of crsQueryResults) {
             let geoJSON: FeatureCollectionWithCRS = {
                 type: "FeatureCollection",
@@ -95,7 +95,7 @@ export async function handleGetRegionBordersAndWeatherByDate(req: Request, res: 
 
             
             //* Query for the weather information of each feature in the regionBordersFeaturesArray, at a given date, and save it to the feature
-            console.log("Started query for the weather of each feature.");
+            //console.log("Started query for the weather of each feature.");
 
             // Set coordinates object or null
             let coordinates: BoundingBox = null;
@@ -124,9 +124,9 @@ export async function handleGetRegionBordersAndWeatherByDate(req: Request, res: 
             //* Add the geoJSON to the geoJSONs array
             geoJSONs.push(geoJSON);
         }
-        console.log("Finished query each CRS in the database for the associated border region features.");
-        console.log("Started sending geoJSONs to the client.");
-        console.log("Finished sending geoJSONs to the client.\n");
+        //console.log("Finished query each CRS in the database for the associated border region features.");
+        //console.log("Started sending geoJSONs to the client.");
+        //console.log("Finished sending geoJSONs to the client.\n");
         return res.json(geoJSONs);
     }
 }

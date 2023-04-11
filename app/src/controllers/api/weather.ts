@@ -36,7 +36,7 @@ async function saveCurrentDateToCollection() {
  * @param response Client HTTP response object
  */
 export async function handleFetchWeather(req: Request, res: Response) {
-    console.log("Started saving weather of each feature to the database.");
+    //console.log("Started saving weather of each feature to the database.");
 
     //* Save the current date to the weatherDates collection
     let weatherDateDatabaseID = await saveCurrentDateToCollection();
@@ -55,9 +55,9 @@ export async function handleFetchWeather(req: Request, res: Response) {
     await async.each(featureDocumentsWithCenter, async (currentFeature) => {
         try {
             
-            if ((currentFeatureIndex % 10) == 0) {
+            /* if ((currentFeatureIndex % 10) == 0) {
                 console.log("Saved weather of feature number:", currentFeatureIndex);
-            }
+            } */
 
             //* Request the weather at the FeatureCenter of each feature from an external API
             let weatherDataJSON = await requestWeather(currentFeature.center.coordinates.reverse())// The database coordinates are saved in [long,lat], the weather API accepts [lat,long]
@@ -74,8 +74,8 @@ export async function handleFetchWeather(req: Request, res: Response) {
             currentFeatureIndex++;
         }
         catch (error) {
-            console.log("Error while saving weather of feature number:", currentFeatureIndex);
-            console.log(error);
+            //console.log("Error while saving weather of feature number:", currentFeatureIndex);
+            console.error(new Date().toJSON(), error);
         }
     })
 
@@ -102,7 +102,7 @@ export async function handleFetchWeather(req: Request, res: Response) {
         message = message + "\nAll features had their centers calculated beforehand, so their weather was fetched.\n";
     }
 
-    console.log(message);
+    //console.log(message);
     sendResponseWithGoBackLink(res, message);
 }
 
@@ -113,7 +113,7 @@ export async function handleFetchWeather(req: Request, res: Response) {
  */
 export async function handleGetWeatherDates(req: Request, res: Response) {
 
-    console.log("\nQuerying for weather dates.");
+    //console.log("\nQuerying for weather dates.");
 
     const weatherDatesQuery = {}; // Query all weather dates to return to the client
     const weatherDatesProjection = { _id: 1, date: 1, format: 1 }; // Only the date itself needs to be returned by the query
@@ -127,7 +127,7 @@ export async function handleGetWeatherDates(req: Request, res: Response) {
         .sort({ date: 1 })
         .toArray();
 
-    console.log("Finished for weather dates.");
+    //console.log("Finished for weather dates.");
     res.json(featuresQueryResults);
 }
 
@@ -148,7 +148,7 @@ export async function handleSaveWeather(req: Request, res: Response) {
     }
 
     if (!data.length) return res.status(500).json("Empty data.")
-    console.log("Transforming data", data)
+    //console.log("Transforming data", data)
     
     // Write data in weather collection
     try {

@@ -223,7 +223,7 @@ export async function handleDeleteWeatherRegion(req: Request, res: Response) {
  * @returns Redirects to home page
  */
 export async function handleCalculateCenters(req: Request, res: Response) {
-  console.log("\nClient requested to calculate the centers for each region border in the collection.");
+  //console.log("\nClient requested to calculate the centers for each region border in the collection.");
 
   //* Check if the region border collection exists
   let regionBordersCollectionName = DatabaseEngine.getFeaturesCollectionName();
@@ -272,12 +272,12 @@ export async function handleCalculateCenters(req: Request, res: Response) {
 
     let message = "";
     message += "Calculated the center coordinates for every feature in the region borders collection.";
-    console.log(message);
+    //console.log(message);
 
     req.flash("success_message", message);
   }
 
-  console.log("Server finished calculating the centers for each region border in the collection.\n");
+  //console.log("Server finished calculating the centers for each region border in the collection.\n");
   return res.redirect("/admin/home");
 }
 
@@ -289,7 +289,7 @@ export async function handleCalculateCenters(req: Request, res: Response) {
  * @returns Redirects to previous page
  */
 export async function handleSaveRegions(req: Request, res: Response) {
-  console.log("Received geoJSON from the client.");
+  //console.log("Received geoJSON from the client.");
   try {
     //* Parse received file bytes to geoJSON
     let fileBuffer = req.file.buffer; // Multer enables the server to access the file sent by the client using "request.file.buffer". The file accessed is in bytes.
@@ -300,15 +300,13 @@ export async function handleSaveRegions(req: Request, res: Response) {
     let insertedCRSObjectId;
 
     try {
-      console.log(
-          "Started inserting geoJSON coordinate reference system in the database."
-      );
+      //console.log("Started inserting geoJSON coordinate reference system in the database.");
       insertedCRSObjectId = await saveCRS(geoJSON);
-      console.log(
+      /* console.log(
           "Inserted geoJSON coordinate reference system in the database. CRS ID in database:",
           // To extract the ID string inside the ObjectId, we use ObjectId.toHexString
           insertedCRSObjectId.toHexString() // The ID string of the CRS document that was inserted in the database
-      );
+      ); */
     } catch (e) {
       console.error(new Date().toJSON(), e);
       req.flash("error_message", "Unable to upload file. No CRS info found in file.");
@@ -316,14 +314,14 @@ export async function handleSaveRegions(req: Request, res: Response) {
     }
     
     //* Save each geoJSON feature to the collection individually
-    console.log("Started inserting geoJSON features in the database.");
+    //console.log("Started inserting geoJSON features in the database.");
     let insertedFeaturesObjectIds = await saveFeatures(geoJSON);
-    console.log("Inserted geoJSON features in the database.");
+    //console.log("Inserted geoJSON features in the database.");
 
      //* Create a field with on each feature with its associated coordinates reference system
-     console.log("Starting associating each feature with its CRS.");
+     //console.log("Starting associating each feature with its CRS.");
      await associateCRStoFeatures(insertedCRSObjectId, insertedFeaturesObjectIds);
-     console.log("Finished associating each feature with its CRS.\n");
+     //console.log("Finished associating each feature with its CRS.\n");
 
     // Send successful response to the client
     req.flash("success_message", "Server successfully saved geoJSON.");

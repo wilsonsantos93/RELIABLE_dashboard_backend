@@ -45,7 +45,7 @@ export async function getHomePage (req: Request, res: Response) {
  * @returns Redirects to home page
  */
 export async function handleDeleteAll(req: Request, res: Response) {
-  console.log("Client requested to clear the all collections.");
+  //console.log("Client requested to clear the all collections.");
 
   let successMsgs = [];
   let errorMsgs = [];
