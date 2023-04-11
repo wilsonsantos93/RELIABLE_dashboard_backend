@@ -42,7 +42,7 @@ export async function updateGeneralMetadata(req: Request, res: Response) {
     } catch (e) {
         req.flash("error_message", "Error updating metadata.");
     } finally {
-        return res.redirect("/metadata/general");
+        return res.redirect("/admin/metadata/general");
     }
 }
 
@@ -184,7 +184,7 @@ export async function getMetadataFields(req: Request, res: Response) {
 export function metadataRedirect(req: Request, res: Response) {
     try {
         req.flash("success_message", "Weather metadata updated succesfully!");
-        return res.redirect("/metadata/weather");
+        return res.redirect("/admin/metadata/weather");
     } catch (e) {
         req.flash("error_message", "An error occurred updating metadata.");
         console.error(new Date().toJSON(), e);
@@ -263,5 +263,5 @@ export async function deleteAllMetadata(req: Request, res: Response) {
         console.error(new Date().toJSON(), e);
         req.flash("error_message", JSON.stringify(e));
     }
-    return res.redirect("/metadata/weather");
+    return res.redirect("/admin/metadata/weather");
 }

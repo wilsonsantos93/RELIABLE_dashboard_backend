@@ -38,7 +38,7 @@ export async function handleDeleteAllWeather(req: Request, res: Response) {
       req.flash("error_message", JSON.stringify(e));
     }
   }
-  return res.redirect("/home")
+  return res.redirect("/admin/home")
 }
 
 /**

@@ -21,11 +21,11 @@
                 <h2>Users</h2>
                 <div class="row">
                     <div class="col-xs-12 col-lg-6">
-                        <a href="/users/create" class="btn btn-primary">Add user</a>
+                        <a href="/admin/users/create" class="btn btn-primary">Add user</a>
                     </div>
 
                     <div class="col-xs-12 col-lg-6">
-                        <form id="formDeleteAll" action="/user/deleteAll" class="pull-right" method="post">
+                        <form id="formDeleteAll" action="/admin/user/deleteAll" class="pull-right" method="post">
                           <div>
                             <button type="submit" class="btn btn-danger d-none">
                                 <i class="fa fa-trash-o"></i>
@@ -71,7 +71,7 @@
                             <i class="fa fa-search"></i>
                         </button>
 
-                        <a class="btn btn-primary btn-sm" target="_blank" alt="Edit" title="Edit" href="users/${row._id}/edit">
+                        <a class="btn btn-primary btn-sm" target="_blank" alt="Edit" title="Edit" href="/admin/users/${row._id}/edit">
                             <i class="fa fa-edit"></i>
                         </a>
 
@@ -83,15 +83,15 @@
             }
         });
 
-        dtConfig.ajax.url = "/user/getUsers?dt=true";
-        dtConfig.getFieldsUrl = "/user/fields";
+        dtConfig.ajax.url = "/admin/user/getUsers?dt=true";
+        dtConfig.getFieldsUrl = "/admin/user/fields";
 
         myDT = new MyDatatable(dtConfig);
     });
 
     // Delete item function
     async function delFromID(id) {
-      const url = `/user/${id}/delete`;
+      const url = `/admin/user/${id}/delete`;
       await myDT.delFromID(id, url);
     }
   </script>

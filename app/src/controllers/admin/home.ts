@@ -8,7 +8,7 @@ import { DatabaseEngine } from "../../configs/mongo.js";
  * @returns Redirects to login page
  */
 export function getIndexPage (req: Request, res: Response) {
-  res.redirect('/login');
+  res.redirect('/admin/login');
 }
 
 /**
@@ -88,5 +88,5 @@ export async function handleDeleteAll(req: Request, res: Response) {
 
   req.flash("error_message", errorMsgs);
   req.flash("success_message", successMsgs);
-  return res.redirect("/home");
+  return res.redirect("/admin/home");
 }

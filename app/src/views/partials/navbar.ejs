@@ -8,12 +8,12 @@
 		<div class="navbar-collapse collapse" id="navbarSupportedContent">
 			<ul class="navbar-nav me-auto mb-2 mb-lg-0">
 				<li class="nav-item" id="regions">
-					<a class="nav-link btn" href="/regions">
+					<a class="nav-link btn" href="/admin/regions">
 						Regions
 					</a>
 				</li>
 				<li class="nav-item" id="regions">
-					<a class="nav-link btn" href="/users">
+					<a class="nav-link btn" href="/admin/users">
 						Users
 					</a>
 				</li>
@@ -22,8 +22,8 @@
 					  Metadata
 					</a>
 					<ul class="dropdown-menu" aria-labelledby="navbarDropdown">
-					  <li><a class="dropdown-item" href="/metadata/general">General</a></li>
-					  <li><a class="dropdown-item" href="/metadata/weather">Weather</a></li>
+					  <li><a class="dropdown-item" href="/admin/metadata/general">General</a></li>
+					  <li><a class="dropdown-item" href="/admin/metadata/weather">Weather</a></li>
 					</ul>
 				  </li>
 				<!-- <li class="nav-item" id="metadata">
@@ -32,7 +32,7 @@
 					</a>
 				</li> -->
                 <li class="nav-item" id="mongo-express">
-					<a class="nav-link btn btn-outline-success" href="/mongo-express" target="_blank">
+					<a class="nav-link btn btn-outline-success" href="/admin/mongo-express" target="_blank">
 						<i class="fa fa-external-link" aria-hidden="true"></i> Mongo-Express
 					</a>
 				</li>
@@ -45,7 +45,7 @@
 				</li>
 				<% } %>
                 <li class="nav-item " id="logout">
-					<a class="nav-link btn btn-primary" href="/logout">
+					<a class="nav-link btn btn-primary" href="/admin/logout">
 						<i class="fa fa-sign-out" aria-hidden="true"></i> Logout
 					</a>
 				</li>

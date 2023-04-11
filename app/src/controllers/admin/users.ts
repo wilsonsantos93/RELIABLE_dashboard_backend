@@ -47,7 +47,7 @@ export async function getEditUserPage (req: Request, res: Response) {
     return res.render("users/edit.ejs", { data: user, roles: Role });
   } catch (e) {
     console.error(new Date().toJSON(), e);
-    return res.redirect("/users");
+    return res.redirect("/admin/users");
   }
 }
 
@@ -73,11 +73,11 @@ export async function handleCreateUser(req: Request, res: Response) {
 
     await DatabaseEngine.getUsersCollection().insertOne(user);
     req.flash("success_message", "User created successfully!");
-    return res.redirect("/users");
+    return res.redirect("/admin/users");
   } catch (e) {
     req.flash("error_message", JSON.stringify(e));
     req.flash("data", req.body);
-    return res.redirect("/users/create");
+    return res.redirect("/admin/users/create");
   }
 } 
 
@@ -103,7 +103,7 @@ export async function handleUpdateUser(req: Request, res: Response) {
 
     await DatabaseEngine.getUsersCollection().updateOne({ _id : new ObjectId(req.params.id) }, { $set: { ...data } });
     req.flash("success_message", "User updated successfully!");
-    return res.redirect("/users");
+    return res.redirect("/admin/users");
   } catch (e) {
     req.flash("error_message", JSON.stringify(e));
     return res.redirect("back");

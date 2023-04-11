@@ -23,12 +23,12 @@ export async function handleLogin (req: Request, res: Response) {
   passport.authenticate("local", (error: any, user: User, info: any) => {
     if (error) {
       req.flash("error", error.message);
-      return res.redirect("/login");
+      return res.redirect("/admin/login");
     }
 
     if (!user) {
       req.flash("error", info.message);
-      return res.redirect("/login");
+      return res.redirect("/admin/login");
     }
 
     if (user) {
@@ -36,14 +36,14 @@ export async function handleLogin (req: Request, res: Response) {
         req.logIn(user, { session: true }, (error) => {
           if (error) {
             req.flash("error", error); 
-            res.redirect("/login");
+            res.redirect("/admin/login");
           } 
-          return res.redirect("/home"); 
+          return res.redirect("/admin/home"); 
         })
       }
       else {
         req.flash("error", "Unauthorized user");
-        return res.redirect("/login"); 
+        return res.redirect("/admin/login"); 
       }
     } 
   })(req, res);
@@ -62,6 +62,6 @@ export function handleLogout (req: Request, res: Response, next: NextFunction) {
       return next();
     }
     req.flash('success_message', 'You are succesfully logged out.');
-    return res.redirect('/login');
+    return res.redirect('/admin/login');
   });
 }

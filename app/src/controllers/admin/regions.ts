@@ -30,7 +30,7 @@ export async function getWeatherPage(req: Request, res: Response) {
     if (!region) throw "Region not found";
     return res.render("regions/weather.ejs", { data: region });
   } catch (e) {
-    return res.redirect("/regions");
+    return res.redirect("/admin/regions");
   }
 }
 
@@ -278,7 +278,7 @@ export async function handleCalculateCenters(req: Request, res: Response) {
   }
 
   console.log("Server finished calculating the centers for each region border in the collection.\n");
-  return res.redirect("/home");
+  return res.redirect("/admin/home");
 }
 
 // TODO: Important. User saves empty geoJSON. Crashes program.

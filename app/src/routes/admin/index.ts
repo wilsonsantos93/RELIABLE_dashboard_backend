@@ -17,7 +17,7 @@ const mongo_express = require('mongo-express-enhanced/lib/middleware.js');
 const router = Router();
 
 // Get root page
-router.get('/meta', (req, res) => res.render("metadata.ejs"));  
+//router.get('/meta', (req, res) => res.render("metadata.ejs"));  
 
 // Get root page
 router.get('/', getIndexPage);  

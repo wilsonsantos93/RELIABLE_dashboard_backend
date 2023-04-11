@@ -16,7 +16,7 @@
                 <%- include('../../partials/alerts.ejs') %>
                 <h3>Edit weather metadata <%= data._id %></h3>
                 <div class="col-xxl-9 col-xl-9 col-lg-9 col-md-9 col-sm-12">
-                  <form id="form-main" method="POST" action="/metadata/weather/redirect">
+                  <form id="form-main" method="POST" action="/admin/metadata/weather/redirect">
 
                       <label>Active:</label>
                       <% if (!data.active) { %>
@@ -190,7 +190,7 @@
         data.ranges.push(dataConverted);
       });
 
-      $.post("/metadata/weather/<%= data._id %>/update", { data }, (data, status) => {
+      $.post("/admin/metadata/weather/<%= data._id %>/update", { data }, (data, status) => {
         $("#form-main").submit(); // make normal request just to redirect
       }).fail(e => {
         showErrorAlert(e.responseJSON);

@@ -16,7 +16,7 @@
                 <%- include('../../partials/alerts.ejs') %>
                 <h3>General metadata</h3>
                 <div class="col-xxl-4 col-xl-5 col-lg-5 col-md-7 col-sm-9">
-                    <form action="/metadata/general" method="POST">
+                    <form action="/admin/metadata/general" method="POST">
                         <label for="KEEP_DATA_PREVIOUS_DAYS">Keep data from previous days:</label>
                         <input type="text" name="KEEP_DATA_PREVIOUS_DAYS" class="form-control" value="<%= data.KEEP_DATA_PREVIOUS_DAYS %>" />
 

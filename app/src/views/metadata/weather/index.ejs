@@ -22,11 +22,11 @@
                 <div class="container">
                     <div class="row">
                       <div class="col-xs-12 col-lg-6">
-                        <a href="/metadata/weather/create" class="btn btn-primary">Add weather metadata</a>
+                        <a href="/admin/metadata/weather/create" class="btn btn-primary">Add weather metadata</a>
                       </div>
 
                         <div class="col-xs-12 col-lg-6">
-                          <form id="formDeleteAll" action="/metadata/weather/deleteAll" class="pull-right" method="post">
+                          <form id="formDeleteAll" action="/admin/metadata/weather/deleteAll" class="pull-right" method="post">
                               <div>
                                   <button type="submit" class="btn btn-danger d-none">
                                       <i class="fa fa-trash-o"></i>
@@ -79,7 +79,7 @@
                             <i class="fa fa-search"></i>
                         </button>
 
-                        <a class="btn btn-primary btn-sm" target="_blank" alt="Edit" title="Edit" href="/metadata/weather/${row._id}/edit">
+                        <a class="btn btn-primary btn-sm" target="_blank" alt="Edit" title="Edit" href="/admin/metadata/weather/${row._id}/edit">
                             <i class="fa fa-edit"></i>
                         </a>
 
@@ -91,8 +91,8 @@
             }
         });
 
-        dtConfig.ajax.url = "/metadata/weather/getMetadata?dt=true";
-        dtConfig.getFieldsUrl = "/metadata/weather/fields";
+        dtConfig.ajax.url = "/admin/metadata/weather/getMetadata?dt=true";
+        dtConfig.getFieldsUrl = "/admin/metadata/weather/fields";
 
         myDT = new MyDatatable(dtConfig);
 
@@ -114,7 +114,7 @@
 
     // Delete item function
     async function delFromID(id) {
-      const url = `/metadata/weather/${id}/delete`;
+      const url = `/admin/metadata/weather/${id}/delete`;
       await myDT.delFromID(id, url);
     }
 

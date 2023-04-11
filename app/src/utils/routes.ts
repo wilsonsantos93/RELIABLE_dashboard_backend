@@ -1,7 +1,6 @@
 import { NextFunction, Request, Response } from "express";
 import { Role, User } from "../types/User.js";
 import passport from "passport";
-import { decrypt } from "./encrypt.js";
 import jwt from "jsonwebtoken";
 
 /**
@@ -75,7 +74,7 @@ export const forwardAuthenticatedAdmin = (req: Request, res: Response, next: Nex
     if (!req.isAuthenticated()) {
         return next();
     }
-    return res.redirect('/home');     
+    return res.redirect('/admin/home');     
 }
 
 /**
@@ -89,5 +88,5 @@ export const authenticateAdmin = (req: Request, res: Response, next: NextFunctio
     else { 
         req.flash('error_message', 'Please log in to access the requested page.');
     }
-    return res.redirect('/login');
+    return res.redirect('/admin/login');
 }
