@@ -373,6 +373,17 @@ export async function generateAlerts(locations: any[], numDaysAhead?: number) {
         const feature = features.find(f => f._id.toString() == alert.regionBorderFeatureObjectId);
         alert.regionName = getObjectValue(DB_REGION_NAME_FIELD, feature);
         alert.locations = feature.locations;
+
+        let recommendations: any = [];
+        for (const r of weatherFieldAlertable) {
+            let min = r.min;
+            let max = r.max;
+            if (!r.min || isNaN(r.min)) min = -Infinity;
+            if (!r.max || isNaN(r.max)) max = Infinity;
+            const value = alert.weather[weatherField.name];
+            if ((min <= value) && (value < max) && r.recommendations) recommendations.push(...r.recommendations);
+        }
+        alert.recommendations = recommendations;
     }
 
     alerts.sort((a,b) => new Date(a.date[0].date).valueOf() - new Date(b.date[0].date).valueOf())
