@@ -64,7 +64,7 @@
     // Document ready event
     $(document).ready(function() {
         const dtConfig = DTConfig();
-        dtConfig.columnsToShow = ["_id", "name", "active", "main"];
+        dtConfig.columnsToShow = ["_id", "name", "active", "main", "authRequired"];
         dtConfig.columnDefs.push({
           targets: "col-active",
           render: function (data, type, row, meta) {
@@ -107,6 +107,12 @@
           $("#table td.col-active").each(function(){
             const text = $(this).html() == "true" ? 
             '<i style="color:green" class="fa fa-check"></i>' : '<i style="color:red" class="fa fa-times"></i>';
+            $(this).html(text);
+          });
+
+          $("#table td.col-authRequired").each(function(){
+            const text = $(this).html() == "true" ? 
+            'Yes' : 'No';
             $(this).html(text);
           });
         });
