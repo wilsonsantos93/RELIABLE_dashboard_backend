@@ -1,9 +1,14 @@
 import { DatabaseEngine } from "../../configs/mongo.js";
-import { collectionExistsInDatabase, queryFeatureDocuments, queryAllFeatureDocuments, queryAllCoordinatesReferenceSystems } from "../../utils/database.js";
+import { collectionExistsInDatabase, queryFeatureDocuments, queryAllCoordinatesReferenceSystems } from "../../utils/database.js";
 // @ts-ignore
 import { Request, Response } from "express-serve-static-core";
 import { ObjectId } from "mongodb";
 import { FeatureCollectionWithCRS } from "../../types/FeatureCollectionWithCRS.js";
+import dayjs from 'dayjs';
+import utc from 'dayjs/plugin/utc.js';
+import timezone from 'dayjs/plugin/timezone.js';
+dayjs.extend(utc);
+dayjs.extend(timezone);
 
 /**
  * Sends a response with an array of geoJSONs. <p>
@@ -145,7 +150,9 @@ export async function handleGetRegionBorderWithWeather(req: Request, res: Respon
         const data = await weatherCollection.aggregate(pipeline).toArray();
 
         for (const d of data) {
-            d.date = d.date[0].date;
+            //d.date = d.date[0].date;
+            const formattedDate = dayjs(d.date[0].date).tz("Europe/Lisbon").format(d.date[0].format);
+            d.date = formattedDate;
         }
 
         return res.json(data);
