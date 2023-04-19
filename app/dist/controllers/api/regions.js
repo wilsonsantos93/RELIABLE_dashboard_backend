@@ -1,6 +1,11 @@
 import { DatabaseEngine } from "../../configs/mongo.js";
 import { collectionExistsInDatabase, queryFeatureDocuments, queryAllCoordinatesReferenceSystems } from "../../utils/database.js";
 import { ObjectId } from "mongodb";
+import dayjs from 'dayjs';
+import utc from 'dayjs/plugin/utc.js';
+import timezone from 'dayjs/plugin/timezone.js';
+dayjs.extend(utc);
+dayjs.extend(timezone);
 /**
  * Sends a response with an array of geoJSONs. <p>
  * Each element of the array is a geoJSON with a different coordinates reference system found in the database. <p>
@@ -60,12 +65,15 @@ export async function handleGetRegionBorders(req, res) {
     }
 }
 export async function handleGetRegionBorderWithWeather(req, res) {
+    const tz = "Europe/Lisbon";
     try {
         if (!req.params.id)
             throw "Must specify a region ID";
         let start, end;
         if (req.query.start) {
-            start = new Date(req.query.start);
+            const convertedDate = dayjs(req.query.start).tz(tz, true).toISOString();
+            start = new Date(convertedDate);
+            //start = new Date(req.query.start as string);
             if (isNaN(start.valueOf()))
                 throw "Start date is invalid";
         }
@@ -100,6 +108,7 @@ export async function handleGetRegionBorderWithWeather(req, res) {
         }
         pipeline.push({ $match: { "date": { "$ne": [] } } });
         pipeline.push({ $project: { "_id": 0, "weatherDateObjectId": 0 } });
+        pipeline.push({ $sort: { "date.0.date": 1 } });
         // project weather fields
         if (!req.user) {
             const fields = await DatabaseEngine.getWeatherMetadataCollection().find({ authRequired: true }).toArray();
@@ -114,7 +123,9 @@ export async function handleGetRegionBorderWithWeather(req, res) {
         // run query
         const data = await weatherCollection.aggregate(pipeline).toArray();
         for (const d of data) {
-            d.date = d.date[0].date;
+            //d.date = d.date[0].date;
+            const formattedDate = dayjs(d.date[0].date).tz(tz).format(d.date[0].format);
+            d.date = formattedDate;
         }
         return res.json(data);
     }
