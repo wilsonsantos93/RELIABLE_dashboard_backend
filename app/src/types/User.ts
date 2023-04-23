@@ -12,5 +12,5 @@ export type User = {
     password?: string;
     email: string;
     role: Role;
-    locations?: { _id: ObjectId | string, name: string | null, lat: number, lng: number }[];
+    locations?: { _id: ObjectId | string, name: string | null, lat: number, lng: number }[] | { iv: string, encryptedData: string}[];
 }
