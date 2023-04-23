@@ -14,8 +14,6 @@ function isAuthorized(allowedRoles: string[], userRole: string) {
 /**
  * Generate JWT token and data for auth
  */
-
-
 export async function createJWTtoken(user: any) {
     const date = new Date().valueOf();
 
