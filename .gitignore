@@ -92,3 +92,7 @@ typings/
 .dynamodb/
 
 #app/dist/
+
+# tests
+app/test
+app/jest.config.ts

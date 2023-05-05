@@ -3,9 +3,9 @@ import path from "path";
 const filename = "generalMetadata.json";
 //const filePath = path.resolve("../", "configs", filename); 
 import { fileURLToPath } from 'url';
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-const filePath = path.join(__dirname, '..', 'configs', filename);
+/*const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename); */
+const filePath = path.join(path.dirname(fileURLToPath(import.meta.url)), '..', 'configs', filename);
 
 export async function readGeneralMetadata() {    
     try {

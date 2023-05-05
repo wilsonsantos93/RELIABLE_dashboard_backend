@@ -8,6 +8,7 @@ import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc.js';
 import timezone from 'dayjs/plugin/timezone.js';
 import { readGeneralMetadata } from "./metadata.js";
+import path from "path";
 dayjs.extend(utc);
 dayjs.extend(timezone);
 const tz = "Europe/Lisbon";
@@ -82,7 +83,9 @@ export async function readWeatherFile() {
         let CSV_FOLDER_PATH = CSV_FOLDER_PATH_DOCKER || CSV_FOLDER_PATH_LOCAL || null;
         if (!CSV_FOLDER_PATH)
             throw "ERROR in CSV Folder: Path not specified or does not exist.";
-        const newestFile = (_a = glob.sync(`${CSV_FOLDER_PATH}/*.csv`)
+        const csvpath = path.join(CSV_FOLDER_PATH, "*.csv");
+        //const newestFile = glob.sync(`${CSV_FOLDER_PATH}/*.csv`)
+        const newestFile = (_a = glob.sync(csvpath)
             .map((name) => ({ name, ctime: fs.statSync(name).ctime }))
             .sort((a, b) => b.ctime - a.ctime)[0]) === null || _a === void 0 ? void 0 : _a.name;
         if (!newestFile)
