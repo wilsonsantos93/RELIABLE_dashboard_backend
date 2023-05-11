@@ -92,7 +92,6 @@ export async function deleteLocation(req: Request, res: Response) {
                                         .filter((l: any) => l._id.toString() != req.params.id)
                                         .map((l:any) => encrypt(JSON.stringify(l)));
 
-        console.log(currentUser.email, userDocument.locations.length, locations.length)
         await DatabaseEngine.getUsersCollection().updateOne({ _id : new ObjectId(currentUser._id) }, { $set: { locations } });
         return res.json({});
     } catch (e) {
