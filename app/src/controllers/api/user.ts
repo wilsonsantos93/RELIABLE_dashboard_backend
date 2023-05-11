@@ -72,11 +72,11 @@ export async function updateLocation(req: Request, res: Response) {
         const data = req.body;
         const userDocument = await DatabaseEngine.getUsersCollection().findOne({ _id : new ObjectId(currentUser._id) });
         const locations = userDocument.locations.map((location: any) => JSON.parse(decrypt(location)));
-        const ix = locations.findIndex((location:any) => location._id.toString() == data._id);
+        const ix = locations.findIndex((location:any) => location._id.toString() == req.params.id);
         if (ix < 0) throw "Error updating location";
         locations[ix] = data;
-        const encryptedLocations = locations.map((location:any) =>  encrypt(JSON.stringify(location)));
-        await DatabaseEngine.getUsersCollection().updateOne({ _id : new ObjectId(currentUser._id) }, { $set: { locations: encryptedLocations } });
+        const encryptedLocations = locations.map((location:any) => encrypt(JSON.stringify(location)));
+        await DatabaseEngine.getUsersCollection().updateOne({ _id : new ObjectId(currentUser._id) }, { $set: { locations: [...encryptedLocations] } });
         return res.json({});
     } catch (e) {
         console.error(new Date().toJSON(), e);
@@ -89,9 +89,10 @@ export async function deleteLocation(req: Request, res: Response) {
         const currentUser = req.user as User;
         const userDocument = await DatabaseEngine.getUsersCollection().findOne({ _id : new ObjectId(currentUser._id) });
         const locations = userDocument.locations.map((l:any) => JSON.parse(decrypt(l)))
-                                        .filter((l: any) => l._id.toString() != req.params._id)
+                                        .filter((l: any) => l._id.toString() != req.params.id)
                                         .map((l:any) => encrypt(JSON.stringify(l)));
 
+        console.log(currentUser.email, userDocument.locations.length, locations.length)
         await DatabaseEngine.getUsersCollection().updateOne({ _id : new ObjectId(currentUser._id) }, { $set: { locations } });
         return res.json({});
     } catch (e) {

@@ -315,8 +315,8 @@ export async function generateAlerts(locations: any[], numDaysAhead?: number) {
         const stringId = feature._id.toString();
         const ix = features.findIndex((f:any) => f._id == stringId);
         if (ix < 0) {
-            feature.locations = [location];
-            features.push({ _id: feature._id, properties: feature.properties });
+            //feature.locations = [location];
+            features.push({ _id: feature._id, properties: feature.properties, locations: [location] });
         } else {
             features[ix].locations.push(location);
         }
@@ -385,7 +385,12 @@ export async function generateAlerts(locations: any[], numDaysAhead?: number) {
             if (!r.min || isNaN(r.min)) min = -Infinity;
             if (!r.max || isNaN(r.max)) max = Infinity;
             const value = alert.weather[weatherField.name];
-            if ((min <= value) && (value < max) && r.recommendations) recommendations.push(...r.recommendations);
+            if ((min <= value) && (value < max) && r.recommendations) {
+                //recommendations.push(...r.recommendations);
+                for (const rec of r.recommendations) {
+                    if (!recommendations.includes(rec)) recommendations.push(rec);
+                }
+            }
         }
         alert.recommendations = recommendations;
     }
