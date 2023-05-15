@@ -9,6 +9,7 @@ import {FeatureCollectionWithCRS} from "../types/FeatureCollectionWithCRS";
 import { BoundingBox } from "../types/BoundingBox.js";
 import fetch from "cross-fetch";
 import { Request } from "express-serve-static-core";
+import { readGeneralMetadata } from "./metadata.js";
 
 /**
  * Checks if a collection exists in a database.
@@ -284,6 +285,9 @@ export async function queryWeatherDocuments(
             pipeline[pipeline.length-1]["$lookup"]["pipeline"].push({ $project: projection });
         }
     }
+
+    const { DB_REGION_NAME_FIELD } = await readGeneralMetadata();
+    if (DB_REGION_NAME_FIELD) pipeline.push({ "$sort": { [DB_REGION_NAME_FIELD]: 1 } });
 
     const regionsWithWeatherDocuments = await DatabaseEngine.getFeaturesCollection().aggregate(pipeline).toArray() as WeatherCollectionDocumentWithFeature[];
 
