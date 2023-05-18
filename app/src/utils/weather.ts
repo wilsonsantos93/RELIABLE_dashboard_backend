@@ -11,6 +11,9 @@ import utc from 'dayjs/plugin/utc.js';
 import timezone from 'dayjs/plugin/timezone.js';
 import { readGeneralMetadata } from "./metadata.js";
 import path from "path";
+import nodemailer from "nodemailer";
+import { Role } from "../types/User.js";
+import { decrypt } from "./encrypt.js";
 dayjs.extend(utc);
 dayjs.extend(timezone);
 
@@ -290,262 +293,257 @@ export async function transformData(data: any[]) {
 
 
 export async function generateAlerts(locations: any[], numDaysAhead?: number) {
-    const weatherFields = await DatabaseEngine.getWeatherMetadataCollection().find({ active: true }).toArray();
-    if (!weatherFields || !weatherFields.length) return {};
+    try {
+        if (!locations.length) return {};
+        
+        const weatherFields = await DatabaseEngine.getWeatherMetadataCollection().find({ active: true }).toArray();
+        if (!weatherFields || !weatherFields.length) return {};
 
-    const weatherField = weatherFields.find((f:any) => f.main == true && f.active == true);
-    if (!weatherField) return [];
+        const weatherField = weatherFields.find((f:any) => f.main == true && f.active == true);
+        if (!weatherField) return {};
 
-    let features: any[] = [];
+        let features: any[] = [];
 
-    for (const location of locations) {
-        const feature = await DatabaseEngine.getFeaturesCollection().findOne({
-            "geometry": {
-                $geoIntersects: {
-                    $geometry: {
-                        "type": "Point",
-                        "coordinates": [location.lng, location.lat]
+        for (const location of locations) {
+            const feature = await DatabaseEngine.getFeaturesCollection().findOne({
+                "geometry": {
+                    $geoIntersects: {
+                        $geometry: {
+                            "type": "Point",
+                            "coordinates": [location.lng, location.lat]
+                        }
                     }
                 }
+            });
+
+            if (!feature) continue;
+
+            const stringId = feature._id.toString();
+            const ix = features.findIndex((f:any) => f._id == stringId);
+            if (ix < 0) {
+                features.push({ _id: feature._id, properties: feature.properties, locations: [location] });
+            } else {
+                features[ix].locations.push(location);
             }
+        }
+
+        const regionsIds = features.map(f => f._id);
+        if (!regionsIds.length) return {};
+
+        const datesCollectionName = DatabaseEngine.getWeatherDatesCollectionName();
+    //const startDate = new Date();
+
+        const dates = await DatabaseEngine.getWeatherDatesCollection().find().toArray();
+        const datesSorted = [...dates]; 
+        datesSorted.sort((a,b) => {
+            const valueA = new Date(a.date).valueOf();
+            const valueB = new Date(b.date).valueOf();
+            if (valueA >= valueB) return -1;
+            else return 1;
         });
+        const firstDate = datesSorted.find(d => d.date.valueOf() <= new Date().valueOf());
+        const startDate = new Date(firstDate.date);
 
-        if (!feature) continue;
+        const { ALERT_NUM_DAYS_AHEAD, DB_REGION_NAME_FIELD } = await readGeneralMetadata();
 
-        const stringId = feature._id.toString();
-        const ix = features.findIndex((f:any) => f._id == stringId);
-        if (ix < 0) {
-            features.push({ _id: feature._id, properties: feature.properties, locations: [location] });
-        } else {
-            features[ix].locations.push(location);
+        if (!numDaysAhead) numDaysAhead = parseInt(ALERT_NUM_DAYS_AHEAD);
+        const endDate = new Date(new Date().valueOf() + (numDaysAhead * 24 * 60 * 60 * 1000));
+
+        const weatherFieldAlertable = weatherField.ranges.filter((r:any) => r.alert == true);
+        if (!weatherFieldAlertable || !weatherFieldAlertable.length) return {};
+
+        const orQuery = [];
+        for (const alertable of weatherFieldAlertable) {
+            let min = alertable.min;
+            let max = alertable.max;
+            if (alertable.min == null || isNaN(alertable.min)) min = -Infinity;
+            if (alertable.max == null || isNaN(alertable.max)) max = Infinity;
+            orQuery.push({ 
+                [`weather.${weatherField.name}`]: { $gte: min, $lt: max }
+            })
         }
-    }
 
-    const regionsIds = features.map(f => f._id);
-    if (!regionsIds.length) return {};
-
-    const datesCollectionName = DatabaseEngine.getWeatherDatesCollectionName();
-   //const startDate = new Date();
-
-    const dates = await DatabaseEngine.getWeatherDatesCollection().find().toArray();
-    const datesSorted = [...dates]; 
-    datesSorted.sort((a,b) => {
-        const valueA = new Date(a.date).valueOf();
-        const valueB = new Date(b.date).valueOf();
-        if (valueA >= valueB) return -1;
-        else return 1;
-    });
-    const firstDate = datesSorted.find(d => d.date.valueOf() <= new Date().valueOf());
-    const startDate = new Date(firstDate.date)
-
-    const { ALERT_NUM_DAYS_AHEAD, DB_REGION_NAME_FIELD } = await readGeneralMetadata();
-
-    if (!numDaysAhead) numDaysAhead = parseInt(ALERT_NUM_DAYS_AHEAD);
-    const endDate = new Date(new Date().valueOf() + (numDaysAhead * 24 * 60 * 60 * 1000));
-
-    const weatherFieldAlertable = weatherField.ranges.filter((r:any) => r.alert == true);
-    if (!weatherFieldAlertable || !weatherFieldAlertable.length) return {};
-
-    const orQuery = [];
-    for (const alertable of weatherFieldAlertable) {
-        let min = alertable.min;
-        let max = alertable.max;
-        if (alertable.min == null || isNaN(alertable.min)) min = -Infinity;
-        if (alertable.max == null || isNaN(alertable.max)) max = Infinity;
-        orQuery.push({ 
-            [`weather.${weatherField.name}`]: { $gte: min, $lt: max }
-        })
-    }
-
-    const alerts = await DatabaseEngine.getWeatherCollection().aggregate([
-        { 
-            $match: { 
-                regionBorderFeatureObjectId: { $in: regionsIds },
-                $or: orQuery
-            }
-        },
-        { $lookup: {
-            from: datesCollectionName,
-            localField: 'weatherDateObjectId',
-            foreignField: '_id',
-            as: 'date',
-            pipeline: [
-                {
-                    $match: { "date": { $gte: startDate, $lt: endDate } }
+        const alerts = await DatabaseEngine.getWeatherCollection().aggregate([
+            { 
+                $match: { 
+                    regionBorderFeatureObjectId: { $in: regionsIds },
+                    $or: orQuery
                 }
-            ]
-            }
-        },
-        {
-            $match: { date: { $ne: [] } }
-        },
-        {
-            $project: { /* [`weather.${weatherField.name}`]: 1, */ weather: 1, date: 1, "regionBorderFeatureObjectId": 1, "weatherDateObjectId": 1}
-        }
-    ]).toArray();
-
-    for (const alert of alerts) {
-        const feature = features.find(f => f._id.toString() == alert.regionBorderFeatureObjectId);
-        alert.regionName = getObjectValue(DB_REGION_NAME_FIELD, feature);
-        alert.locations = feature.locations;
-
-        /* let recommendations: any = [];
-        for (const r of weatherFieldAlertable) {
-            let min = r.min;
-            let max = r.max;
-            if (!r.min || isNaN(r.min)) min = -Infinity;
-            if (!r.max || isNaN(r.max)) max = Infinity;
-            const value = alert.weather[weatherField.name];
-            if ((min <= value) && (value < max) && r.recommendations) {
-                for (const rec of r.recommendations) {
-                    if (!recommendations.includes(rec)) recommendations.push(rec);
+            },
+            { $lookup: {
+                from: datesCollectionName,
+                localField: 'weatherDateObjectId',
+                foreignField: '_id',
+                as: 'date',
+                pipeline: [
+                    {
+                        $match: { "date": { $gte: startDate, $lt: endDate } }
+                    }
+                ]
                 }
+            },
+            {
+                $match: { date: { $ne: [] } }
+            },
+            {
+                $project: { /* [`weather.${weatherField.name}`]: 1, */ weather: 1, date: 1, "regionBorderFeatureObjectId": 1, "weatherDateObjectId": 1}
             }
-        } */
-        let recommendations: string[] = [];
-        for (const field of weatherFields) {
-            if (!field.active) continue;
-            const value = alert.weather[field.name];
-            if (value == null || isNaN(value)) continue;
-            for (let r of field.ranges) {
+        ]).toArray();
+
+        for (const alert of alerts) {
+            const feature = features.find(f => f._id.toString() == alert.regionBorderFeatureObjectId);
+            alert.regionName = getObjectValue(DB_REGION_NAME_FIELD, feature);
+            alert.locations = feature.locations;
+
+            /* let recommendations: any = [];
+            for (const r of weatherFieldAlertable) {
                 let min = r.min;
                 let max = r.max;
-                if (r.min == null || isNaN(r.min)) min = -Infinity;
-                if (r.max == null || isNaN(r.max)) max = Infinity;
+                if (!r.min || isNaN(r.min)) min = -Infinity;
+                if (!r.max || isNaN(r.max)) max = Infinity;
+                const value = alert.weather[weatherField.name];
                 if ((min <= value) && (value < max) && r.recommendations) {
                     for (const rec of r.recommendations) {
                         if (!recommendations.includes(rec)) recommendations.push(rec);
                     }
                 }
+            } */
+            let recommendations: string[] = [];
+            for (const field of weatherFields) {
+                if (!field.active) continue;
+                const value = alert.weather[field.name];
+                if (value == null || isNaN(value)) continue;
+                for (let r of field.ranges) {
+                    let min = r.min;
+                    let max = r.max;
+                    if (r.min == null || isNaN(r.min)) min = -Infinity;
+                    if (r.max == null || isNaN(r.max)) max = Infinity;
+                    if ((min <= value) && (value < max) && r.recommendations) {
+                        for (const rec of r.recommendations) {
+                            if (!recommendations.includes(rec)) recommendations.push(rec);
+                        }
+                    }
+                }
             }
+            alert.weather = { name: weatherField.displayName, value: alert.weather[weatherField.name] };
+            alert.recommendations = recommendations;
         }
-        alert.weather = { name: weatherField.displayName, value: alert.weather[weatherField.name] };
-        alert.recommendations = recommendations;
+
+        alerts.sort((a,b) => new Date(a.date[0].date).valueOf() - new Date(b.date[0].date).valueOf())
+
+        return { numDaysAhead: ALERT_NUM_DAYS_AHEAD, alerts };
+    } catch (e) {
+        console.error(new Date().toJSON(), JSON.stringify(e))
+        return {};
     }
-
-    alerts.sort((a,b) => new Date(a.date[0].date).valueOf() - new Date(b.date[0].date).valueOf())
-
-    return { numDaysAhead: ALERT_NUM_DAYS_AHEAD, alerts };
 }
 
 
+export async function sendAlertsByEmail() {
+    try {
+        const users = await DatabaseEngine.getUsersCollection().find({ role: Role.USER, alertByEmail: true }).toArray();
+        if (!users.length) return;
 
-/**
- * TEST FUNCTION ONLY
- */
-/* export async function test_transformData(data: any[], regionMetaId?: any) {
-    const transformedData: any = [];
-    const formattedDates: any = [];
-    const originalDates: any = [];
-    const fieldsNotDate: string[] = [];
-    const regionsCollection = DatabaseEngine.getFeaturesCollection();
-    const datesCollection = DatabaseEngine.getWeatherDatesCollection();
+        const transporter = getEmailTransporter();
 
-    // Get regions Metadata (aggregation)
-    //if (regionMetaId) FindOne 
-    // else Find
-    const metadatas = [
-        { _id: "1", weatherSchema: [{ "name": "tindoor"}], matchers: [{ dataField: "county", dbField: "Concelho"}] },
-        { _id: "2", weatherSchema: [{ "name": "tindoor"}], matchers: [{ dataField: "county", dbField: "Concelho"}] }
-    ]
-        
-    const checker = (arr: string[], target: string[]) => target.every(v => arr.includes(v));
+        console.log("FOUND USERS", users.length);
+        for (const user of users) {
+            console.log(user._id, user.locations);
+            if (!user.locations || !user.locations.length || !user.email) continue;
 
-    // Loop through data 
-    for (const d of data) {
+            const locations = user.locations.map((location: any) => JSON.parse(decrypt(location)))
+                                .map((location: any) => {
+                                    return {
+                                        _id: location._id,
+                                        name: location.name,
+                                        lat: location.position.lat,
+                                        lng: location.position.lng
+                                    }
+                                });
 
-        // Loop through fields
-        const weatherFieldsWithDateRemoved: any[] = [];
-        for (const key in d) {
-            const match = extractDateFromString(key);
-            const originalDate = match && match.length ? match[0] : null;
-            if (originalDate && !originalDates.includes(originalDate)) {
-                originalDates.push(originalDate);
-                const field = key.replace(originalDate,"").replace(/^\_+|\_+$/g, '')
-                if (field && !weatherFieldsWithDateRemoved.includes(field))
-                weatherFieldsWithDateRemoved.push(field)
-            } 
-            if (!originalDate) fieldsNotDate.push(key);
-        }
+            const data = await generateAlerts(locations, 2);
+            if (!data.alerts || !data.alerts.length) continue;
 
-        if (!originalDates.length) return [];
+            const alerts = data.alerts.filter(a => new Date(a.date[0].date).valueOf() > new Date().valueOf());
 
-        for (const meta of metadatas) {
-            const metadataMatchersArr = meta.matchers.map(f => f.dataField);
-            const checkMatchers = checker(weatherFieldsWithDateRemoved, metadataMatchersArr);
+            if (!alerts.length) continue;
+
+            const htmlMsg = generateHtmlMessage(alerts, user._id.toString());
+
+            const mailOptions = {
+                to: user.email,
+                subject: 'RELIABLE: Alertas previstos',
+                html: htmlMsg
+            };
+
+            console.log("-->", user._id, htmlMsg);
             
-            const weatherFields = meta.weatherSchema.map(f => f.name);
-            const checkWeather = checker(weatherFieldsWithDateRemoved, weatherFields)
-            
-            if (!checkMatchers || !checkWeather) continue;
-
-            const find: any = {};
-            meta.matchers.forEach(m => {
-                find[m.dbField] = { $in: allReplacements(d[m.dataField], "-", " ") }
-            })
-
-            const projection: FeaturesProjection = { _id: 1, geometry: 0 };
-            const regions = await regionsCollection.find(
-                find,
-                { projection }
-            )
-            .collation({ locale: "pt", strength: 1 })
-            .toArray();
-            
-            if (!regions.length) continue; 
-
-            // Insert dates into DB
-            const bulkOps = originalDates.map((date: string) => {
-                const convertedDate = dayjs(extractAndFormatDateFromString(date)).tz(tz, true).toISOString();
-                const dateToInsert = new Date(convertedDate);
-                formattedDates.push(dateToInsert);
-                return { updateOne: 
-                    {
-                        filter: { "date": dateToInsert, regionMetadataId: meta._id }, 
-                        update: { $setOnInsert: { "date": dateToInsert, regionMetadataId: meta._id } },
-                        upsert: true 
+            await new Promise((resolve, reject) => {
+                return transporter.sendMail(mailOptions, function(error, info) {
+                    if (error) {
+                        console.error(new Date().toJSON(), error);
+                        return reject(error);
+                    } else {
+                        console.log(new Date().toJSON(), `Email sent: ${info.response}`);
+                        return resolve(true);
                     }
-                }
+                }); 
+            })
+        };
+
+        return;
+    } catch (e) {
+        console.error(new Date().toJSON(), JSON.stringify(e));
+        return;
+    }
+}
+
+function generateHtmlMessage(alerts: any, userId: string) {
+    let message = '<p>Alertas previstos:</p>';
+
+    for (const a of alerts) {
+        let names: string[] = [];
+        a.locations.forEach((l: any) => {
+          if (l.name) names.push(l.name);
+        });
+
+        if (names.length) `<p><strong${a.regionName} (${names.join()})></strong></p>`;
+        else message += `<p>><strong>${a.regionName}></strong></p>`;
+
+        message += `com ${a.weather.name} de <strong>${a.weather.value}</strong>`;
+        message += `em ${dayjs(a.date[0].date).tz(tz).format(`dddd, D MMMM ${a.date[0].format.includes(":") ? "HH:mm" : ''}`)}`;
+
+        message += `<p>Recomendações:</p>`;
+        message += `<ul>`;
+        
+        if (a.recommendations && a.recomendations.length) {
+            a.recommendations.forEach((recommendation: string) => {
+                message += `<li>${recommendation}</li>`;
             });
-            await datesCollection.bulkWrite(bulkOps);
-            const datesFromDB = await datesCollection.find({ regionMetadataId: meta._id, date: { $in: formattedDates }}).toArray();
-
-            
-            // build sample for each date
-            for (const date of originalDates) {
-                let sample: any = {};
-
-                // Add fields with this date to the sample
-                const fields = Object.keys(d).filter(f => f.includes(date));
-                if (!fields || !fields.length) continue;
-
-                sample.weather = {};
-                fields.forEach(f => {
-                    sample.weather[f.replace(date,"").replace(/^\_+|\_+$/g, '')] = parseFloat(d[f]) || d[f];
-                });
-
-                // Add fields not having any date to the sample
-                fieldsNotDate.forEach(f => {
-                    sample.weather[f] = parseFloat(d[f]) || d[f];
-                });
-
-                // Add dateId
-                const convertedDate = dayjs(extractAndFormatDateFromString(date)).tz(tz, true).toISOString();
-                sample.weatherDateObjectId = datesFromDB.find(doc => new Date(doc.date).valueOf() == new Date(convertedDate).valueOf())?._id;
-
-                // Add region id and push to array
-                for (const region of regions) {
-                    let newSample = { ...sample };
-
-                    // Add region Id
-                    newSample.regionBorderFeatureObjectId = region?._id || null;
-
-                    // Push sample to array
-                    if (Object.keys(newSample).length > 0) transformedData.push(newSample);
-                }  
-            }
+            message += `</ul>`;
         }
     }
+    message += `<p>
+        Em caso de dúvida ou necessidade ligar para o SNS 24 (808 24 24 24)<br></br>
+        Em caso de emergência ligue para o 112<br></br>
+        Para informações mais detalhadas consulte o <a target="_blank" href="https://www.dgs.pt/">site da DGS</a></p>`;
 
-    return transformedData;
-} */
+    message += `<p><a href='/${userId}/unsubscribe'>Cancelar subscrição</a></p>`;
+    return message;
+}
+
+function getEmailTransporter() {
+    const transporter = nodemailer.createTransport({
+        service: 'gmail',
+        auth: {
+          user: 'youremail@gmail.com',
+          pass: 'yourpassword'
+        },
+        secure: true,
+        tls: {
+            rejectUnauthorized: false
+        }
+    });
+
+    return transporter;
+}
