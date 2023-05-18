@@ -43,7 +43,8 @@ router.post("/register", async function(req, res, next) {
         const user: any = {
             username: null, 
             email: req.body.username,
-            locations: []
+            locations: [],
+            alertByEmail: true
         };
         const passwordHash = await hashPassword(req.body.password);
         user.password = passwordHash;
