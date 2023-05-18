@@ -14,8 +14,10 @@ import path from "path";
 import nodemailer from "nodemailer";
 import { Role } from "../types/User.js";
 import { decrypt } from "./encrypt.js";
+import pt from 'dayjs/locale/pt.js';
 dayjs.extend(utc);
 dayjs.extend(timezone);
+dayjs.locale(pt);
 
 const tz = "Europe/Lisbon";
 
@@ -446,49 +448,48 @@ export async function sendAlertsByEmail() {
 
         const transporter = getEmailTransporter();
 
-        console.log("FOUND USERS", users.length);
+        const senderAddress = process.env.EMAIL_ACCOUNT;
+
         for (const user of users) {
-            console.log(user._id, user.locations);
-            if (!user.locations || !user.locations.length || !user.email) continue;
+            try {
+                if (!user.locations || !user.locations.length || !user.email) continue;
 
-            const locations = user.locations.map((location: any) => JSON.parse(decrypt(location)))
-                                .map((location: any) => {
-                                    return {
-                                        _id: location._id,
-                                        name: location.name,
-                                        lat: location.position.lat,
-                                        lng: location.position.lng
-                                    }
-                                });
+                const locations = user.locations.map((location: any) => JSON.parse(decrypt(location)))
+                                    .map((location: any) => {
+                                        return {
+                                            _id: location._id,
+                                            name: location.name,
+                                            lat: location.position.lat,
+                                            lng: location.position.lng
+                                        }
+                                    });
 
-            const data = await generateAlerts(locations, 2);
-            if (!data.alerts || !data.alerts.length) continue;
+                const data = await generateAlerts(locations, 2);
+                if (!data.alerts || !data.alerts.length) continue;
 
-            const alerts = data.alerts.filter(a => new Date(a.date[0].date).valueOf() > new Date().valueOf());
+                const alerts = data.alerts.filter(a => new Date(a.date[0].date).valueOf() > new Date().valueOf());
+                if (!alerts.length) continue;
 
-            if (!alerts.length) continue;
+                const htmlMsg = generateHtmlMessage(alerts, user._id.toString());
+                if (!htmlMsg) continue;
 
-            const htmlMsg = generateHtmlMessage(alerts, user._id.toString());
-
-            const mailOptions = {
-                to: user.email,
-                subject: 'RELIABLE: Alertas previstos',
-                html: htmlMsg
-            };
-
-            console.log("-->", user._id, htmlMsg);
-            
-            await new Promise((resolve, reject) => {
-                return transporter.sendMail(mailOptions, function(error, info) {
-                    if (error) {
-                        console.error(new Date().toJSON(), error);
-                        return reject(error);
-                    } else {
-                        console.log(new Date().toJSON(), `Email sent: ${info.response}`);
-                        return resolve(true);
-                    }
-                }); 
-            })
+                const mailOptions = {
+                    from: { name: "RELIABLE", address: senderAddress },
+                    to: user.email,
+                    subject: 'Alertas previstos',
+                    html: htmlMsg
+                };
+                
+                await new Promise((resolve, reject) => {
+                    transporter.sendMail(mailOptions, function(error) {
+                        if (error) return reject(error);
+                        else return resolve(true);
+                    }); 
+                });
+            } catch (e) {
+                console.error(new Date().toJSON(), JSON.stringify(e));
+                continue;
+            }
         };
 
         return;
@@ -499,51 +500,64 @@ export async function sendAlertsByEmail() {
 }
 
 function generateHtmlMessage(alerts: any, userId: string) {
-    let message = '<p>Alertas previstos:</p>';
+    try {
+        let message = '<p>Existem alertas previstos para as suas localizações:</p>';
 
-    for (const a of alerts) {
-        let names: string[] = [];
-        a.locations.forEach((l: any) => {
-          if (l.name) names.push(l.name);
-        });
+        for (const a of alerts) {
+            let names: string[] = [];
+            if (a.locations && a.locations.length) {
+                a.locations.forEach((l: any) => {
+                    if (l.name) names.push(l.name);
+                });
+            }
 
-        if (names.length) `<p><strong${a.regionName} (${names.join()})></strong></p>`;
-        else message += `<p>><strong>${a.regionName}></strong></p>`;
+            if (names.length) message += `<p><strong>${a.regionName} (${names.join()})</strong>`;
+            else message += `<p><strong>${a.regionName}</strong>`;
 
-        message += `com ${a.weather.name} de <strong>${a.weather.value}</strong>`;
-        message += `em ${dayjs(a.date[0].date).tz(tz).format(`dddd, D MMMM ${a.date[0].format.includes(":") ? "HH:mm" : ''}`)}`;
-
-        message += `<p>Recomendações:</p>`;
-        message += `<ul>`;
-        
-        if (a.recommendations && a.recomendations.length) {
-            a.recommendations.forEach((recommendation: string) => {
-                message += `<li>${recommendation}</li>`;
-            });
-            message += `</ul>`;
+            message += ` com ${a.weather.name} de <strong>${a.weather.value}</strong>`;
+            message += ` em <strong>${dayjs(a.date[0].date).tz(tz).format(`dddd, D MMMM ${a.date[0].format.includes(":") ? "HH:mm" : ''}`)} </strong></p>`;
+            
+            if (a.recommendations && a.recommendations.length) {
+                message += `<p>Recomendações:</p>`;
+                message += `<ul>`;
+                a.recommendations.forEach((recommendation: string) => {
+                    message += `<li>${recommendation}</li>`;
+                });
+                message += `</ul>`;
+            }
         }
-    }
-    message += `<p>
-        Em caso de dúvida ou necessidade ligar para o SNS 24 (808 24 24 24)<br></br>
-        Em caso de emergência ligue para o 112<br></br>
-        Para informações mais detalhadas consulte o <a target="_blank" href="https://www.dgs.pt/">site da DGS</a></p>`;
 
-    message += `<p><a href='/${userId}/unsubscribe'>Cancelar subscrição</a></p>`;
-    return message;
+        message += `<p>
+            Em caso de dúvida ou necessidade ligar para o SNS 24 (808 24 24 24).<br></br>
+            Em caso de emergência ligue para o 112.<br></br>
+            Para informações mais detalhadas consulte o <a target="_blank" href="https://www.dgs.pt/">site da DGS</a>.</p>`;
+
+        const baseUrl = process.env.BASE_URL || "http://climaextremo.vps.tecnico.ulisboa.pt";
+
+        message += `</br></br><a href="${baseUrl}/unsubscribe/${userId}">Cancelar subscrição</a>`;
+
+        return message;
+    } catch (e) {
+        console.error(new Date().toJSON(), e);
+        return null;
+    }
 }
 
 function getEmailTransporter() {
-    const transporter = nodemailer.createTransport({
-        service: 'gmail',
+    const config: any = {
+        host: process.env.EMAIL_HOST || "smtp.sapo.pt",
+        port: process.env.EMAIL_PORT || 465,
         auth: {
-          user: 'youremail@gmail.com',
-          pass: 'yourpassword'
+            user: process.env.EMAIL_ACCOUNT || '',
+            pass: process.env.EMAIL_PASSWORD || ''
         },
         secure: true,
         tls: {
             rejectUnauthorized: false
         }
-    });
+    };
+
+    const transporter = nodemailer.createTransport(config);
 
     return transporter;
 }
