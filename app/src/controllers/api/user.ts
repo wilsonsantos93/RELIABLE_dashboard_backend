@@ -105,13 +105,55 @@ export async function getAlerts(req: Request, res: Response) {
         const currentUser = req.user as User;
 
         const userDocument = await DatabaseEngine.getUsersCollection().findOne({ _id : new ObjectId(currentUser._id) });
-        const locations = userDocument.locations.map((l:any) => JSON.parse(decrypt(l)))
+
+        let locations = [];
+        if (userDocument.locations && userDocument.locations.length) {
+            locations = userDocument.locations.map((l:any) => JSON.parse(decrypt(l)))
                     .map((l:any) => { return {...l, lat: l.position.lat, lng: l.position.lng }});
+        }
         
         const alerts = await generateAlerts(locations);
         return res.json(alerts);
     } catch (e) {
         console.error(new Date().toJSON(), e);
         return res.status(500).json(e);
+    }
+}
+
+export async function updateUserPreferences(req: Request, res: Response) {
+    try {
+        const currentUser = req.user as User;
+        const data = req.body;
+
+        if (!data.hasOwnProperty('alertByEmail')) return res.status(404).json("Data not found"); 
+
+        const userDocument = await DatabaseEngine.getUsersCollection().findOne({ _id : new ObjectId(currentUser._id) });
+        if (!userDocument) return res.status(404).json("User not found");
+
+        await DatabaseEngine.getUsersCollection().updateOne({ _id : new ObjectId(currentUser._id) }, { $set: { alertByEmail: data.alertByEmail } });
+        
+        return res.json({});
+    } catch (e) {
+        console.error(new Date().toJSON(), e);
+        return res.status(500).json(e);
+    }
+}
+
+export async function unsubscribeEmail(req: Request, res: Response) {
+    try {
+        if (!req.params.id) return res.status(500).json("Missing id");
+
+        const userId = req.params.id;
+        if (!ObjectId.isValid(userId)) throw "Invalid id";
+
+        const userDocument = await DatabaseEngine.getUsersCollection().findOne({ _id : new ObjectId(userId) });
+        if (!userDocument) throw "Unsubscribe - User not found";
+        
+        await DatabaseEngine.getUsersCollection().updateOne({ _id : new ObjectId(userId) }, { $set: { alertByEmail: false } });
+        
+        return res.render("users/unsubscribe.ejs");
+    } catch (e) {
+        console.error(new Date().toJSON(), e);
+        return res.render('error');
     }
 }
