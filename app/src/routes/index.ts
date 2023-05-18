@@ -12,6 +12,7 @@ import { User } from "../types/User";
 import flash from "connect-flash";
 import MongoStore from 'connect-mongo';
 import { readGeneralMetadata } from "../utils/metadata.js";
+import { unsubscribeEmail } from "../controllers/api/user.js";
 
 const router = Router();
 
@@ -69,5 +70,8 @@ router.get("/api/metadata", async (req, res) => {
         return res.status(500).json("Error getting data.");
     }
 }); 
+
+// Route to unsubscribe alert by email
+router.get("/unsubscribe/:id", unsubscribeEmail);
 
 export default router;
