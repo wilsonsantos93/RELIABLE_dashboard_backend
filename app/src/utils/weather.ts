@@ -427,7 +427,14 @@ export async function generateAlerts(locations: any[], numDaysAhead?: number) {
                     }
                 }
             }
-            alert.weather = { name: weatherField.displayName, value: alert.weather[weatherField.name] };
+
+            const value = alert.weather[weatherField.name];
+            const label = weatherField.ranges.find((r: any ) => (r.min <= value) && (value <= r.max))?.label;
+            alert.weather = { 
+                name: weatherField.displayName, 
+                value: value,
+                label: label
+            };
             alert.recommendations = recommendations;
         }
 
@@ -514,17 +521,19 @@ function generateHtmlMessage(alerts: any, userId: string) {
             if (names.length) message += `<p><strong>${a.regionName} (${names.join()})</strong>`;
             else message += `<p><strong>${a.regionName}</strong>`;
 
-            message += ` com ${a.weather.name} de <strong>${a.weather.value}</strong>`;
+            message += ` com ${a.weather.name} de `;
+            if (a.weather.label)  message += `<strong>${a.weather.value} (${a.weather.label})</strong>`; 
+            else message += `<strong>${a.weather.value}</strong>`;
             message += ` em <strong>${dayjs(a.date[0].date).tz(tz).format(`dddd, D MMMM ${a.date[0].format.includes(":") ? "HH:mm" : ''}`)} </strong></p>`;
             
-            if (a.recommendations && a.recommendations.length) {
+           /*  if (a.recommendations && a.recommendations.length) {
                 message += `<p>Recomendações:</p>`;
                 message += `<ul>`;
                 a.recommendations.forEach((recommendation: string) => {
                     message += `<li>${recommendation}</li>`;
                 });
                 message += `</ul>`;
-            }
+            } */
         }
 
         message += `<p>
@@ -548,8 +557,8 @@ function getEmailTransporter() {
         host: process.env.EMAIL_HOST || "smtp.sapo.pt",
         port: process.env.EMAIL_PORT || 465,
         auth: {
-            user: process.env.EMAIL_ACCOUNT || '',
-            pass: process.env.EMAIL_PASSWORD || ''
+            user: process.env.EMAIL_ACCOUNT || 'josesantos28@sapo.pt',
+            pass: process.env.EMAIL_PASSWORD || 'p3wqj6ay'
         },
         secure: true,
         tls: {
