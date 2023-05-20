@@ -49,8 +49,8 @@ if (process.env.NODE_APP_INSTANCE === '0') {
         await readWeatherFile();
     });
 
-    if (process.env.ALERT_BY_EMAIL) {
-        if (process.env.EMAIL_USER && process.env.EMAIL_PASSWORD) {
+    if (process.env.ALERT_BY_EMAIL != '') {
+        if (process.env.EMAIL_USER != '' && process.env.EMAIL_PASSWORD != '') {
             schedule.scheduleJob('30 12 * * *', async function () {
                 await sendAlertsByEmail();
             });
