@@ -329,7 +329,9 @@ export async function queryAllWeatherDates() {
 export async function getCollectionFields(collectionName: string, find: any, projection: any) {
     function flattenObject(obj: any, prefix = '') {
         if (!obj) return;
-        return Object.keys(obj).reduce((acc:any, k) => {
+        if (Array.isArray(obj)) return;
+
+        return Object.keys(obj).reduce((acc: any, k) => {
             const pre = prefix.length ? prefix + '.' : '';
             if (typeof obj[k] === 'object' && k != "_id") Object.assign(acc, flattenObject(obj[k], pre + k));
             else acc[pre + k] = obj[k];
@@ -341,7 +343,7 @@ export async function getCollectionFields(collectionName: string, find: any, pro
         const data = await DatabaseEngine.getCollection(collectionName).find(find, { projection }).toArray();
         let columnNames: any = [];
         for (const d of data) {
-            const keys = Object.keys(flattenObject(d))
+            const keys = Object.keys(flattenObject(d));
             for (const k of keys) {
                 if (!columnNames.includes(k)) columnNames.push(k);
             }
