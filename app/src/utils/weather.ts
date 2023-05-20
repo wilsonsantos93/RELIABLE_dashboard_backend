@@ -554,11 +554,11 @@ function generateHtmlMessage(alerts: any, userId: string) {
 
 function getEmailTransporter() {
     const config: any = {
-        host: process.env.EMAIL_HOST || "smtp.sapo.pt",
-        port: process.env.EMAIL_PORT || 465,
+        host: process.env.EMAIL_HOST,
+        port: process.env.EMAIL_PORT,
         auth: {
-            user: process.env.EMAIL_ACCOUNT || '',
-            pass: process.env.EMAIL_PASSWORD || ''
+            user: process.env.EMAIL_ACCOUNT,
+            pass: process.env.EMAIL_PASSWORD
         },
         secure: true,
         tls: {
