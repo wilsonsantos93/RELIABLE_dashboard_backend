@@ -167,7 +167,7 @@ export async function handleGetWeatherMetadata(req: Request, res: Response) {
         const projection: any = { authRequired: 0 };
         // if not logged in, filter fields
         if (!req.user) {
-            find = { authRequired: false };
+            find = { authRequired: false, active: true };
         }
         const data = await DatabaseEngine.getWeatherMetadataCollection().find(find, {projection}).toArray();
         return res.json(data);
