@@ -557,8 +557,8 @@ function getEmailTransporter() {
         host: process.env.EMAIL_HOST || "smtp.sapo.pt",
         port: process.env.EMAIL_PORT || 465,
         auth: {
-            user: process.env.EMAIL_ACCOUNT || 'josesantos28@sapo.pt',
-            pass: process.env.EMAIL_PASSWORD || 'p3wqj6ay'
+            user: process.env.EMAIL_ACCOUNT || '',
+            pass: process.env.EMAIL_PASSWORD || ''
         },
         secure: true,
         tls: {
