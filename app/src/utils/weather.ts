@@ -471,7 +471,7 @@ export async function sendAlertsByEmail() {
                                         }
                                     });
 
-                const data = await generateAlerts(locations, 2);
+                const data = await generateAlerts(locations, 1);
                 if (!data.alerts || !data.alerts.length) continue;
 
                 const alerts = data.alerts.filter(a => new Date(a.date[0].date).valueOf() > new Date().valueOf());
@@ -554,6 +554,7 @@ function generateHtmlMessage(alerts: any, userId: string) {
 
 function getEmailTransporter() {
     const config: any = {
+        service: "gmail",
         host: process.env.EMAIL_HOST,
         port: process.env.EMAIL_PORT,
         auth: {
@@ -562,6 +563,7 @@ function getEmailTransporter() {
         },
         secure: true,
         tls: {
+            ciphers:'SSLv3',
             rejectUnauthorized: false
         }
     };
