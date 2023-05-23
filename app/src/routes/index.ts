@@ -60,6 +60,7 @@ router.use("/api/map", reliableSession, passport.initialize(), passport.session(
 router.use("/api/user", reliableSession, passport.initialize(), passport.session(), userRouter);
 router.use("/libs", librariesRouter);
 
+// Route to get general metadata
 router.get("/api/metadata", async (req, res) => {
     try {
         const { DB_REGION_NAME_FIELD } = await readGeneralMetadata();
