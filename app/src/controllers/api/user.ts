@@ -151,7 +151,7 @@ export async function unsubscribeEmail(req: Request, res: Response) {
         
         await DatabaseEngine.getUsersCollection().updateOne({ _id : new ObjectId(userId) }, { $set: { alertByEmail: false } });
         
-        return res.render("users/unsubscribe.ejs");
+        return res.render("users/unsubscribed.ejs");
     } catch (e) {
         console.error(new Date().toJSON(), e);
         return res.render('error');
