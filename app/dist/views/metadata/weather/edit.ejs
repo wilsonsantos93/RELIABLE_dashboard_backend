@@ -14,7 +14,7 @@
         <div class="container">
             <div class="row justify-content-sm-center h-100">
                 <%- include('../../partials/alerts.ejs') %>
-                <h3>Edit weather metadata <%= data._id %></h3>
+                <h3>Edit weather metadata - <%= data.name %></h3>
                 <div class="col-xxl-9 col-xl-9 col-lg-9 col-md-9 col-sm-12">
                   <form id="form-main" method="POST" action="/admin/metadata/weather/redirect">
 
@@ -72,13 +72,17 @@
                     <% if (i == data.ranges.length-1) { %>
                       <div class="clonable" data-ss="1">
                         <form class="row d-flex flex-row align-items-center flex-wrap border border-1 p-2">
-                          <div class="col-md-2">
+                          <div class="col-md-1">
                               <label class="clonable-increment-html" for="">Min</label>
-                              <input id="min_1" type="number" class="form-control clonable-increment-id" placeholder="" name="min" value="<%= c.min %>" />
+                              <input id="min_1" type="text" class="form-control clonable-increment-id" placeholder="" name="min" value="<%= c.min %>" />
+                          </div>
+                          <div class="col-md-1">
+                              <label class="clonable-increment-html" for="">Max</label>
+                              <input id="max_1" type="text" class="form-control clonable-increment-id" placeholder="" name="max" value="<%= c.max %>" />
                           </div>
                           <div class="col-md-2">
-                              <label class="clonable-increment-html" for="">Max</label>
-                              <input id="max_1" type="number" class="form-control clonable-increment-id" placeholder="" name="max" value="<%= c.max %>" />
+                            <label class="clonable-increment-html" for="">Label</label>
+                            <input id="label" type="text" class="form-control clonable-increment-id" placeholder="Low, High" name="label" value="<%= c.label %>" />
                           </div>
                           <div class="col-md-1">
                               <label class="clonable-increment-html" for="">Color</label>
@@ -110,16 +114,20 @@
                     <% } else { %>
                       <div>
                         <form class="row d-flex flex-row align-items-center flex-wrap border border-1 p-2">
-                          <div class="col-md-2">
-                              <label for="">Mínimo</label>
-                              <input id="min_1" type="number" class="form-control" placeholder="" name="min" value="<%= c.min %>" />
-                          </div>
-                          <div class="col-md-2">
-                              <label for="">Máximo</label>
-                              <input id="max_1" type="number" class="form-control" placeholder="" name="max" value="<%= c.max %>" />
+                          <div class="col-md-1">
+                              <label for="">Min</label>
+                              <input id="min_1" type="text" class="form-control" placeholder="" name="min" value="<%= c.min %>" />
                           </div>
                           <div class="col-md-1">
-                              <label for="">Cor</label>
+                              <label for="">Max</label>
+                              <input id="max_1" type="text" class="form-control" placeholder="" name="max" value="<%= c.max %>" />
+                          </div>
+                          <div class="col-md-2">
+                            <label class="clonable-increment-html" for="">Label</label>
+                            <input id="label" type="text" class="form-control clonable-increment-id" placeholder="Low, High" name="label" value="<%= c.label %>" />
+                          </div>
+                          <div class="col-md-1">
+                              <label for="">Color</label>
                               <input id="color_1" type="color" class="form-control" name="color" placeholder="#333333" value="<%= c.color %>" />
                           </div>
 

@@ -64,6 +64,10 @@ export async function handleCreateUser(req, res) {
         const user = req.body;
         const passwordHash = await hashPassword(user.password);
         user.password = passwordHash;
+        if (user.role == Role.USER) {
+            user.alertByEmail = true;
+            user.locations = [];
+        }
         await DatabaseEngine.getUsersCollection().insertOne(user);
         req.flash("success_message", "User created successfully!");
         return res.redirect("/admin/users");

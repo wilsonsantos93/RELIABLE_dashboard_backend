@@ -2,6 +2,7 @@ import { DatabaseEngine } from "../configs/mongo.js";
 import { separateMultiPolygons } from "./features.js";
 import { ObjectId } from "mongodb";
 import fetch from "cross-fetch";
+import { readGeneralMetadata } from "./metadata.js";
 /**
  * Checks if a collection exists in a database.
  * @param collectionName The collection's name to check.
@@ -226,6 +227,9 @@ export async function queryWeatherDocuments(req, weatherDateID, crsObjectId = nu
             pipeline[pipeline.length - 1]["$lookup"]["pipeline"].push({ $project: projection });
         }
     }
+    const { DB_REGION_NAME_FIELD } = await readGeneralMetadata();
+    if (DB_REGION_NAME_FIELD)
+        pipeline.push({ "$sort": { [DB_REGION_NAME_FIELD]: 1 } });
     const regionsWithWeatherDocuments = await DatabaseEngine.getFeaturesCollection().aggregate(pipeline).toArray();
     return regionsWithWeatherDocuments;
 }
@@ -261,6 +265,8 @@ export async function queryAllWeatherDates() {
 export async function getCollectionFields(collectionName, find, projection) {
     function flattenObject(obj, prefix = '') {
         if (!obj)
+            return;
+        if (Array.isArray(obj))
             return;
         return Object.keys(obj).reduce((acc, k) => {
             const pre = prefix.length ? prefix + '.' : '';

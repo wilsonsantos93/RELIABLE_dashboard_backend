@@ -11,6 +11,7 @@ import passport from "passport";
 import flash from "connect-flash";
 import MongoStore from 'connect-mongo';
 import { readGeneralMetadata } from "../utils/metadata.js";
+import { unsubscribeEmail } from "../controllers/api/user.js";
 const router = Router();
 // Use session
 const reliableSession = session({
@@ -52,6 +53,7 @@ router.use('/api/region', reliableSession, passport.initialize(), passport.sessi
 router.use("/api/map", reliableSession, passport.initialize(), passport.session(), mapRouter);
 router.use("/api/user", reliableSession, passport.initialize(), passport.session(), userRouter);
 router.use("/libs", librariesRouter);
+// Route to get general metadata
 router.get("/api/metadata", async (req, res) => {
     try {
         const { DB_REGION_NAME_FIELD } = await readGeneralMetadata();
@@ -63,5 +65,7 @@ router.get("/api/metadata", async (req, res) => {
         return res.status(500).json("Error getting data.");
     }
 });
+// Route to unsubscribe alert by email
+router.get("/unsubscribe/:id", unsubscribeEmail);
 export default router;
 //# sourceMappingURL=index.js.map

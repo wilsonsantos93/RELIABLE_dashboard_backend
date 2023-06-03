@@ -7,7 +7,7 @@ import passport from "passport";
 import passportConfig from "./auth/index.js";
 import bodyParser from "body-parser";
 import schedule from "node-schedule";
-import { handleDeleteWeatherAndDates, readWeatherFile } from "./utils/weather.js";
+import { handleDeleteWeatherAndDates, readWeatherFile, sendAlertsByEmail } from "./utils/weather.js";
 import path from "path";
 import { fileURLToPath } from 'url';
 const __filename = fileURLToPath(import.meta.url);
@@ -39,10 +39,14 @@ if (process.env.NODE_APP_INSTANCE === '0') {
         await handleDeleteWeatherAndDates();
         await readWeatherFile();
     });
+    if (process.env.EMAIL_USER != '' && process.env.EMAIL_PASSWORD != '') {
+        schedule.scheduleJob('5 23 * * *', async function () {
+            await sendAlertsByEmail();
+        });
+    }
 }
 //! Start server
 app.listen(process.env.PORT, function () {
     console.log("Weather data server started listening on port " + process.env.PORT + ".\n");
 });
-//readWeatherFile();
 //# sourceMappingURL=server.js.map
