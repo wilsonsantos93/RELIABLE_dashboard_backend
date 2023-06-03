@@ -49,20 +49,15 @@ if (process.env.NODE_APP_INSTANCE === '0') {
         await readWeatherFile();
     });
 
-    if (process.env.ALERT_BY_EMAIL != '') {
-        if (process.env.EMAIL_USER != '' && process.env.EMAIL_PASSWORD != '') {
-            schedule.scheduleJob('30 12 * * *', async function () {
-                await sendAlertsByEmail();
-            });
-        }
+    if (process.env.EMAIL_USER != '' && process.env.EMAIL_PASSWORD != '') {
+        schedule.scheduleJob('5 23 * * *', async function () {
+            await sendAlertsByEmail();
+        });
     }
+    
 }
 
 //! Start server
 app.listen(process.env.PORT, function () {
     console.log("Weather data server started listening on port " + process.env.PORT + ".\n");
 });
-
-//handleDeleteWeatherAndDates();
-//readWeatherFile();
-//sendAlertsByEmail();
