@@ -26,11 +26,10 @@ passport.initialize();
 passport.session();
 //! EJS Template engine
 app.set("view engine", "ejs");
-//app.set("views", ("./src/views/"));
 app.set("views", path.join(__dirname, "views"));
 app.use(express.static(path.join(__dirname, 'views/assets')));
 // use CORS
-app.use(cors());
+app.use(cors({ origin: '*', optionsSuccessStatus: 200 }));
 //use Router
 app.use(router);
 // node schedule
