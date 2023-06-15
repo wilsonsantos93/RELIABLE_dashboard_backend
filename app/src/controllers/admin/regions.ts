@@ -7,6 +7,14 @@ import { collectionExistsInDatabase, saveFeatures, getCollectionFields, getDatat
 import { FeatureProperties } from "../../types/FeatureProperties";
 import { FeatureCollectionWithCRS } from "../../types/FeatureCollectionWithCRS";
 import { MultiPolygon, Polygon } from "geojson";
+import dayjs from 'dayjs';
+import utc from 'dayjs/plugin/utc.js';
+import timezone from 'dayjs/plugin/timezone.js';
+import pt from 'dayjs/locale/pt.js';
+dayjs.extend(utc);
+dayjs.extend(timezone);
+dayjs.locale(pt);
+const tz = "Europe/Lisbon";
 
 /**
  * Get Regions page
@@ -132,7 +140,7 @@ export async function handleGetRegionWithWeather(req: Request, res: Response) {
     
     pipeline[0].$match = { ...pipeline[0]["$match"], ...find };
     pipeline[1]["$lookup"]["pipeline"] = [
-      { "$project": { "_id": 0, "date": { $dateToString: { date: "$date", format: "%Y-%m-%d %H:%M:%S" } } }}
+      { "$project": { "_id": 0, "format": 1, "date": 1, /* { $dateToString: { date: "$date", format: "%Y-%m-%d %H:%M:%S" } } */ }}
     ];
 
     if (dateToSearch != '') pipeline.push({ $match: { "date.0.date": new RegExp(dateToSearch, 'i') } });
@@ -143,7 +151,9 @@ export async function handleGetRegionWithWeather(req: Request, res: Response) {
     const data = await weatherCollection.aggregate(pipeline).toArray();
     
     for (const d of data) {
-      d.date = d.date[0]?.date;
+      //d.date = d.date[0]?.date;
+      if (!d.date || !d.date.length) d.date = null;
+      else d.date = dayjs(d.date[0].date).tz(tz).format(`DD-MM-YYYY ${d.date[0].format?.includes(":") ? "HH:mm" : ''}`);
     }
 
     data.sort((a,b) => new Date(a.date).valueOf() - new Date(b.date).valueOf());
