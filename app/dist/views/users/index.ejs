@@ -94,6 +94,14 @@
       const url = `/admin/user/${id}/delete`;
       await myDT.delFromID(id, url);
     }
+
+    $('#table').on('draw.dt', function () {
+      $("#table td.col-alertByEmail").each(function(){
+        const text = $(this).html() == "true" ? 
+        '<i style="color:green" class="fa fa-check"></i>' : '<i style="color:red" class="fa fa-times"></i>';
+        $(this).html(text);
+      });
+    });
   </script>
 
 </html>

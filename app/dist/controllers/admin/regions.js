@@ -3,6 +3,14 @@ import { ObjectId } from "mongodb";
 // @ts-ignore
 import polygonCenter from "geojson-polygon-center";
 import { collectionExistsInDatabase, saveFeatures, getCollectionFields, getDatatablesData, saveCRS, associateCRStoFeatures, queryAllFeatureDocuments } from "../../utils/database.js";
+import dayjs from 'dayjs';
+import utc from 'dayjs/plugin/utc.js';
+import timezone from 'dayjs/plugin/timezone.js';
+import pt from 'dayjs/locale/pt.js';
+dayjs.extend(utc);
+dayjs.extend(timezone);
+dayjs.locale(pt);
+const tz = "Europe/Lisbon";
 /**
  * Get Regions page
  * @param req Client HTTP request object
@@ -123,7 +131,7 @@ export async function handleGetRegionWithWeather(req, res) {
         const recordsTotal = (await weatherCollection.aggregate(pipeline).toArray()).length;
         pipeline[0].$match = Object.assign(Object.assign({}, pipeline[0]["$match"]), find);
         pipeline[1]["$lookup"]["pipeline"] = [
-            { "$project": { "_id": 0, "date": { $dateToString: { date: "$date", format: "%Y-%m-%d %H:%M:%S" } } } }
+            { "$project": { "_id": 0, "format": 1, "date": 1, /* { $dateToString: { date: "$date", format: "%Y-%m-%d %H:%M:%S" } } */ } }
         ];
         if (dateToSearch != '')
             pipeline.push({ $match: { "date.0.date": new RegExp(dateToSearch, 'i') } });
@@ -132,7 +140,11 @@ export async function handleGetRegionWithWeather(req, res) {
         pipeline.push({ $limit: parseInt(req.query.length) || 0 });
         const data = await weatherCollection.aggregate(pipeline).toArray();
         for (const d of data) {
-            d.date = (_a = d.date[0]) === null || _a === void 0 ? void 0 : _a.date;
+            //d.date = d.date[0]?.date;
+            if (!d.date || !d.date.length)
+                d.date = null;
+            else
+                d.date = dayjs(d.date[0].date).tz(tz).format(`DD-MM-YYYY ${((_a = d.date[0].format) === null || _a === void 0 ? void 0 : _a.includes(":")) ? "HH:mm" : ''}`);
         }
         data.sort((a, b) => new Date(a.date).valueOf() - new Date(b.date).valueOf());
         return res.json({
