@@ -296,7 +296,6 @@ export async function generateAlerts(locations, numDaysAhead) {
         if (!regionsIds.length)
             return {};
         const datesCollectionName = DatabaseEngine.getWeatherDatesCollectionName();
-        //const startDate = new Date();
         const dates = await DatabaseEngine.getWeatherDatesCollection().find().toArray();
         const datesSorted = [...dates];
         datesSorted.sort((a, b) => {
@@ -308,7 +307,9 @@ export async function generateAlerts(locations, numDaysAhead) {
                 return 1;
         });
         const firstDate = datesSorted.find(d => d.date.valueOf() <= new Date().valueOf());
-        const startDate = new Date(firstDate.date);
+        let startDate = new Date();
+        if (firstDate)
+            startDate = new Date(firstDate.date);
         const { ALERT_NUM_DAYS_AHEAD, DB_REGION_NAME_FIELD } = await readGeneralMetadata();
         if (!numDaysAhead)
             numDaysAhead = parseInt(ALERT_NUM_DAYS_AHEAD);
