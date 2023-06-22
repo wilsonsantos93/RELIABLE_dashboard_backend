@@ -110,14 +110,14 @@
 
                           <div class="col-md-1">
                               <label class="clonable-increment-html" for=""></label>
-                              <button class="btn btn-danger btn-sm clonable-button-close d-block">
+                              <button type="button" class="btn btn-danger btn-sm clonable-button-close d-block">
                                   <i class="fa fa-trash"></i>
                               </button>
                           </div>
                         </form>
                       </div>
                     <% } else { %>
-                      <div>
+                      <div class="clonable">
                         <form class="row d-flex flex-row align-items-center flex-wrap border border-1 p-2">
                           <div class="col-md-1">
                               <label for="">Min</label>
@@ -152,8 +152,8 @@
 
                           <% if (i != 0) { %>
                           <div class="col-md-1">
-                              <label  for=""></label>
-                              <button class="btn btn-danger btn-sm d-block">
+                              <label class="clonable-increment-html" for=""></label>
+                              <button type="button" class="btn btn-danger btn-sm clonable-button-close d-block">
                                 <i class="fa fa-trash"></i>
                               </button>
                           </div>
