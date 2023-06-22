@@ -104,7 +104,7 @@ export async function createMetadata(req, res) {
             !req.body.data.description ||
             req.body.data.description == '')
             throw "Some fields are missing.";
-        const data = Object.assign(Object.assign({}, req.body.data), { authRequired: req.body.data.authRequired === 'true', main: req.body.data.main === 'true', active: req.body.data.active === 'true', ranges: req.body.data.ranges.map((r) => {
+        const data = Object.assign(Object.assign({}, req.body.data), { viewOrder: parseInt(req.body.data.viewOrder), authRequired: req.body.data.authRequired === 'true', main: req.body.data.main === 'true', active: req.body.data.active === 'true', ranges: req.body.data.ranges.map((r) => {
                 return Object.assign(Object.assign({}, r), { max: parseFloat(r.max), min: parseFloat(r.min), alert: r.alert === 'true', recommendations: r.recommendations && r.recomendations != "" ? r.recommendations : [] });
             }) });
         if (data.main == true) {
@@ -182,7 +182,7 @@ export async function updateMetadata(req, res) {
             !req.body.data.description ||
             req.body.data.description == '')
             throw "Some fields are missing.";
-        const data = Object.assign(Object.assign({}, req.body.data), { authRequired: req.body.data.authRequired === 'true', main: req.body.data.main === 'true', active: req.body.data.active === 'true', ranges: req.body.data.ranges.map((r) => {
+        const data = Object.assign(Object.assign({}, req.body.data), { viewOrder: parseInt(req.body.data.viewOrder), authRequired: req.body.data.authRequired === 'true', main: req.body.data.main === 'true', active: req.body.data.active === 'true', ranges: req.body.data.ranges.map((r) => {
                 return Object.assign(Object.assign({}, r), { max: parseFloat(r.max), min: parseFloat(r.min), alert: r.alert === 'true', recommendations: r.recommendations && r.recomendations != "" ? r.recommendations : [] });
             }) });
         const doc = await DatabaseEngine.getWeatherMetadataCollection().findOne({ _id: new ObjectId(req.params.id) });
