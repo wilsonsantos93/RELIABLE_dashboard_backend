@@ -64,7 +64,7 @@
     // Document ready event
     $(document).ready(function() {
         const dtConfig = DTConfig();
-        dtConfig.columnsToShow = ["_id", "name", "active", "main", "authRequired"];
+        dtConfig.columnsToShow = ["_id", "name", "viewOrder", "active", "main", "authRequired"];
         dtConfig.columnDefs.push({
           targets: "col-active",
           render: function (data, type, row, meta) {

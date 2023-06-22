@@ -114,6 +114,7 @@ export async function createMetadata(req: Request, res: Response) {
 
         const data: WeatherMetadata = { 
             ...req.body.data, 
+            viewOrder: parseInt(req.body.data.viewOrder),
             authRequired: req.body.data.authRequired === 'true',
             main: req.body.data.main === 'true',
             active: req.body.data.active === 'true',
@@ -208,6 +209,7 @@ export async function updateMetadata(req: Request, res: Response) {
 
         const data: WeatherMetadata = { 
             ...req.body.data, 
+            viewOrder: parseInt(req.body.data.viewOrder),
             authRequired: req.body.data.authRequired === 'true',
             main: req.body.data.main === 'true',
             active: req.body.data.active === 'true',
