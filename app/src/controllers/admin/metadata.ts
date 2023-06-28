@@ -66,6 +66,19 @@ export function getCreateMetadataPage(req: Request, res: Response) {
     return res.render("metadata/weather/create.ejs");
 }
 
+
+function compare(a: any, b: any) {
+    if (!a.min || isNaN(a.min)) a.min = 0;
+    if (!b.min || isNaN(b.min)) b.min = 0;
+    if ( a.min < b.min ){
+      return -1;
+    }
+    if ( a.min > b.min ){
+      return 1;
+    }
+    return 0;
+}
+
 /**
  * Get edit weather metadata page
  * @param req Client HTTP request object
@@ -73,18 +86,6 @@ export function getCreateMetadataPage(req: Request, res: Response) {
  * @returns Renders metadata edit page
  */
 export async function getEditMetadataPage(req: Request, res: Response) {
-    function compare(a: any, b: any) {
-        if (!a.min || isNaN(a.min)) a.min = 0;
-        if (!b.min || isNaN(b.min)) b.min = 0;
-        if ( a.min < b.min ){
-          return -1;
-        }
-        if ( a.min > b.min ){
-          return 1;
-        }
-        return 0;
-    }
-      
     let data: any = [];
     try {
         data = await DatabaseEngine.getWeatherMetadataCollection().findOne({ _id: new ObjectId(req.params.id) });
@@ -133,6 +134,9 @@ export async function createMetadata(req: Request, res: Response) {
             await DatabaseEngine.getWeatherMetadataCollection().updateMany({}, { $set: { main: false } });
         }
 
+        if (data.ranges.length) {
+            data.ranges.sort(compare);
+        }
         await DatabaseEngine.getWeatherMetadataCollection().insertOne(data);
         return res.json({});
     } catch (e) {
@@ -229,6 +233,9 @@ export async function updateMetadata(req: Request, res: Response) {
             await DatabaseEngine.getWeatherMetadataCollection().updateMany({}, { $set: { main: false } });
         }
 
+        if (data.ranges.length) {
+            data.ranges.sort(compare);
+        }
         await DatabaseEngine.getWeatherMetadataCollection().updateOne({ _id: new ObjectId(req.params.id) }, { $set: { ...data } });
         return res.json({});
     } catch (e) {

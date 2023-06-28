@@ -5,6 +5,7 @@ export type WeatherMetadata = {
     viewOrder: number;
     main: boolean;
     active: boolean;
+    scaleType: string;
     ranges: {
         max: string | number;
         min: string | number;

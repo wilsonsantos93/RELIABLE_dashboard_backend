@@ -51,6 +51,12 @@
                             <input checked class="form-check-input" type="radio" id="main-check-no" name="main" value="false" />
                             <label for="no">No</label>
                             
+                            <p style="margin-top:10px">Scale type:</p>
+                            <input checked class="form-check-input" type="radio" id="scale-check-threshold" name="scaleType" value="threshold" />
+                            <label for="threshold">Threshold</label>
+                            <input class="form-check-input" type="radio" id="scale-check-categorical" name="scaleType" value="categorical" />
+                            <label for="categorical">Categorical</label>
+
                         </form>
                         <br>
 
@@ -62,11 +68,11 @@
                                         <label class="clonable-increment-html" for="">Min</label>
                                         <input id="min_4" type="text" class="form-control clonable-increment-id" placeholder="" name="min" value="" />
                                     </div>
-                                    <div class="col-md-1">
+                                    <div class="col-md-1 max-col">
                                         <label class="clonable-increment-html" for="">Max</label>
                                         <input id="max_1" type="text" class="form-control clonable-increment-id" placeholder="" name="max" value="" />
                                     </div>
-                                    <div class="col-md-2">
+                                    <div class="col-md-2 label-col">
                                         <label class="clonable-increment-html" for="">Label</label>
                                         <input id="label" type="text" class="form-control clonable-increment-id" placeholder="Low, High" name="label" value="" />
                                       </div>
@@ -81,7 +87,7 @@
                                     </div>
 
                                     <div class="col-md-5">
-                                        <label class="clonable-increment-html" for="">Recommendations (comma separated)</label>
+                                        <label class="clonable-increment-html" for="">Recommendations (; separated)</label>
                                         <textarea style="resize: none" class="form-control clonable-increment-id" placeholder="Drink water, Close doors..." id="recommendations_1"></textarea>
                                     </div>
 
@@ -122,7 +128,7 @@
                 colourForms.each(function() { 
                     const dataConverted = convertFormToJSON($(this));
                     if (dataConverted.recommendations && dataConverted.recommendations.length) {
-                        dataConverted.recommendations = dataConverted.recommendations.split(",").map(s => 
+                        dataConverted.recommendations = dataConverted.recommendations.split(";").map(s => 
                             s.trim()
                             .replace("\\n","")
                             .replace("\\t", "")
@@ -132,6 +138,13 @@
                     } else dataConverted.recommendations = "";
                     data.ranges.push(dataConverted);
                 });
+
+
+                if (data.scaleType == 'categorical') {
+                    data.ranges.forEach(r => {
+                        r.max = r.min;
+                    })
+                }
 
                 $.post("/admin/metadata/weather/create", { data }, (data, status) => {
                     $("#form-main").submit(); // make normal request just to redirect
@@ -150,15 +163,25 @@
             }
 
             $("#main-check-yes").on("change", (e) => {
-                if (e.target.checked) $(".alert-col").show();
+                if (e.target.checked) $(".alert-col, .label-col").show();
             })
 
             $("#main-check-no").on("change", (e) => {
-                if (e.target.checked) $(".alert-col").hide();
+                if (e.target.checked) $(".alert-col, .label-col").hide();
+            })
+
+            $("#scale-check-categorical").on("change", (e) => {
+                //if (e.target.checked) $("input#max_1").prop("disabled", true);
+                if (e.target.checked) $(".max-col").hide();
+            });
+
+            $("#scale-check-threshold").on("change", (e) => {
+                //if (e.target.checked) $("input#max_1").prop("disabled", false);
+                if (e.target.checked) $(".max-col").show();
             })
 
             // default hide
-            $(".alert-col").hide();
+            $(".alert-col, .label-col").hide();
 
         });
     </script>

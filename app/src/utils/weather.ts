@@ -264,6 +264,7 @@ export async function transformData(data: any[]) {
 
             sample.weather = {};
             fields.forEach(f => {
+                if (d[f] == '0.0') d[f] == 0;
                 sample.weather[f.replace(date,"").replace(/^\_+|\_+$/g, '')] = parseFloat(d[f]) || d[f];
             });
 
@@ -388,7 +389,7 @@ export async function generateAlerts(locations: any[], numDaysAhead?: number) {
                 $match: { date: { $ne: [] } }
             },
             {
-                $project: { /* [`weather.${weatherField.name}`]: 1, */ weather: 1, date: 1, "regionBorderFeatureObjectId": 1, "weatherDateObjectId": 1}
+                $project: { weather: 1, date: 1, "regionBorderFeatureObjectId": 1, "weatherDateObjectId": 1 }
             }
         ]).toArray();
 
@@ -397,30 +398,18 @@ export async function generateAlerts(locations: any[], numDaysAhead?: number) {
             alert.regionName = getObjectValue(DB_REGION_NAME_FIELD, feature);
             alert.locations = feature.locations;
 
-            /* let recommendations: any = [];
-            for (const r of weatherFieldAlertable) {
-                let min = r.min;
-                let max = r.max;
-                if (!r.min || isNaN(r.min)) min = -Infinity;
-                if (!r.max || isNaN(r.max)) max = Infinity;
-                const value = alert.weather[weatherField.name];
-                if ((min <= value) && (value < max) && r.recommendations) {
-                    for (const rec of r.recommendations) {
-                        if (!recommendations.includes(rec)) recommendations.push(rec);
-                    }
-                }
-            } */
             let recommendations: string[] = [];
             for (const field of weatherFields) {
                 if (!field.active) continue;
                 const value = alert.weather[field.name];
                 if (value == null || isNaN(value)) continue;
-                for (let r of field.ranges) {
+                const ranges = [...field.ranges].reverse();
+                for (let r of ranges) {
                     let min = r.min;
                     let max = r.max;
                     if (r.min == null || isNaN(r.min)) min = -Infinity;
                     if (r.max == null || isNaN(r.max)) max = Infinity;
-                    if ((min <= value) && (value < max) && r.recommendations) {
+                    if ((min <= value) && (value <= max) && r.recommendations) {
                         for (const rec of r.recommendations) {
                             if (!recommendations.includes(rec)) recommendations.push(rec);
                         }
@@ -429,7 +418,7 @@ export async function generateAlerts(locations: any[], numDaysAhead?: number) {
             }
 
             const value = alert.weather[weatherField.name];
-            const label = weatherField.ranges.find((r: any ) => (r.min <= value) && (value <= r.max))?.label;
+            const label = [...weatherField.ranges].reverse().find((r: any) => (r.min <= value) && (value <= r.max))?.label;
             alert.weather = { 
                 name: weatherField.displayName, 
                 value: value,
