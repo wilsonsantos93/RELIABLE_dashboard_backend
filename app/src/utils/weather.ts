@@ -264,7 +264,7 @@ export async function transformData(data: any[]) {
 
             sample.weather = {};
             fields.forEach(f => {
-                if (d[f] == '0.0') d[f] == 0;
+                if (d[f] == '0.0') d[f] = 0;
                 sample.weather[f.replace(date,"").replace(/^\_+|\_+$/g, '')] = parseFloat(d[f]) || d[f];
             });
 
