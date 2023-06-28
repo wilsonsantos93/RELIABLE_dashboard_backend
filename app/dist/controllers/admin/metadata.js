@@ -59,6 +59,19 @@ export function getMetadataPage(req, res) {
 export function getCreateMetadataPage(req, res) {
     return res.render("metadata/weather/create.ejs");
 }
+function compare(a, b) {
+    if (!a.min || isNaN(a.min))
+        a.min = 0;
+    if (!b.min || isNaN(b.min))
+        b.min = 0;
+    if (a.min < b.min) {
+        return -1;
+    }
+    if (a.min > b.min) {
+        return 1;
+    }
+    return 0;
+}
 /**
  * Get edit weather metadata page
  * @param req Client HTTP request object
@@ -66,19 +79,6 @@ export function getCreateMetadataPage(req, res) {
  * @returns Renders metadata edit page
  */
 export async function getEditMetadataPage(req, res) {
-    function compare(a, b) {
-        if (!a.min || isNaN(a.min))
-            a.min = 0;
-        if (!b.min || isNaN(b.min))
-            b.min = 0;
-        if (a.min < b.min) {
-            return -1;
-        }
-        if (a.min > b.min) {
-            return 1;
-        }
-        return 0;
-    }
     let data = [];
     try {
         data = await DatabaseEngine.getWeatherMetadataCollection().findOne({ _id: new ObjectId(req.params.id) });
@@ -109,6 +109,9 @@ export async function createMetadata(req, res) {
             }) });
         if (data.main == true) {
             await DatabaseEngine.getWeatherMetadataCollection().updateMany({}, { $set: { main: false } });
+        }
+        if (data.ranges.length) {
+            data.ranges.sort(compare);
         }
         await DatabaseEngine.getWeatherMetadataCollection().insertOne(data);
         return res.json({});
@@ -188,6 +191,9 @@ export async function updateMetadata(req, res) {
         const doc = await DatabaseEngine.getWeatherMetadataCollection().findOne({ _id: new ObjectId(req.params.id) });
         if (data.main == true && doc.main == false) {
             await DatabaseEngine.getWeatherMetadataCollection().updateMany({}, { $set: { main: false } });
+        }
+        if (data.ranges.length) {
+            data.ranges.sort(compare);
         }
         await DatabaseEngine.getWeatherMetadataCollection().updateOne({ _id: new ObjectId(req.params.id) }, { $set: Object.assign({}, data) });
         return res.json({});
